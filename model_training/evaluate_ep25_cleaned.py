@@ -1,7 +1,7 @@
 """Evaluate Epoch 25 checkpoint on cleaned validation set"""
 import torch
 import pandas as pd
-from model import CrossAttentionMatcher
+from inference.model import CrossAttentionMatcher
 from transformers import AutoProcessor, AutoTokenizer
 from PIL import Image
 from tqdm import tqdm

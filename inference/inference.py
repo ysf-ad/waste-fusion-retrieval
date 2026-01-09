@@ -6,7 +6,7 @@ Usage: python inference.py --image path/to/image.jpg
 
 import torch
 import torch.nn.functional as F
-from model import CrossAttentionMatcher
+from inference.model import CrossAttentionMatcher
 from transformers import AutoProcessor, AutoTokenizer
 import pandas as pd
 from PIL import Image

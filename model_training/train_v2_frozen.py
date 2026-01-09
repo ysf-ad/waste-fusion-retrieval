@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from transformers import AutoProcessor
-from model import CrossAttentionMatcher
+from inference.model import CrossAttentionMatcher
 import pandas as pd
 import os
 import re
