@@ -1,0 +1,19 @@
+# Large Data
+training_data/
+archive/
+
+# Model Weights (Too large for standard Git > 100MB)
+*.pth
+*.pt
+waste_db_cache.pt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db
