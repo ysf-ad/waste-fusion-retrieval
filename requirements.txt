@@ -5,3 +5,5 @@ pandas
 pillow
 tqdm
 gradio
+matplotlib
+seaborn

@@ -156,7 +156,7 @@ class CrossAttentionMatcher(nn.Module):
             # or in-batch negatives. 
             # For this specific architecture, we assume N rows are provided or pre-cached.
             if input_ids_list is not None:
-                 cached_k = self.encode_text(input_ids_list, attention_mask_list)
+                cached_k = self.encode_text(input_ids_list, attention_mask_list)
             else:
                 raise ValueError("Must provide either cached_k or text inputs")
                 
