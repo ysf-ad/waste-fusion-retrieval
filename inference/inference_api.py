@@ -1,0 +1,37 @@
+#api for the server 
+import io
+from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import JSONResponse
+from PIL import Image
+import torch
+import os
+from inference.inference import load_resources, encode_database, classify
+
+app = FastAPI()
+
+# Load model and resources at startup
+
+model, processor, tokenizer, df = load_resources()
+cached_k = encode_database(model, tokenizer, df)
+
+@app.post("/predict")
+async def predict(file: UploadFile = File(...)):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image.")
+    try:
+        image_bytes = await file.read()
+        # Save to a temporary file
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            tmp.write(image_bytes)
+            tmp_path = tmp.name
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid image: {e}")
+    try:
+        results = classify(tmp_path, model, processor, cached_k, df)
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+    if results is None:
+        raise HTTPException(status_code=400, detail="Failed to classify image.")
+    return JSONResponse(content={"results": results})

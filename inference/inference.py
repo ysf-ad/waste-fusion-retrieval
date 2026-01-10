@@ -62,30 +62,30 @@ def encode_database(model, tokenizer, df):
 def classify(image_path, model, processor, cached_k, df):
     if not os.path.exists(image_path):
         print(f"ERROR: Image {image_path} not found.")
-        return
-    
+        return None
+
     image = Image.open(image_path).convert("RGB")
     pixel_values = processor(images=image, return_tensors="pt").pixel_values.to(DEVICE)
-    
+
     with torch.no_grad():
         q_vectors = model.forward_image(pixel_values)
         scores = model.score(q_vectors, cached_k)
-    
+
     # Get top 5
     top5_scores, top5_indices = scores[0].topk(5)
-    
-    print(f"\nResults for: {image_path}")
-    print("-" * 50)
     items = df['Item'].tolist()
+    results = []
     for i, (idx, score) in enumerate(zip(top5_indices.cpu().numpy(), top5_scores.cpu().numpy())):
         item_name = items[idx]
         category = df.iloc[idx]['Category']
         instruction = df.iloc[idx].get('Instruction_1', '')
-        print(f"{i+1}. {item_name}")
-        print(f"   Category: {category}")
-        print(f"   Confidence Score: {score:.2f}")
-        print(f"   Instruction: {instruction}")
-        print("-" * 50)
+        results.append({
+            "item": item_name,
+            "category": category,
+            "confidence": float(score),
+            "instruction": instruction
+        })
+    return results
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
