@@ -1,0 +1,341 @@
+/* Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    color: #1f2937;
+}
+
+/* Page Container */
+.page {
+    display: none;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.page.active {
+    display: block;
+}
+
+/* Camera Page */
+.camera-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.camera-page h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #1e3a5f;
+}
+
+.camera-page .subtitle {
+    color: #6b7280;
+    margin-bottom: 2rem;
+}
+
+.camera-container {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+#video {
+    width: 100%;
+    display: block;
+}
+
+.capture-btn {
+    margin-top: 2rem;
+    padding: 1rem 3rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.capture-btn:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.capture-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Result Page */
+.result-page {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.result-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.result-content {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+/* Left Side - Image */
+.image-section {
+    flex: 0 0 300px;
+}
+
+.captured-image {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+#canvas-display {
+    width: 100%;
+    border-radius: 12px;
+    display: block;
+}
+
+/* Right Side - Result Info */
+.info-section {
+    flex: 1;
+}
+
+.item-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 0.25rem;
+}
+
+.item-category {
+    color: #6b7280;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Instruction Box */
+.instruction-box {
+    background: #f0f7ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.instruction-box .icon {
+    color: #3b82f6;
+    font-size: 1.25rem;
+}
+
+.instruction-box .text {
+    color: #1e40af;
+    font-size: 0.95rem;
+}
+
+.instruction-box .text .bin-highlight {
+    font-weight: 700;
+    color: #2563eb;
+}
+
+/* Bin Indicator */
+.bin-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.25rem 2rem;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 1.5rem;
+}
+
+.bin-indicator .recycle-icon {
+    font-size: 2rem;
+}
+
+/* Bin Colors */
+.bin-blue { background: #3b82f6; }
+.bin-green { background: #22c55e; }
+.bin-grey, .bin-gray { background: #6b7280; }
+.bin-black { background: #1f2937; }
+.bin-yellow { background: #eab308; color: #1f2937; }
+.bin-brown { background: #92400e; }
+.bin-red { background: #dc2626; }
+
+/* Why Section */
+.why-section {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+.why-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.75rem;
+}
+
+.why-header .icon {
+    background: #3b82f6;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+.why-content {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.why-content .info-icon {
+    color: #3b82f6;
+    font-size: 1rem;
+    margin-top: 2px;
+}
+
+.why-content p {
+    color: #4b5563;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Confidence Badge */
+.confidence-badge {
+    display: inline-block;
+    background: #d1fae5;
+    color: #065f46;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+/* Back Button */
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background: #d1d5db;
+}
+
+/* Loading State */
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    margin-top: 1rem;
+    color: #6b7280;
+    font-size: 1.1rem;
+}
+
+/* Error State */
+.error-message {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page {
+        padding: 1rem;
+    }
+
+    .result-content {
+        flex-direction: column;
+    }
+
+    .image-section {
+        flex: none;
+        width: 100%;
+    }
+
+    .bin-indicator {
+        font-size: 1.25rem;
+        padding: 1rem 1.5rem;
+    }
+
+    .item-name {
+        font-size: 1.4rem;
+    }
+}

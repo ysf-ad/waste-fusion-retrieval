@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waste Classifier</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <!-- Camera Page -->
+    <div id="camera-page" class="page camera-page active">
+        <h1>♻️ Waste Classifier</h1>
+        <p class="subtitle">Use your camera to classify waste items</p>
+
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+        </div>
+
+        <button id="capture-btn" class="capture-btn">
+            <span>📷</span> Take Photo
+        </button>
+    </div>
+
+    <!-- Loading Page -->
+    <div id="loading-page" class="page">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">Analyzing your item...</p>
+        </div>
+    </div>
+
+    <!-- Result Page -->
+    <div id="result-page" class="page result-page">
+        <button id="back-btn" class="back-btn">
+            ← Scan Another Item
+        </button>
+
+        <div class="result-card">
+            <div class="result-content">
+                <!-- Left: Captured Image -->
+                <div class="image-section">
+                    <canvas id="canvas-display"></canvas>
+                </div>
+
+                <!-- Right: Classification Info -->
+                <div class="info-section">
+                    <span id="confidence-badge" class="confidence-badge"></span>
+                    <h2 id="item-name" class="item-name">Item Name</h2>
+                    <p id="item-category" class="item-category">Category</p>
+
+                    <div class="instruction-box">
+                        <span class="icon">☑️</span>
+                        <p class="text" id="instruction-text">Place this item in the <span class="bin-highlight" id="bin-name-inline">Bin</span>.</p>
+                    </div>
+
+                    <div id="bin-indicator" class="bin-indicator bin-blue">
+                        <span class="recycle-icon">♻️</span>
+                        <span id="bin-name">BLUE BIN</span>
+                    </div>
+
+                    <div class="why-section">
+                        <div class="why-header">
+                            <span class="icon">i</span>
+                            <span>Why?</span>
+                        </div>
+                        <div class="why-content">
+                            <span class="info-icon">ℹ️</span>
+                            <p id="why-text">Explanation about the classification.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-container" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        // API Endpoint - Points to the backend API
+        // Use localhost:9000 when running locally or via docker-compose
+        const API_ENDPOINT = 'http://localhost:9000/predict';
+
+        // Elements
+        const cameraPage = document.getElementById('camera-page');
+        const loadingPage = document.getElementById('loading-page');
+        const resultPage = document.getElementById('result-page');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas-display');
+        const captureBtn = document.getElementById('capture-btn');
+        const backBtn = document.getElementById('back-btn');
+
+        // Result elements
+        const confidenceBadge = document.getElementById('confidence-badge');
+        const itemName = document.getElementById('item-name');
+        const itemCategory = document.getElementById('item-category');
+        const instructionText = document.getElementById('instruction-text');
+        const binNameInline = document.getElementById('bin-name-inline');
+        const binIndicator = document.getElementById('bin-indicator');
+        const binName = document.getElementById('bin-name');
+        const whyText = document.getElementById('why-text');
+        const errorContainer = document.getElementById('error-container');
+
+        let stream = null;
+
+        // Utility functions
+        function showPage(page) {
+            [cameraPage, loadingPage, resultPage].forEach(p => p.classList.remove('active'));
+            page.classList.add('active');
+        }
+
+        function getBinColor(category) {
+            const cat = (category || '').toLowerCase();
+            if (cat.includes('recycl') || cat.includes('blue')) return { class: 'bin-blue', name: 'BLUE BIN', color: 'Blue' };
+            if (cat.includes('compost') || cat.includes('organic') || cat.includes('green')) return { class: 'bin-green', name: 'GREEN BIN', color: 'Green' };
+            if (cat.includes('garbage') || cat.includes('landfill') || cat.includes('grey') || cat.includes('gray')) return { class: 'bin-grey', name: 'GREY BIN', color: 'Grey' };
+            if (cat.includes('hazard') || cat.includes('electronic') || cat.includes('special')) return { class: 'bin-red', name: 'SPECIAL DISPOSAL', color: 'Special' };
+            if (cat.includes('black')) return { class: 'bin-black', name: 'BLACK BIN', color: 'Black' };
+            if (cat.includes('yellow')) return { class: 'bin-yellow', name: 'YELLOW BIN', color: 'Yellow' };
+            return { class: 'bin-grey', name: 'GREY BIN', color: 'Grey' };
+        }
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                video.srcObject = stream;
+            } catch (error) {
+                console.error('Camera error:', error);
+                alert('Could not access camera: ' + error.message);
+            }
+        }
+
+        async function captureAndProcess() {
+            // Capture image to canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            // Show loading
+            showPage(loadingPage);
+
+            // Convert to blob and send to API
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'capture.jpg');
+
+                try {
+                    const response = await fetch(API_ENDPOINT, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    displayResult(data);
+                } catch (error) {
+                    console.error('API error:', error);
+                    showError(error.message);
+                }
+            }, 'image/jpeg', 0.9);
+        }
+
+        function displayResult(data) {
+            errorContainer.style.display = 'none';
+
+            // Get top result
+            const result = data.results && data.results[0] ? data.results[0] : data;
+
+            const name = result.item || 'Unknown Item';
+            const category = result.category || 'Unknown';
+            const confidence = result.confidence ? Math.round(result.confidence * 100) : 0;
+            const instruction = result.instruction || 'Please dispose of this item properly.';
+
+            // Get bin info based on category
+            const binInfo = getBinColor(category);
+
+            // Update UI
+            confidenceBadge.textContent = `${confidence}% confidence`;
+            itemName.textContent = name;
+            itemCategory.textContent = category;
+            binNameInline.textContent = binInfo.color + ' Bin';
+            binIndicator.className = 'bin-indicator ' + binInfo.class;
+            binName.textContent = binInfo.name;
+            whyText.textContent = instruction;
+
+            showPage(resultPage);
+        }
+
+        function showError(message) {
+            errorContainer.textContent = 'Error: ' + message;
+            errorContainer.style.display = 'block';
+            showPage(resultPage);
+        }
+
+        function resetCamera() {
+            showPage(cameraPage);
+        }
+
+        // Event listeners
+        captureBtn.addEventListener('click', captureAndProcess);
+        backBtn.addEventListener('click', resetCamera);
+
+        // Start camera on load
+        startCamera();
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>
