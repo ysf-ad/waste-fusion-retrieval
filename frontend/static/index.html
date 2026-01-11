@@ -24,14 +24,6 @@
         <button id="capture-btn" class="capture-btn">
             <span>📷</span> Take Photo
         </button>
-
-        <div class="upload-section">
-            <p class="or-divider">— or —</p>
-            <label for="file-input" class="upload-btn">
-                <span>📁</span> Upload Image
-            </label>
-            <input type="file" id="file-input" accept="image/*" style="display: none;" />
-        </div>
     </div>
 
     <!-- Loading Page -->
@@ -89,9 +81,8 @@
     </div>
 
     <script>
-        // API Endpoint - Points to the backend API
-        // Use localhost:9000 when running locally or via docker-compose
-        const API_ENDPOINT = 'http://localhost:9000/predict';
+        // API Endpoint - Points to the backend API via Cloudflare Tunnel
+        const API_ENDPOINT = 'https://api.biswa.ca/predict';
 
         // Elements
         const cameraPage = document.getElementById('camera-page');
@@ -132,8 +123,6 @@
             return { class: 'bin-grey', name: 'GREY BIN', color: 'Grey' };
         }
 
-        // File input element
-        const fileInput = document.getElementById('file-input');
         const cameraFallback = document.getElementById('camera-fallback');
 
         // Camera functions
@@ -168,26 +157,6 @@
             captureBtn.disabled = true;
             captureBtn.style.opacity = '0.5';
         }
-
-        // Handle file upload
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            // Show image on canvas
-            const img = new Image();
-            img.onload = async () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-
-                // Process the image
-                showPage(loadingPage);
-                await processImage(file);
-            };
-            img.src = URL.createObjectURL(file);
-        });
 
         async function processImage(blob) {
             const formData = new FormData();

@@ -86,36 +86,6 @@ body {
     box-shadow: none;
 }
 
-/* Upload Section */
-.upload-section {
-    margin-top: 1.5rem;
-    text-align: center;
-}
-
-.or-divider {
-    color: #9ca3af;
-    margin-bottom: 1rem;
-}
-
-.upload-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
-    font-weight: 600;
-    background: #e5e7eb;
-    color: #374151;
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.upload-btn:hover {
-    background: #d1d5db;
-}
-
 /* Camera Fallback */
 .camera-fallback {
     display: flex;

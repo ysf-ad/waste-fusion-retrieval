@@ -2,12 +2,26 @@
 import io
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 import torch
 import os
 from inference.inference import load_resources, encode_database, classify
 
 app = FastAPI()
+
+# Add CORS middleware to allow requests from your frontend domain
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://site.biswa.ca",
+        "https://biswa.ca",
+        "http://localhost:8080",  # For local development
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load model and resources at startup
 print("Loading resources...")
