@@ -24,6 +24,9 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 def load_resources():
     print(f"Loading model on {DEVICE}...")
+    print(f"Looking for checkpoint at: {MODEL_CHECKPOINT}")
+    print(f"Looking for CSV at: {CSV_FILE}")
+    
     # 1. Load Model Architecture
     model = CrossAttentionMatcher(MODEL_ID_TXT, MODEL_ID_IMG)
     
@@ -34,6 +37,7 @@ def load_resources():
     model.load_state_dict(torch.load(MODEL_CHECKPOINT, map_location=DEVICE))
     model.to(DEVICE)
     model.eval()
+    print("Model loaded successfully.")
 
     # 3. Load Processors
     processor = AutoProcessor.from_pretrained(MODEL_ID_IMG)
@@ -44,6 +48,7 @@ def load_resources():
         print(f"ERROR: Database {CSV_FILE} not found.")
         return None, None, None, None
     df = pd.read_csv(CSV_FILE)
+    print(f"CSV loaded successfully with {len(df)} rows.")
     
     return model, processor, tokenizer, df
 

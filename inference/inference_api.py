@@ -10,9 +10,17 @@ from inference.inference import load_resources, encode_database, classify
 app = FastAPI()
 
 # Load model and resources at startup
-
+print("Loading resources...")
 model, processor, tokenizer, df = load_resources()
+
+if model is None or df is None:
+    raise RuntimeError(
+        "Failed to load model or CSV. Check that v2_frozen_ep25.pth and waste-wizard.csv exist in the project root."
+    )
+
+print("Encoding database...")
 cached_k = encode_database(model, tokenizer, df)
+print("Server ready!")
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
