@@ -14,8 +14,10 @@ import os
 import argparse
 
 # --- Configuration ---
-MODEL_CHECKPOINT = "v2_frozen_ep25.pth"
-CSV_FILE = "waste-wizard.csv" # Needs to be relative to the script location
+# Get the base directory (project root)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_CHECKPOINT = os.path.join(BASE_DIR, "v2_frozen_ep25.pth")
+CSV_FILE = os.path.join(BASE_DIR, "waste-wizard.csv")
 MODEL_ID_TXT = "BAAI/bge-large-en-v1.5"
 MODEL_ID_IMG = "facebook/dinov2-large"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
