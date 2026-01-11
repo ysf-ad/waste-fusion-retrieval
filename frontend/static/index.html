@@ -12,13 +12,26 @@
         <h1>♻️ Waste Classifier</h1>
         <p class="subtitle">Use your camera to classify waste items</p>
 
-        <div class="camera-container">
+        <div class="camera-container" id="camera-wrapper">
             <video id="video" autoplay playsinline></video>
+            <!-- Fallback message when camera not available -->
+            <div id="camera-fallback" class="camera-fallback" style="display: none;">
+                <p>📷 Camera not available</p>
+                <p class="fallback-hint">Camera requires HTTPS. Use file upload instead.</p>
+            </div>
         </div>
 
         <button id="capture-btn" class="capture-btn">
             <span>📷</span> Take Photo
         </button>
+
+        <div class="upload-section">
+            <p class="or-divider">— or —</p>
+            <label for="file-input" class="upload-btn">
+                <span>📁</span> Upload Image
+            </label>
+            <input type="file" id="file-input" accept="image/*" style="display: none;" />
+        </div>
     </div>
 
     <!-- Loading Page -->
@@ -119,8 +132,19 @@
             return { class: 'bin-grey', name: 'GREY BIN', color: 'Grey' };
         }
 
+        // File input element
+        const fileInput = document.getElementById('file-input');
+        const cameraFallback = document.getElementById('camera-fallback');
+
         // Camera functions
         async function startCamera() {
+            // Check if mediaDevices is available (requires HTTPS or localhost)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.warn('Camera API not available. Likely due to HTTP access.');
+                showCameraFallback();
+                return;
+            }
+
             try {
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: {
@@ -130,9 +154,60 @@
                     }
                 });
                 video.srcObject = stream;
+                video.style.display = 'block';
+                cameraFallback.style.display = 'none';
             } catch (error) {
                 console.error('Camera error:', error);
-                alert('Could not access camera: ' + error.message);
+                showCameraFallback();
+            }
+        }
+
+        function showCameraFallback() {
+            video.style.display = 'none';
+            cameraFallback.style.display = 'flex';
+            captureBtn.disabled = true;
+            captureBtn.style.opacity = '0.5';
+        }
+
+        // Handle file upload
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show image on canvas
+            const img = new Image();
+            img.onload = async () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                // Process the image
+                showPage(loadingPage);
+                await processImage(file);
+            };
+            img.src = URL.createObjectURL(file);
+        });
+
+        async function processImage(blob) {
+            const formData = new FormData();
+            formData.append('file', blob, 'capture.jpg');
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                console.error('API error:', error);
+                showError(error.message);
             }
         }
 
@@ -148,25 +223,7 @@
 
             // Convert to blob and send to API
             canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append('file', blob, 'capture.jpg');
-
-                try {
-                    const response = await fetch(API_ENDPOINT, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`Server error: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    displayResult(data);
-                } catch (error) {
-                    console.error('API error:', error);
-                    showError(error.message);
-                }
+                await processImage(blob);
             }, 'image/jpeg', 0.9);
         }
 
