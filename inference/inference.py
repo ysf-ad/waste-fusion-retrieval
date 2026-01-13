@@ -102,4 +102,8 @@ if __name__ == "__main__":
     model, processor, tokenizer, df = load_resources()
     if model:
         cached_k = encode_database(model, tokenizer, df)
-        classify(args.image, model, processor, cached_k, df)
+        results = classify(args.image, model, processor, cached_k, df)
+        if results:
+            print("\n=== Classification Results ===")
+            for i, result in enumerate(results, 1):
+                print(f"{i}. {result['item']} ({result['category']}) - Confidence: {result['confidence']:.4f}")

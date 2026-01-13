@@ -17,6 +17,8 @@ app.add_middleware(
         "https://site.biswa.ca",
         "https://biswa.ca",
         "http://localhost:8080",  # For local development
+        "http://localhost",        # For Pi camera service
+        "http://127.0.0.1",       # Localhost fallback
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -35,6 +37,16 @@ if model is None or df is None:
 print("Encoding database...")
 cached_k = encode_database(model, tokenizer, df)
 print("Server ready!")
+
+@app.get("/")
+async def root():
+    """Health check endpoint"""
+    return {"status": "ok", "message": "Waste Classifier API is running"}
+
+@app.get("/health")
+async def health():
+    """Health check endpoint"""
+    return {"status": "ok", "model_loaded": model is not None, "database_loaded": df is not None}
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):

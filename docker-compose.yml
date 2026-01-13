@@ -1,13 +1,16 @@
 version: '3.8'
 
 services:
-  # Backend API (GPU inference server)
+  # Backend API (GPU inference server for waste classification)
   api:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "9000:9000"
+    environment:
+      # API configuration
+      - PYTHONUNBUFFERED=1
     deploy:
       resources:
         reservations:
@@ -16,3 +19,9 @@ services:
               count: 1
               capabilities: [gpu]
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

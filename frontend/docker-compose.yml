@@ -8,17 +8,19 @@ services:
     ports:
       - "80:80"
     environment:
-      - CAPTURE_DELAY=15
-      - MOTION_SENSOR_PIN=17
+      # People detection settings
+      - CAPTURE_DELAY=2              # Seconds to wait after person detected before capturing
+      - DETECTION_COOLDOWN=10        # Seconds between captures to avoid spam
+      - PEOPLE_DETECTION_THRESHOLD=0.5  # Confidence threshold (0-1)
+      # API endpoint for waste classification
       - API_ENDPOINT=https://api.biswa.ca/predict
     devices:
-      # Camera access
+      # Camera access (on Raspberry Pi)
       - /dev/video0:/dev/video0
       - /dev/vchiq:/dev/vchiq
-    # Required for camera and GPIO access
+    # Required for camera access
     privileged: true
     volumes:
-      # For GPIO access
+      # For camera memory access
       - /sys:/sys
-      - /dev/gpiomem:/dev/gpiomem
     restart: unless-stopped
