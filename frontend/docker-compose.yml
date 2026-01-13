@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.pi
+    ports:
+      - "80:80"
+    environment:
+      - CAPTURE_DELAY=15
+      - MOTION_SENSOR_PIN=17
+      - API_ENDPOINT=https://api.biswa.ca/predict
+    devices:
+      # Camera access
+      - /dev/video0:/dev/video0
+      - /dev/vchiq:/dev/vchiq
+    # Required for camera and GPIO access
+    privileged: true
+    volumes:
+      # For GPIO access
+      - /sys:/sys
+      - /dev/gpiomem:/dev/gpiomem
+    restart: unless-stopped

@@ -16,14 +16,3 @@ services:
               count: 1
               capabilities: [gpu]
     restart: unless-stopped
-
-  # Frontend (nginx serving static files)
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "8080:80"
-    depends_on:
-      - api
-    restart: unless-stopped

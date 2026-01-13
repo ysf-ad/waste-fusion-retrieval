@@ -83,6 +83,18 @@
     <script>
         // API Endpoint - Points to the backend API via Cloudflare Tunnel
         const API_ENDPOINT = 'https://api.biswa.ca/predict';
+        
+        // Pi Camera Service endpoints (local)
+        const PI_SERVICE = {
+            status: '/api/status',
+            capture: '/api/capture',
+            latestImage: '/api/latest-image',
+            stream: '/api/stream',
+            config: '/api/config'
+        };
+        
+        // Check for Pi camera service
+        let usingPiCamera = false;
 
         // Elements
         const cameraPage = document.getElementById('camera-page');
@@ -127,6 +139,26 @@
 
         // Camera functions
         async function startCamera() {
+            // First, check if Pi camera service is available
+            try {
+                const response = await fetch(PI_SERVICE.status);
+                if (response.ok) {
+                    const status = await response.json();
+                    if (status.pi_available && status.camera_ready) {
+                        console.log('Pi camera service detected');
+                        usingPiCamera = true;
+                        // Use MJPEG stream from Pi
+                        video.src = PI_SERVICE.stream;
+                        video.style.display = 'block';
+                        cameraFallback.style.display = 'none';
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('Pi camera service not available, falling back to browser camera');
+            }
+
+            // Fallback to browser camera
             // Check if mediaDevices is available (requires HTTPS or localhost)
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 console.warn('Camera API not available. Likely due to HTTP access.');
@@ -181,19 +213,47 @@
         }
 
         async function captureAndProcess() {
-            // Capture image to canvas
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-
             // Show loading
             showPage(loadingPage);
 
-            // Convert to blob and send to API
-            canvas.toBlob(async (blob) => {
-                await processImage(blob);
-            }, 'image/jpeg', 0.9);
+            if (usingPiCamera) {
+                // Use Pi camera service to capture
+                try {
+                    // Trigger capture
+                    await fetch(PI_SERVICE.capture);
+                    
+                    // Get the captured image
+                    const imgResponse = await fetch(PI_SERVICE.latestImage);
+                    const blob = await imgResponse.blob();
+                    
+                    // Draw to canvas for preview
+                    const img = new Image();
+                    img.onload = async () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        
+                        // Process the image
+                        await processImage(blob);
+                    };
+                    img.src = URL.createObjectURL(blob);
+                } catch (error) {
+                    console.error('Pi capture error:', error);
+                    showError('Failed to capture from Pi camera: ' + error.message);
+                }
+            } else {
+                // Capture image to canvas from browser camera
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+
+                // Convert to blob and send to API
+                canvas.toBlob(async (blob) => {
+                    await processImage(blob);
+                }, 'image/jpeg', 0.9);
+            }
         }
 
         function displayResult(data) {
