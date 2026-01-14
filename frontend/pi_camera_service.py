@@ -23,7 +23,7 @@ except ImportError:
 
 # --- Configuration ---
 MOTION_SENSOR_PIN = 17  # GPIO pin for motion sensor
-CAPTURE_DELAY = 15      # Seconds to wait after motion before capturing
+CAPTURE_DELAY = 3     # Seconds to wait after motion before capturing
 API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://api.biswa.ca/predict')
 STATIC_DIR = '/app/static'
 
