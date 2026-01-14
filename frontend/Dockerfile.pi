@@ -1,27 +1,18 @@
 # Raspberry Pi 5 with Camera and GPIO support
-FROM python:3.11-slim-bookworm
+FROM python:3.11-bookworm
 
-# Install system dependencies BEFORE pip packages
+# Install system dependencies including python3-libcamera
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    python3-dev \
-    python3-pip \
-    gcc \
-    g++ \
-    git \
-    cmake \
-    libyaml-dev \
-    libssl-dev \
-    libffi-dev \
+    python3-libcamera \
+    python3-kms++ \
     libcamera-dev \
-    libcamera0 \
     libcap-dev \
     libatlas-base-dev \
     libjasper-dev \
-    libharfbuzz0b \
-    libwebp6 \
-    libtiff6 \
+    libtiff-dev \
     libjasper1 \
+    ffmpeg \
+    build-essential \
     libopenjp2-7 \
     libtiffxx6 \
     && rm -rf /var/lib/apt/lists/*
@@ -32,9 +23,9 @@ WORKDIR /app
 # Copy requirements first for caching
 COPY requirements.txt .
 
-# Install Python packages
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN pip install --no-cache-dir -r requirements.txt
+# Install Python packages (NOT picamera2 - use system package)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir flask flask-cors requests gpiozero RPi.GPIO
 
 # Copy static files and Python service
 COPY static/ /app/static/
