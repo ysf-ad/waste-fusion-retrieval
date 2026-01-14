@@ -1,13 +1,29 @@
 # Raspberry Pi 5 with Camera and GPIO support
 FROM python:3.11-slim-bookworm
 
-# Install only essential system libraries (not python3-* packages)
+# Install system dependencies BEFORE pip packages
 RUN apt-get update && apt-get install -y \
+    build-essential \
+    python3-dev \
+    python3-pip \
     gcc \
     g++ \
+    git \
+    cmake \
+    libyaml-dev \
+    libssl-dev \
+    libffi-dev \
     libcamera-dev \
+    libcamera0 \
     libcap-dev \
     libatlas-base-dev \
+    libjasper-dev \
+    libharfbuzz0b \
+    libwebp6 \
+    libtiff6 \
+    libjasper1 \
+    libopenjp2-7 \
+    libtiffxx6 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -16,7 +32,8 @@ WORKDIR /app
 # Copy requirements first for caching
 COPY requirements.txt .
 
-# Install Python packages via pip (not apt)
+# Install Python packages
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy static files and Python service
