@@ -1,17 +1,13 @@
 # Raspberry Pi 5 with Camera and GPIO support
 FROM python:3.11-slim-bookworm
 
-# Install system dependencies for camera and GPIO
-RUN apt-get update && apt-get upgrade -y && apt-get install -y \
-    libcap-dev \
-    libatlas-base-dev \
-    ffmpeg \
-    libopenjp2-7 \
-    libcamera-dev \
-    libkms++-dev \
-    libfmt-dev \
+# Install only essential system libraries (not python3-* packages)
+RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    libcamera-dev \
+    libcap-dev \
+    libatlas-base-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -19,6 +15,8 @@ WORKDIR /app
 
 # Copy requirements first for caching
 COPY requirements.txt .
+
+# Install Python packages via pip (not apt)
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy static files and Python service
