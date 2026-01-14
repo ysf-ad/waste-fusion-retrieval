@@ -2,14 +2,16 @@
 FROM python:3.11-slim-bookworm
 
 # Install system dependencies for camera and GPIO
-RUN apt-get update && apt-get install -y \
-    libcamera-dev \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     libcap-dev \
     libatlas-base-dev \
     ffmpeg \
+    libopenjp2-7 \
+    libcamera-dev \
+    libkms++-dev \
+    libfmt-dev \
     gcc \
     g++ \
-    libcamera0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
