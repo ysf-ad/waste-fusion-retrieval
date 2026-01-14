@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   frontend:
@@ -6,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile.pi
     ports:
-      - "80:80"
+      - "8000:80"
     environment:
       - CAPTURE_DELAY=15
       - MOTION_SENSOR_PIN=17
