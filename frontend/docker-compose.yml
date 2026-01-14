@@ -10,14 +10,22 @@ services:
       - CAPTURE_DELAY=15
       - MOTION_SENSOR_PIN=17
       - API_ENDPOINT=https://api.biswa.ca/predict
+      - LIBCAMERA_LOG_LEVELS=*:DEBUG
     devices:
       # Camera access
       - /dev/video0:/dev/video0
+      - /dev/video31:/dev/video31
       - /dev/vchiq:/dev/vchiq
+      - /dev/media0:/dev/media0
     # Required for camera and GPIO access
     privileged: true
+    cap_add:
+      - SYS_ADMIN
+      - SYS_RESOURCE
     volumes:
       # For GPIO access
       - /sys:/sys
       - /dev/gpiomem:/dev/gpiomem
+      - /run/dbus:/run/dbus:ro
+      - /var/run/dbus:/var/run/dbus:ro
     restart: unless-stopped
