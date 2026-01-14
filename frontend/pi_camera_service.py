@@ -25,7 +25,9 @@ except ImportError:
 MOTION_SENSOR_PIN = 17  # GPIO pin for motion sensor
 CAPTURE_DELAY = 3     # Seconds to wait after motion before capturing
 API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://api.biswa.ca/predict')
-STATIC_DIR = '/app/static'
+
+# Use environment variable or default to local directory
+STATIC_DIR = os.getenv('STATIC_DIR', os.path.join(os.path.dirname(__file__), 'static'))
 
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path='')
 CORS(app)
