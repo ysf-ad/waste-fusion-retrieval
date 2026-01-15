@@ -82,7 +82,8 @@
 
     <script>
         // API Endpoint - Points to the backend API via Cloudflare Tunnel
-        const API_ENDPOINT = 'https://api.biswa.ca/predict';
+        // Use local proxy to avoid CORS issues
+        const API_ENDPOINT = '/api/predict';
         
         // Pi Camera Service endpoints (local)
         const PI_SERVICE = {

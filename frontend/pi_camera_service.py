@@ -9,7 +9,8 @@ import io
 import base64
 import json
 import threading
-from flask import Flask, Response, jsonify, send_file
+import requests
+from flask import Flask, Response, jsonify, send_file, request
 from flask_cors import CORS
 
 # Try to import Pi-specific libraries (will fail on non-Pi systems)
@@ -210,6 +211,31 @@ def get_config():
         'motion_sensor_pin': MOTION_SENSOR_PIN,
         'api_endpoint': API_ENDPOINT
     })
+
+
+@app.route('/api/predict', methods=['POST'])
+def predict_proxy():
+    """Proxy prediction requests to avoid CORS issues"""
+    import requests
+    
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    
+    try:
+        # Forward the file to the actual API
+        files = {'file': (file.filename, file.stream, file.content_type)}
+        response = requests.post(API_ENDPOINT, files=files, timeout=30)
+        
+        # Return the API response
+        return Response(
+            response.content,
+            status=response.status_code,
+            content_type=response.headers.get('Content-Type', 'application/json')
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 if __name__ == '__main__':
