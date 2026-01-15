@@ -208,9 +208,13 @@ def video_stream():
                 request_obj = camera.capture_request()
                 if request_obj:
                     with request_obj:
-                        # Get JPEG from the main stream
-                        data = request_obj.make_image('main')
-                        frame = data.tobytes()
+                        # Get image and encode to JPEG
+                        img = request_obj.make_image('main')
+                        
+                        # Encode PIL Image to JPEG bytes
+                        jpeg_buffer = io.BytesIO()
+                        img.save(jpeg_buffer, format='JPEG', quality=80)
+                        frame = jpeg_buffer.getvalue()
                         
                         yield (b'--frame\r\n'
                                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
