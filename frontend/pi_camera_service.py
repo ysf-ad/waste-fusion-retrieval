@@ -201,28 +201,41 @@ def video_stream():
     if not camera:
         return jsonify({'error': 'Camera not available'}), 503
     
+    print("Stream endpoint called")
+    frame_count = 0
+    
     def generate():
+        nonlocal frame_count
         try:
             while True:
-                # Capture frame from video stream
-                request_obj = camera.capture_request()
                 try:
+                    # Capture frame from video stream
+                    request_obj = camera.capture_request()
+                    
                     # Get image and encode to JPEG
                     img = request_obj.make_image('main')
                     
                     # Encode PIL Image to JPEG bytes
                     jpeg_buffer = io.BytesIO()
-                    img.save(jpeg_buffer, format='JPEG', quality=80)
+                    img.save(jpeg_buffer, format='JPEG', quality=85)
                     frame = jpeg_buffer.getvalue()
                     
+                    frame_count += 1
+                    if frame_count % 10 == 0:
+                        print(f"Streamed {frame_count} frames, last frame size: {len(frame)} bytes")
+                    
                     yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-                finally:
+                           b'Content-Type: image/jpeg\r\n'
+                           b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
+                    
                     request_obj.release()
-                
-                time.sleep(0.05)  # ~20 FPS
+                    time.sleep(0.05)  # ~20 FPS
+                    
+                except Exception as e:
+                    print(f"Frame capture error: {e}")
+                    time.sleep(0.1)
         except Exception as e:
-            print(f"Stream error: {e}")
+            print(f"Stream generation error: {e}")
     
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
