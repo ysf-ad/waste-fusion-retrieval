@@ -87,36 +87,56 @@ def capture_frame_loop():
     """Continuously capture frames from camera and cache them"""
     global camera, latest_stream_frame, stream_frame_lock
     
+    print("[Frame Loop] Starting background frame capture thread")
     frame_count = 0
+    error_count = 0
+    
     while True:
         try:
             if camera:
-                # Capture frame
-                request_obj = camera.capture_request()
-                img = request_obj.make_image('main')
-                
-                # Encode to JPEG
-                jpeg_buffer = io.BytesIO()
-                img.save(jpeg_buffer, format='JPEG', quality=85)
-                frame_data = jpeg_buffer.getvalue()
-                
-                # Store in thread-safe cache
-                with stream_frame_lock:
-                    latest_stream_frame = frame_data
-                
-                frame_count += 1
-                if frame_count % 20 == 0:
-                    print(f"Frame loop: captured {frame_count} frames, latest frame size: {len(frame_data)} bytes")
-                
-                request_obj.release()
-                time.sleep(0.05)  # ~20 FPS
+                try:
+                    # Capture frame
+                    request_obj = camera.capture_request()
+                    if not request_obj:
+                        print("[Frame Loop] ERROR: capture_request returned None")
+                        time.sleep(0.5)
+                        continue
+                    
+                    img = request_obj.make_image('main')
+                    
+                    # Encode to JPEG
+                    jpeg_buffer = io.BytesIO()
+                    img.save(jpeg_buffer, format='JPEG', quality=85)
+                    frame_data = jpeg_buffer.getvalue()
+                    
+                    # Store in thread-safe cache
+                    with stream_frame_lock:
+                        latest_stream_frame = frame_data
+                    
+                    frame_count += 1
+                    if frame_count % 20 == 0:
+                        print(f"[Frame Loop] Captured {frame_count} frames, latest: {len(frame_data)} bytes")
+                    
+                    request_obj.release()
+                    time.sleep(0.05)  # ~20 FPS
+                    error_count = 0  # Reset error count on success
+                except Exception as inner_e:
+                    error_count += 1
+                    if error_count <= 3:  # Only print first 3 errors
+                        print(f"[Frame Loop] Capture error: {inner_e}")
+                    if error_count > 10:
+                        print("[Frame Loop] Too many errors, restarting thread in 2 seconds...")
+                        time.sleep(2)
+                        error_count = 0
+                    time.sleep(0.1)
             else:
-                time.sleep(0.1)
+                print("[Frame Loop] WARNING: Camera is None")
+                time.sleep(1)
         except Exception as e:
-            print(f"Frame capture loop error: {e}")
+            print(f"[Frame Loop] FATAL error: {e}")
             import traceback
             traceback.print_exc()
-            time.sleep(0.1)
+            time.sleep(1)
 
 def on_motion_detected():
     """Callback when motion is detected"""
@@ -366,5 +386,16 @@ if __name__ == '__main__':
     # Initialize hardware
     init_hardware()
     
+    # Give frame loop a moment to start capturing
+    print("Waiting for frame capture thread to initialize...")
+    time.sleep(2)
+    
+    # Check if frame loop is working
+    if latest_stream_frame:
+        print(f"✓ Frame capture working! Latest frame: {len(latest_stream_frame)} bytes")
+    else:
+        print("✗ WARNING: Frame capture thread hasn't captured any frames yet")
+    
     # Start Flask server
+    print("Starting Flask server on port 8000...")
     app.run(host='0.0.0.0', port=8000, threaded=True)
