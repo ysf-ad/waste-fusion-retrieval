@@ -202,15 +202,21 @@ def video_stream():
         return jsonify({'error': 'Camera not available'}), 503
     
     def generate():
-        while True:
-            stream = io.BytesIO()
-            camera.capture_file(stream, format='jpeg')
-            stream.seek(0)
-            frame = stream.getvalue()
-            
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-            time.sleep(0.1)  # ~10 FPS
+        try:
+            while True:
+                # Capture frame from video stream
+                request_obj = camera.capture_request()
+                if request_obj:
+                    with request_obj:
+                        # Get JPEG from the main stream
+                        data = request_obj.make_image('main')
+                        frame = data.tobytes()
+                        
+                        yield (b'--frame\r\n'
+                               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                        time.sleep(0.05)  # ~20 FPS
+        except Exception as e:
+            print(f"Stream error: {e}")
     
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
