@@ -206,19 +206,21 @@ def video_stream():
             while True:
                 # Capture frame from video stream
                 request_obj = camera.capture_request()
-                if request_obj:
-                    with request_obj:
-                        # Get image and encode to JPEG
-                        img = request_obj.make_image('main')
-                        
-                        # Encode PIL Image to JPEG bytes
-                        jpeg_buffer = io.BytesIO()
-                        img.save(jpeg_buffer, format='JPEG', quality=80)
-                        frame = jpeg_buffer.getvalue()
-                        
-                        yield (b'--frame\r\n'
-                               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-                        time.sleep(0.05)  # ~20 FPS
+                try:
+                    # Get image and encode to JPEG
+                    img = request_obj.make_image('main')
+                    
+                    # Encode PIL Image to JPEG bytes
+                    jpeg_buffer = io.BytesIO()
+                    img.save(jpeg_buffer, format='JPEG', quality=80)
+                    frame = jpeg_buffer.getvalue()
+                    
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                finally:
+                    request_obj.release()
+                
+                time.sleep(0.05)  # ~20 FPS
         except Exception as e:
             print(f"Stream error: {e}")
     
