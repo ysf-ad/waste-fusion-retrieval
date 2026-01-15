@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Waste Classifier</title>
+    <title>BINIT</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -11,7 +11,7 @@
     <div id="camera-page" class="page camera-page active">
         <div class="header-bar">
             <div class="title-section">
-                <h1>♻️ Waste Classifier</h1>
+                <h1>♻️ BINIT</h1>
             </div>
             
             <button id="capture-btn" class="capture-btn-compact">
@@ -175,6 +175,44 @@
         }
 
         // Camera functions
+        function connectToEventStream() {
+            console.log('Connecting to event stream for motion detection...');
+            const eventSource = new EventSource('/api/events');
+            
+            eventSource.addEventListener('motion_detected', (e) => {
+                console.log('Motion detected event received!');
+            });
+            
+            eventSource.addEventListener('countdown', (e) => {
+                const data = JSON.parse(e.data);
+                console.log(`Countdown: ${data.number}`);
+                // Show countdown overlay
+                countdownOverlay.style.display = 'flex';
+                countdownNumber.textContent = data.number;
+            });
+            
+            eventSource.addEventListener('image_captured', async (e) => {
+                console.log('Image captured, processing...');
+                countdownOverlay.style.display = 'none';
+                
+                // Fetch the captured image and process it
+                await captureFromPiAndProcess();
+            });
+            
+            eventSource.addEventListener('heartbeat', (e) => {
+                // Keep connection alive
+            });
+            
+            eventSource.onerror = (error) => {
+                console.error('EventSource error:', error);
+                // Attempt to reconnect after 5 seconds
+                setTimeout(() => {
+                    eventSource.close();
+                    connectToEventStream();
+                }, 5000);
+            };
+        }
+        
         async function startCamera() {
             // First, check if Pi camera service is available
             try {
@@ -187,6 +225,9 @@
                         // MJPEG stream is now directly loaded in img tag src
                         video.style.display = 'block';
                         cameraFallback.style.display = 'none';
+                        
+                        // Connect to SSE for real-time motion detection events
+                        connectToEventStream();
                         return;
                     }
                 }
@@ -256,31 +297,7 @@
             showPage(loadingPage);
 
             if (usingPiCamera) {
-                // Use Pi camera service to capture
-                try {
-                    // Trigger capture
-                    await fetch(PI_SERVICE.capture);
-                    
-                    // Get the captured image
-                    const imgResponse = await fetch(PI_SERVICE.latestImage);
-                    const blob = await imgResponse.blob();
-                    
-                    // Draw to canvas for preview
-                    const img = new Image();
-                    img.onload = async () => {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        
-                        // Process the image
-                        await processImage(blob);
-                    };
-                    img.src = URL.createObjectURL(blob);
-                } catch (error) {
-                    console.error('Pi capture error:', error);
-                    showError('Failed to capture from Pi camera: ' + error.message);
-                }
+                await captureFromPiAndProcess();
             } else {
                 // Capture image to canvas from browser camera
                 canvas.width = video.videoWidth;
@@ -292,6 +309,27 @@
                 canvas.toBlob(async (blob) => {
                     await processImage(blob);
                 }, 'image/jpeg', 0.9);
+            }
+        }
+        
+        async function captureFromPiAndProcess() {
+            try {
+                // Get the captured image from Pi
+                const imgResponse = await fetch(PI_SERVICE.latestImage);
+                if (!imgResponse.ok) {
+                    throw new Error('Failed to get captured image');
+                }
+                
+                const blob = await imgResponse.blob();
+                
+                // Show loading page
+                showPage(loadingPage);
+                
+                // Process the image
+                await processImage(blob);
+            } catch (error) {
+                console.error('Pi capture processing error:', error);
+                showError('Failed to process captured image: ' + error.message);
             }
         }
 

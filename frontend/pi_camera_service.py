@@ -40,6 +40,7 @@ latest_capture = None
 latest_capture_time = None
 motion_detected_flag = False
 capture_in_progress = False
+event_queue = []  # Queue for SSE events
 
 
 def init_hardware():
@@ -95,21 +96,28 @@ def on_motion_stopped():
 
 def delayed_capture():
     """Wait for CAPTURE_DELAY seconds then countdown and capture image"""
-    global capture_in_progress, latest_capture, latest_capture_time
+    global capture_in_progress, latest_capture, latest_capture_time, event_queue
     
     if capture_in_progress:
         return
     
     capture_in_progress = True
     print(f"Waiting {CAPTURE_DELAY} seconds before countdown...")
+    
+    # Notify frontend that motion was detected
+    event_queue.append({'event': 'motion_detected', 'data': {}})
+    
     time.sleep(CAPTURE_DELAY)
     
     # Countdown 3, 2, 1
     print("Countdown: 3...")
+    event_queue.append({'event': 'countdown', 'data': {'number': 3}})
     time.sleep(1)
     print("Countdown: 2...")
+    event_queue.append({'event': 'countdown', 'data': {'number': 2}})
     time.sleep(1)
     print("Countdown: 1...")
+    event_queue.append({'event': 'countdown', 'data': {'number': 1}})
     time.sleep(1)
     print("Capturing now!")
     
@@ -122,6 +130,9 @@ def delayed_capture():
             latest_capture = stream.getvalue()
             latest_capture_time = time.time()
             print("Image captured successfully")
+            
+            # Notify frontend to process the captured image
+            event_queue.append({'event': 'image_captured', 'data': {}})
     except Exception as e:
         print(f"Capture failed: {e}")
     finally:
@@ -147,6 +158,29 @@ def status():
         'capture_delay': CAPTURE_DELAY,
         'api_endpoint': API_ENDPOINT
     })
+
+
+@app.route('/api/events')
+def events():
+    """SSE endpoint for real-time notifications"""
+    def event_stream():
+        global event_queue
+        last_heartbeat = time.time()
+        
+        while True:
+            # Send events from queue
+            while event_queue:
+                event = event_queue.pop(0)
+                yield f"event: {event['event']}\ndata: {json.dumps(event['data'])}\n\n"
+            
+            # Send heartbeat every 15 seconds to keep connection alive
+            if time.time() - last_heartbeat > 15:
+                yield f"event: heartbeat\ndata: {json.dumps({'time': time.time()})}\n\n"
+                last_heartbeat = time.time()
+            
+            time.sleep(0.5)
+    
+    return Response(event_stream(), mimetype='text/event-stream')
 
 
 @app.route('/api/capture')
@@ -202,23 +236,15 @@ def video_stream():
     
     # Check if camera is still valid, reinitialize if needed
     if not camera:
-        print("=== Camera is None, attempting to reinitialize ===")
         if not init_hardware():
-            print("ERROR: Failed to reinitialize camera")
             return jsonify({'error': 'Camera not available'}), 503
     
-    print("=== Stream endpoint called ===")
-    frame_count = 0
-    
     def generate():
-        nonlocal frame_count
         try:
-            print("Starting frame generation...")
             while True:
                 try:
                     # Double-check camera is still available
                     if not camera:
-                        print("Camera became None during streaming!")
                         break
                     
                     # Capture frame from video stream
@@ -232,10 +258,6 @@ def video_stream():
                     img.save(jpeg_buffer, format='JPEG', quality=85)
                     frame = jpeg_buffer.getvalue()
                     
-                    frame_count += 1
-                    if frame_count % 5 == 0:
-                        print(f"Streamed {frame_count} frames, last frame size: {len(frame)} bytes")
-                    
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n'
                            b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
@@ -244,14 +266,10 @@ def video_stream():
                     time.sleep(0.05)  # ~20 FPS
                     
                 except Exception as e:
-                    import traceback
                     print(f"Frame capture error: {e}")
-                    traceback.print_exc()
                     time.sleep(0.1)
         except Exception as e:
-            import traceback
             print(f"Stream generation error: {e}")
-            traceback.print_exc()
     
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
