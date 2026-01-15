@@ -42,6 +42,8 @@ motion_detected_flag = False
 capture_in_progress = False
 event_queue = []  # Queue for SSE events
 motion_enabled = True  # Flag to enable/disable motion detection
+latest_stream_frame = None  # Cache for streaming frame
+stream_frame_lock = threading.Lock()  # Thread-safe frame access
 
 
 def init_hardware():
@@ -71,11 +73,43 @@ def init_hardware():
         pir.when_no_motion = on_motion_stopped
         print(f"Motion sensor initialized on GPIO {MOTION_SENSOR_PIN}")
         
+        # Start background frame capture thread
+        threading.Thread(target=capture_frame_loop, daemon=True).start()
+        print("Background frame capture thread started")
+        
         return True
     except Exception as e:
         print(f"Failed to initialize hardware: {e}")
         return False
 
+
+def capture_frame_loop():
+    """Continuously capture frames from camera and cache them"""
+    global camera, latest_stream_frame, stream_frame_lock
+    
+    while True:
+        try:
+            if camera:
+                # Capture frame
+                request_obj = camera.capture_request()
+                img = request_obj.make_image('main')
+                
+                # Encode to JPEG
+                jpeg_buffer = io.BytesIO()
+                img.save(jpeg_buffer, format='JPEG', quality=85)
+                frame_data = jpeg_buffer.getvalue()
+                
+                # Store in thread-safe cache
+                with stream_frame_lock:
+                    latest_stream_frame = frame_data
+                
+                request_obj.release()
+                time.sleep(0.05)  # ~20 FPS
+            else:
+                time.sleep(0.1)
+        except Exception as e:
+            print(f"Frame capture loop error: {e}")
+            time.sleep(0.1)
 
 def on_motion_detected():
     """Callback when motion is detected"""
@@ -239,45 +273,28 @@ def get_latest_image_base64():
 
 @app.route('/api/stream')
 def video_stream():
-    """Stream video from camera (MJPEG)"""
-    global camera
+    """Stream video from camera (MJPEG) - uses cached frames from background thread"""
+    global latest_stream_frame, stream_frame_lock
     
-    # Check if camera is still valid, reinitialize if needed
     if not camera:
-        if not init_hardware():
-            return jsonify({'error': 'Camera not available'}), 503
+        return jsonify({'error': 'Camera not available'}), 503
     
     def generate():
-        try:
-            while True:
-                try:
-                    # Double-check camera is still available
-                    if not camera:
-                        break
-                    
-                    # Capture frame from video stream
-                    request_obj = camera.capture_request()
-                    
-                    # Get image and encode to JPEG
-                    img = request_obj.make_image('main')
-                    
-                    # Encode PIL Image to JPEG bytes
-                    jpeg_buffer = io.BytesIO()
-                    img.save(jpeg_buffer, format='JPEG', quality=85)
-                    frame = jpeg_buffer.getvalue()
-                    
+        while True:
+            try:
+                # Get the latest cached frame
+                with stream_frame_lock:
+                    frame = latest_stream_frame
+                
+                if frame:
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n'
                            b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
-                    
-                    request_obj.release()
-                    time.sleep(0.05)  # ~20 FPS
-                    
-                except Exception as e:
-                    print(f"Frame capture error: {e}")
-                    time.sleep(0.1)
-        except Exception as e:
-            print(f"Stream generation error: {e}")
+                
+                time.sleep(0.05)  # ~20 FPS to clients
+            except Exception as e:
+                print(f"Stream error: {e}")
+                time.sleep(0.1)
     
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
