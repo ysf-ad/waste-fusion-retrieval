@@ -176,23 +176,20 @@
 
         // Camera functions
         function connectToEventStream() {
-            console.log('Connecting to event stream for motion detection...');
             const eventSource = new EventSource('/api/events');
             
             eventSource.addEventListener('motion_detected', (e) => {
-                console.log('Motion detected event received!');
+                // Motion detected on backend
             });
             
             eventSource.addEventListener('countdown', (e) => {
                 const data = JSON.parse(e.data);
-                console.log(`Countdown: ${data.number}`);
                 // Show countdown overlay
                 countdownOverlay.style.display = 'flex';
                 countdownNumber.textContent = data.number;
             });
             
             eventSource.addEventListener('image_captured', async (e) => {
-                console.log('Image captured, processing...');
                 countdownOverlay.style.display = 'none';
                 
                 // Fetch the captured image and process it
@@ -366,6 +363,11 @@
             whyText.textContent = instruction;
 
             showPage(resultPage);
+            
+            // Disable motion detection while showing results
+            if (usingPiCamera) {
+                fetch('/api/motion/disable', { method: 'POST' });
+            }
 
             // Auto-return to camera after 15 seconds
             if (autoReturnTimer) clearTimeout(autoReturnTimer);
@@ -385,6 +387,12 @@
                 clearTimeout(autoReturnTimer);
                 autoReturnTimer = null;
             }
+            
+            // Re-enable motion detection when returning to camera
+            if (usingPiCamera) {
+                fetch('/api/motion/enable', { method: 'POST' });
+            }
+            
             showPage(cameraPage);
         }
 

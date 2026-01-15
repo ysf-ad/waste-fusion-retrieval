@@ -41,6 +41,7 @@ latest_capture_time = None
 motion_detected_flag = False
 capture_in_progress = False
 event_queue = []  # Queue for SSE events
+motion_enabled = True  # Flag to enable/disable motion detection
 
 
 def init_hardware():
@@ -78,7 +79,11 @@ def init_hardware():
 
 def on_motion_detected():
     """Callback when motion is detected"""
-    global motion_detected_flag
+    global motion_detected_flag, motion_enabled
+    
+    if not motion_enabled:
+        return  # Ignore motion when disabled
+    
     motion_detected_flag = True
     print("Motion detected!")
     
@@ -180,7 +185,10 @@ def events():
             
             time.sleep(0.5)
     
-    return Response(event_stream(), mimetype='text/event-stream')
+    response = Response(event_stream(), mimetype='text/event-stream')
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'
+    return response
 
 
 @app.route('/api/capture')
@@ -282,6 +290,22 @@ def get_config():
         'motion_sensor_pin': MOTION_SENSOR_PIN,
         'api_endpoint': API_ENDPOINT
     })
+
+
+@app.route('/api/motion/enable', methods=['POST'])
+def enable_motion():
+    """Enable motion detection"""
+    global motion_enabled
+    motion_enabled = True
+    return jsonify({'status': 'enabled'})
+
+
+@app.route('/api/motion/disable', methods=['POST'])
+def disable_motion():
+    """Disable motion detection"""
+    global motion_enabled
+    motion_enabled = False
+    return jsonify({'status': 'disabled'})
 
 
 @app.route('/api/predict', methods=['POST'])
