@@ -180,23 +180,28 @@ body {
 
 /* Result Page - Optimized for 800x480 */
 .result-page {
-    width: 100vw;
-    height: 100vh;
-    padding: 0.3rem;
+    width: 800px;
+    height: 480px;
+    padding: 0;
     position: fixed;
     top: 0;
     left: 0;
     background: #f0f4f8;
     z-index: 1000;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .result-card {
     background: white;
-    border-radius: 8px;
-    padding: 0.4rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    height: calc(100% - 2.5rem);
-    margin-top: 2.5rem;
+    border-radius: 0;
+    padding: 0.5rem;
+    box-shadow: none;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .result-content {
@@ -204,6 +209,8 @@ body {
     gap: 0.5rem;
     align-items: flex-start;
     height: 100%;
+    width: 100%;
+    padding-top: 2.5rem;
 }
 
 /* Left Side - Image */
