@@ -140,6 +140,10 @@ body {
     width: 800px;
     height: 480px;
     padding: 0.3rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: #f0f4f8;
 }
 
 .result-card {
@@ -147,7 +151,8 @@ body {
     border-radius: 8px;
     padding: 0.4rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    height: 100%;
+    height: calc(100% - 2.5rem);
+    margin-top: 2.5rem;
 }
 
 .result-content {
