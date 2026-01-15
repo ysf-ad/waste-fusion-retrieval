@@ -306,7 +306,13 @@
 
             const name = result.item || 'Unknown Item';
             const category = result.category || 'Unknown';
-            const confidence = result.confidence ? Math.round(result.confidence * 100) : 0;
+            // Handle confidence - API might return 0-1 or 0-100
+            let confidence = result.confidence || 0;
+            if (confidence <= 1) {
+                confidence = Math.round(confidence * 100);
+            } else {
+                confidence = Math.round(confidence);
+            }
             const instruction = result.instruction || 'Please dispose of this item properly.';
 
             // Get bin info based on category
