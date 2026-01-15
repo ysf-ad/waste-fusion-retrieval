@@ -259,5 +259,5 @@ if __name__ == '__main__':
     # Initialize hardware
     init_hardware()
     
-    # Start Flask server with debug mode for auto-reload
-    app.run(host='0.0.0.0', port=8000, debug=True, threaded=True, use_reloader=True)
+    # Start Flask server
+    app.run(host='0.0.0.0', port=8000, threaded=True)
