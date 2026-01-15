@@ -279,7 +279,7 @@
                 }
 
                 const data = await response.json();
-                displayResult(data);
+                displayResult(data, blob);
             } catch (error) {
                 console.error('API error:', error);
                 showError(error.message);
@@ -332,8 +332,25 @@
 
         let autoReturnTimer = null;
 
-        function displayResult(data) {
+        function displayResult(data, blob) {
             errorContainer.style.display = 'none';
+
+            // Draw captured image to canvas
+            if (blob) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.getElementById('canvas-display');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
+            }
 
             // Get top result
             const result = data.results && data.results[0] ? data.results[0] : data;

@@ -87,6 +87,7 @@ def capture_frame_loop():
     """Continuously capture frames from camera and cache them"""
     global camera, latest_stream_frame, stream_frame_lock
     
+    frame_count = 0
     while True:
         try:
             if camera:
@@ -103,12 +104,18 @@ def capture_frame_loop():
                 with stream_frame_lock:
                     latest_stream_frame = frame_data
                 
+                frame_count += 1
+                if frame_count % 20 == 0:
+                    print(f"Frame loop: captured {frame_count} frames, latest frame size: {len(frame_data)} bytes")
+                
                 request_obj.release()
                 time.sleep(0.05)  # ~20 FPS
             else:
                 time.sleep(0.1)
         except Exception as e:
             print(f"Frame capture loop error: {e}")
+            import traceback
+            traceback.print_exc()
             time.sleep(0.1)
 
 def on_motion_detected():
