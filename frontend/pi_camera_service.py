@@ -100,21 +100,18 @@ def on_motion_stopped():
 
 
 def delayed_capture():
-    """Wait for CAPTURE_DELAY seconds then countdown and capture image"""
+    """Countdown and capture image immediately when motion detected"""
     global capture_in_progress, latest_capture, latest_capture_time, event_queue
     
     if capture_in_progress:
         return
     
     capture_in_progress = True
-    print(f"Waiting {CAPTURE_DELAY} seconds before countdown...")
     
     # Notify frontend that motion was detected
     event_queue.append({'event': 'motion_detected', 'data': {}})
     
-    time.sleep(CAPTURE_DELAY)
-    
-    # Countdown 3, 2, 1
+    # Countdown 3, 2, 1 - start immediately
     print("Countdown: 3...")
     event_queue.append({'event': 'countdown', 'data': {'number': 3}})
     time.sleep(1)
