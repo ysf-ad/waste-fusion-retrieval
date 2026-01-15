@@ -9,8 +9,22 @@
 <body>
     <!-- Camera Page -->
     <div id="camera-page" class="page camera-page active">
-        <h1>♻️ Waste Classifier</h1>
-        <p class="subtitle">Use your camera to classify waste items</p>
+        <div class="header-bar">
+            <div class="title-section">
+                <h1>♻️ Waste Classifier</h1>
+            </div>
+            
+            <button id="capture-btn" class="capture-btn-compact">
+                📷
+            </button>
+            
+            <div class="instructions-section">
+                <h3>How to Use</h3>
+                <p>1. Position item in camera view</p>
+                <p>2. Wait for automatic capture</p>
+                <p>3. View classification results</p>
+            </div>
+        </div>
 
         <div class="camera-container" id="camera-wrapper">
             <video id="video" autoplay playsinline></video>
@@ -20,10 +34,6 @@
                 <p class="fallback-hint">Camera requires HTTPS. Use file upload instead.</p>
             </div>
         </div>
-
-        <button id="capture-btn" class="capture-btn">
-            <span>📷</span> Take Photo
-        </button>
     </div>
 
     <!-- Loading Page -->
