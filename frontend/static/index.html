@@ -27,8 +27,7 @@
         </div>
 
         <div class="camera-container" id="camera-wrapper">
-            <canvas id="video" style="width: 100%; height: 100%; display: block;"></canvas>
-            <img id="video-stream" src="" style="display: none;" />
+            <img id="video" src="/api/stream" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
             <!-- Countdown overlay -->
             <div id="countdown-overlay" class="countdown-overlay" style="display: none;">
                 <span id="countdown-number">3</span>
@@ -133,30 +132,6 @@
         const errorContainer = document.getElementById('error-container');
 
         let stream = null;
-        const videoStream = document.getElementById('video-stream');
-        const videoCanvas = document.getElementById('video');
-        const streamCtx = videoCanvas.getContext ? videoCanvas.getContext('2d') : null;
-
-        function refreshStreamFrame() {
-            // Continuously reload the MJPEG stream image
-            const img = new Image();
-            img.onload = () => {
-                if (streamCtx && videoCanvas.parentElement) {
-                    // Set canvas size to match image
-                    videoCanvas.width = img.width;
-                    videoCanvas.height = img.height;
-                    // Draw image to canvas
-                    streamCtx.drawImage(img, 0, 0);
-                    // Request next frame
-                    setTimeout(refreshStreamFrame, 50);
-                }
-            };
-            img.onerror = () => {
-                setTimeout(refreshStreamFrame, 500);
-            };
-            // Force reload with cache bust
-            img.src = '/api/stream?' + Date.now();
-        }
 
         // Utility functions
         function showPage(page) {
@@ -207,10 +182,11 @@
                 if (response.ok) {
                     const status = await response.json();
                     if (status.pi_available && status.camera_ready) {
-                        console.log('Pi camera service detected');
+                        console.log('Pi camera service detected - using MJPEG stream');
                         usingPiCamera = true;
-                        // Start streaming to canvas
-                        refreshStreamFrame();\n                        cameraFallback.style.display = 'none';
+                        // MJPEG stream is now directly loaded in img tag src
+                        video.style.display = 'block';
+                        cameraFallback.style.display = 'none';
                         return;
                     }
                 }

@@ -198,17 +198,29 @@ def get_latest_image_base64():
 @app.route('/api/stream')
 def video_stream():
     """Stream video from camera (MJPEG)"""
-    if not camera:
-        return jsonify({'error': 'Camera not available'}), 503
+    global camera
     
-    print("Stream endpoint called")
+    # Check if camera is still valid, reinitialize if needed
+    if not camera:
+        print("=== Camera is None, attempting to reinitialize ===")
+        if not init_hardware():
+            print("ERROR: Failed to reinitialize camera")
+            return jsonify({'error': 'Camera not available'}), 503
+    
+    print("=== Stream endpoint called ===")
     frame_count = 0
     
     def generate():
         nonlocal frame_count
         try:
+            print("Starting frame generation...")
             while True:
                 try:
+                    # Double-check camera is still available
+                    if not camera:
+                        print("Camera became None during streaming!")
+                        break
+                    
                     # Capture frame from video stream
                     request_obj = camera.capture_request()
                     
@@ -221,7 +233,7 @@ def video_stream():
                     frame = jpeg_buffer.getvalue()
                     
                     frame_count += 1
-                    if frame_count % 10 == 0:
+                    if frame_count % 5 == 0:
                         print(f"Streamed {frame_count} frames, last frame size: {len(frame)} bytes")
                     
                     yield (b'--frame\r\n'
@@ -232,10 +244,14 @@ def video_stream():
                     time.sleep(0.05)  # ~20 FPS
                     
                 except Exception as e:
+                    import traceback
                     print(f"Frame capture error: {e}")
+                    traceback.print_exc()
                     time.sleep(0.1)
         except Exception as e:
+            import traceback
             print(f"Stream generation error: {e}")
+            traceback.print_exc()
     
     return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
