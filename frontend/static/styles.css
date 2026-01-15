@@ -1,4 +1,4 @@
-/* Base Styles */
+/* Base Styles - Optimized for 800x480 screen */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -10,13 +10,14 @@ body {
     background: #f0f4f8;
     min-height: 100vh;
     color: #1f2937;
+    overflow: hidden;
 }
 
 /* Page Container */
 .page {
     display: none;
     min-height: 100vh;
-    padding: 2rem;
+    padding: 0;
 }
 
 .page.active {
@@ -27,8 +28,9 @@ body {
 .camera-page {
     display: flex;
     flex-direction: column;
-    padding: 1rem;
-    height: 100vh;
+    padding: 0.25rem;
+    height: 480px;
+    width: 800px;
 }
 
 /* Header Bar */
@@ -36,54 +38,54 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem 1rem;
+    padding: 0.3rem 0.5rem;
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1rem;
-    gap: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.3rem;
+    gap: 0.5rem;
 }
 
 .title-section h1 {
-    font-size: 1.3rem;
+    font-size: 0.9rem;
     color: #1e3a5f;
     white-space: nowrap;
 }
 
 .instructions-section {
     text-align: right;
-    font-size: 0.85rem;
+    font-size: 0.6rem;
 }
 
 .instructions-section h3 {
-    font-size: 0.95rem;
+    font-size: 0.65rem;
     color: #1e3a5f;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.15rem;
 }
 
 .instructions-section p {
     color: #6b7280;
-    margin: 0.1rem 0;
-    line-height: 1.3;
+    margin: 0.05rem 0;
+    line-height: 1.2;
 }
 
 .capture-btn-compact {
-    padding: 0.8rem 1.2rem;
-    font-size: 1.5rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 1.1rem;
     background: #3b82f6;
     color: white;
     border: none;
-    border-radius: 12px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
     flex-shrink: 0;
-    min-width: 60px;
+    min-width: 40px;
 }
 
 .capture-btn-compact:hover {
     background: #2563eb;
     transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
 }
 
 .capture-btn-compact:disabled {
@@ -98,9 +100,9 @@ body {
     width: 100%;
     flex: 1;
     background: #000;
-    border-radius: 16px;
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 #video {
@@ -116,97 +118,103 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 300px;
+    height: 100%;
     background: #1f2937;
     color: white;
     text-align: center;
-    padding: 2rem;
+    padding: 1rem;
 }
 
 .camera-fallback p {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
 }
 
 .camera-fallback .fallback-hint {
-    font-size: 0.9rem;
+    font-size: 0.7rem;
     color: #9ca3af;
 }
 
-/* Result Page */
+/* Result Page - Optimized for 800x480 */
 .result-page {
-    max-width: 1000px;
-    margin: 0 auto;
+    width: 800px;
+    height: 480px;
+    padding: 0.3rem;
 }
 
 .result-card {
     background: white;
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    padding: 0.4rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    height: 100%;
 }
 
 .result-content {
     display: flex;
-    gap: 2rem;
+    gap: 0.5rem;
     align-items: flex-start;
+    height: 100%;
 }
 
 /* Left Side - Image */
 .image-section {
-    flex: 0 0 300px;
+    flex: 0 0 200px;
 }
 
 .captured-image {
     width: 100%;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 #canvas-display {
     width: 100%;
-    border-radius: 12px;
+    border-radius: 6px;
     display: block;
 }
 
 /* Right Side - Result Info */
 .info-section {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
 }
 
 .item-name {
-    font-size: 1.75rem;
+    font-size: 1rem;
     font-weight: 700;
     color: #1e3a5f;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.1rem;
 }
 
 .item-category {
     color: #6b7280;
-    font-size: 1rem;
-    margin-bottom: 1.5rem;
+    font-size: 0.7rem;
+    margin-bottom: 0.3rem;
 }
 
 /* Instruction Box */
 .instruction-box {
     background: #f0f7ff;
     border: 1px solid #bfdbfe;
-    border-radius: 10px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
+    border-radius: 6px;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.3rem;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.3rem;
 }
 
 .instruction-box .icon {
     color: #3b82f6;
-    font-size: 1.25rem;
+    font-size: 0.9rem;
 }
 
 .instruction-box .text {
     color: #1e40af;
-    font-size: 0.95rem;
+    font-size: 0.65rem;
 }
 
 .instruction-box .text .bin-highlight {
@@ -219,17 +227,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1rem;
-    padding: 1.25rem 2rem;
-    border-radius: 12px;
-    font-size: 1.5rem;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
     font-weight: 700;
     color: white;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.3rem;
 }
 
 .bin-indicator .recycle-icon {
-    font-size: 2rem;
+    font-size: 1.2rem;
 }
 
 /* Bin Colors */
@@ -244,51 +252,54 @@ body {
 /* Why Section */
 .why-section {
     background: #f9fafb;
-    border-radius: 12px;
-    padding: 1.25rem;
+    border-radius: 6px;
+    padding: 0.4rem;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .why-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
     font-weight: 600;
     color: #374151;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.3rem;
+    font-size: 0.65rem;
 }
 
 .why-header .icon {
     background: #3b82f6;
     color: white;
-    width: 24px;
-    height: 24px;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.85rem;
+    font-size: 0.6rem;
 }
 
 .why-content {
     background: white;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 1rem;
+    border-radius: 4px;
+    padding: 0.4rem;
     display: flex;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 0.3rem;
 }
 
 .why-content .info-icon {
     color: #3b82f6;
-    font-size: 1rem;
-    margin-top: 2px;
+    font-size: 0.7rem;
+    margin-top: 1px;
 }
 
 .why-content p {
     color: #4b5563;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    font-size: 0.6rem;
+    line-height: 1.3;
 }
 
 /* Confidence Badge */
@@ -296,6 +307,10 @@ body {
     display: inline-block;
     background: #d1fae5;
     color: #065f46;
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-weight: 600;
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.8rem;
@@ -303,8 +318,30 @@ body {
     margin-bottom: 1rem;
 }
 
-/* Back Button */
+/* Back Button - Optimized for 800x480 */
 .back-btn {
+    position: absolute;
+    top: 0.3rem;
+    left: 0.3rem;
+    z-index: 10;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    background: white;
+    color: #3b82f6;
+    border: 2px solid #3b82f6;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #3b82f6;
+    color: white;
+}
+
+/* Loading Page */
+.loading {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
