@@ -137,13 +137,13 @@
 
         function getBinColor(category) {
             const cat = (category || '').toLowerCase();
-            if (cat.includes('recycl') || cat.includes('blue')) return { class: 'bin-blue', name: 'BLUE BIN', color: 'Blue' };
-            if (cat.includes('compost') || cat.includes('organic') || cat.includes('green')) return { class: 'bin-green', name: 'GREEN BIN', color: 'Green' };
-            if (cat.includes('garbage') || cat.includes('landfill') || cat.includes('grey') || cat.includes('gray')) return { class: 'bin-grey', name: 'GREY BIN', color: 'Grey' };
-            if (cat.includes('hazard') || cat.includes('electronic') || cat.includes('special')) return { class: 'bin-red', name: 'SPECIAL DISPOSAL', color: 'Special' };
-            if (cat.includes('black')) return { class: 'bin-black', name: 'BLACK BIN', color: 'Black' };
-            if (cat.includes('yellow')) return { class: 'bin-yellow', name: 'YELLOW BIN', color: 'Yellow' };
-            return { class: 'bin-grey', name: 'GREY BIN', color: 'Grey' };
+            if (cat.includes('recycl') || cat.includes('blue')) return { class: 'bin-blue', name: 'BLUE BIN', color: 'Blue', icon: '♻️' };
+            if (cat.includes('compost') || cat.includes('organic') || cat.includes('green')) return { class: 'bin-green', name: 'GREEN BIN', color: 'Green', icon: '🌱' };
+            if (cat.includes('garbage') || cat.includes('landfill') || cat.includes('grey') || cat.includes('gray')) return { class: 'bin-grey', name: 'GARBAGE BIN', color: 'Garbage', icon: '🗑️' };
+            if (cat.includes('hazard') || cat.includes('electronic') || cat.includes('special')) return { class: 'bin-red', name: 'SPECIAL DISPOSAL', color: 'Special', icon: '⚠️' };
+            if (cat.includes('black')) return { class: 'bin-black', name: 'BLACK BIN', color: 'Black', icon: '🗑️' };
+            if (cat.includes('yellow')) return { class: 'bin-yellow', name: 'YELLOW BIN', color: 'Yellow', icon: '♻️' };
+            return { class: 'bin-grey', name: 'GARBAGE BIN', color: 'Garbage', icon: '🗑️' };
         }
 
         const cameraFallback = document.getElementById('camera-fallback');
@@ -290,6 +290,7 @@
             binNameInline.textContent = binInfo.color + ' Bin';
             binIndicator.className = 'bin-indicator ' + binInfo.class;
             binName.textContent = binInfo.name;
+            document.querySelector('.recycle-icon').textContent = binInfo.icon;
             whyText.textContent = instruction;
 
             showPage(resultPage);

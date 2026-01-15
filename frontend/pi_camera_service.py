@@ -53,8 +53,11 @@ def init_hardware():
     try:
         # Initialize camera
         camera = Picamera2()
-        camera_config = camera.create_still_configuration(
-            main={"size": (1280, 720)}
+        # Configure for both preview and still capture
+        camera_config = camera.create_video_configuration(
+            main={"size": (800, 480)},
+            lores={"size": (640, 480)},
+            display="lores"
         )
         camera.configure(camera_config)
         camera.start()
