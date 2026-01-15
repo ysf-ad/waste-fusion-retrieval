@@ -28,6 +28,10 @@
 
         <div class="camera-container" id="camera-wrapper">
             <video id="video" autoplay playsinline></video>
+            <!-- Countdown overlay -->
+            <div id="countdown-overlay" class="countdown-overlay" style="display: none;">
+                <span id="countdown-number">3</span>
+            </div>
             <!-- Fallback message when camera not available -->
             <div id="camera-fallback" class="camera-fallback" style="display: none;">
                 <p>📷 Camera not available</p>
@@ -147,6 +151,28 @@
         }
 
         const cameraFallback = document.getElementById('camera-fallback');
+        const countdownOverlay = document.getElementById('countdown-overlay');
+        const countdownNumber = document.getElementById('countdown-number');
+
+        // Countdown function
+        async function showCountdown() {
+            return new Promise((resolve) => {
+                countdownOverlay.style.display = 'flex';
+                let count = 3;
+                countdownNumber.textContent = count;
+                
+                const interval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdownNumber.textContent = count;
+                    } else {
+                        clearInterval(interval);
+                        countdownOverlay.style.display = 'none';
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
 
         // Camera functions
         async function startCamera() {
@@ -224,6 +250,9 @@
         }
 
         async function captureAndProcess() {
+            // Show countdown
+            await showCountdown();
+            
             // Show loading
             showPage(loadingPage);
 

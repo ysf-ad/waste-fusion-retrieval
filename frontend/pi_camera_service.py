@@ -94,15 +94,24 @@ def on_motion_stopped():
 
 
 def delayed_capture():
-    """Wait for CAPTURE_DELAY seconds then capture image"""
+    """Wait for CAPTURE_DELAY seconds then countdown and capture image"""
     global capture_in_progress, latest_capture, latest_capture_time
     
     if capture_in_progress:
         return
     
     capture_in_progress = True
-    print(f"Waiting {CAPTURE_DELAY} seconds before capture...")
+    print(f"Waiting {CAPTURE_DELAY} seconds before countdown...")
     time.sleep(CAPTURE_DELAY)
+    
+    # Countdown 3, 2, 1
+    print("Countdown: 3...")
+    time.sleep(1)
+    print("Countdown: 2...")
+    time.sleep(1)
+    print("Countdown: 1...")
+    time.sleep(1)
+    print("Capturing now!")
     
     try:
         if camera:
