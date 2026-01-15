@@ -309,9 +309,9 @@
             // Handle confidence - API might return 0-1 or 0-100
             let confidence = result.confidence || 0;
             if (confidence <= 1) {
-                confidence = Math.round(confidence * 100);
+                confidence = (confidence * 100).toFixed(1);
             } else {
-                confidence = Math.round(confidence);
+                confidence = parseFloat(confidence).toFixed(1);
             }
             const instruction = result.instruction || 'Please dispose of this item properly.';
 
