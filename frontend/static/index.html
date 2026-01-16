@@ -453,8 +453,12 @@
             // Get top result
             const result = data.results && data.results[0] ? data.results[0] : data;
 
-            // Translate item name if it's unknown
-            const name = result.item || translations[currentLang]['unknown item'];
+            // Translate item name if in French mode
+            let name = result.item || translations[currentLang]['unknown item'];
+            if (currentLang === 'fr' && result.item) {
+                name = await translateToFrench(result.item);
+            }
+            
             const category = result.category || translations[currentLang]['unknown'];
             // Handle confidence - API might return 0-1 or 0-100
             let confidence = result.confidence || 0;
@@ -483,7 +487,7 @@
             confidenceBadge.textContent = `${confidence}% ${translations[currentLang]['confidence']}`;
             itemName.textContent = name;
             itemCategory.textContent = translatedCategory;
-            binNameInline.textContent = binInfo.color + ' Bin';
+            binNameInline.textContent = binInfo.name;
             binIndicator.className = 'bin-indicator ' + binInfo.class;
             binName.textContent = binInfo.name;
             document.querySelector('.recycle-icon').textContent = binInfo.icon;
