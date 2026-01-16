@@ -113,11 +113,11 @@ def classify(image_path, model, processor, cached_k, df):
         q_vectors = model.forward_image(pixel_values)
         scores = model.score(q_vectors, cached_k)
 
-    # Get top 5
-    top5_scores, top5_indices = scores[0].topk(5)
+    # Get top 20
+    top20_scores, top20_indices = scores[0].topk(20)
     items = df['Item'].tolist()
     results = []
-    for i, (idx, score) in enumerate(zip(top5_indices.cpu().numpy(), top5_scores.cpu().numpy())):
+    for i, (idx, score) in enumerate(zip(top20_indices.cpu().numpy(), top20_scores.cpu().numpy())):
         item_name = items[idx]
         category = df.iloc[idx]['Category']
         instruction = df.iloc[idx].get('Instruction_1', '')
@@ -128,14 +128,14 @@ def classify(image_path, model, processor, cached_k, df):
             "instruction": instruction
         })
     
-    # Build prompt with top 5 results
-    top5_text = "\n".join([
+    # Build prompt with top 20 results
+    top20_text = "\n".join([
         f"{i+1}. {r['item']} (Visual Match Score: {r['confidence']:.3f}, Category: {r['category']})\n   Disposal Context: {r['instruction']}"
         for i, r in enumerate(results)
     ])
     
     custom_prompt = f"""You are the Waste Wizard AI, a helpful and expert assistant for waste classification. 
-Your task is to identify the correct item from a list of 5 visual matches and provide personalized disposal advice.
+Your task is to identify the correct item from a list of 20 visual matches and provide personalized disposal advice.
 
 The list includes visual match scores and up to 3 specific context columns from our database for each item. 
 
@@ -144,8 +144,8 @@ GUIDELINES:
 2. PERSONALIZE the advice: Synthesize all the provided context into a friendly, clear, and personalized message for the user.
 3. Be specific: If there are conditional instructions (e.g., "if empty", "remove lid"), make sure to mention them conversationally.
 
-Top 5 Visual Matches:
-{top5_text}
+Top 20 Visual Matches:
+{top20_text}
 
 Return a JSON object:
 {{
