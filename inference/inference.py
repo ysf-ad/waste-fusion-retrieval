@@ -36,9 +36,9 @@ MODEL_ID_TXT = "BAAI/bge-large-en-v1.5"
 MODEL_ID_IMG = "facebook/dinov2-large"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# xAI Grok API Configuration
-XAI_API_KEY = os.getenv("XAI_API_KEY")
-XAI_API_URL = "https://api.x.ai/v1/chat/completions"
+# Groq API Configuration
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 if not XAI_API_KEY:
     print("WARNING: XAI_API_KEY not found in environment variables. Please set it in .env file.")
 
@@ -130,23 +130,31 @@ def classify(image_path, model, processor, cached_k, df):
     
     # Build prompt with top 5 results
     top5_text = "\n".join([
-        f"{i+1}. {r['item']} (Category: {r['category']}, Confidence: {r['confidence']:.3f})\n   Instruction: {r['instruction']}"
+        f"{i+1}. {r['item']} (Visual Match Score: {r['confidence']:.3f}, Category: {r['category']})\n   Disposal Context: {r['instruction']}"
         for i, r in enumerate(results)
     ])
     
-    custom_prompt = f"""Analyze this waste item image and the top 5 model predictions below. 
-    Determine which prediction is most accurate based on the visual content.
-    
-    Top 5 Predictions:
-    {top5_text}
-    
-    Return a JSON response with:
-    - "item": the correct item name
-    - "category": the disposal category
-    - "instruction": the disposal instruction
-    - "reasoning": brief explanation of your choice
-    
-    Respond ONLY with valid JSON, no additional text."""
+    custom_prompt = f"""You are the Waste Wizard AI, a helpful and expert assistant for waste classification. 
+Your task is to identify the correct item from a list of 5 visual matches and provide personalized disposal advice.
+
+The list includes visual match scores and up to 3 specific context columns from our database for each item. 
+
+GUIDELINES:
+1. SELECT the best match based on both visual score and common sense.
+2. PERSONALIZE the advice: Synthesize all the provided context into a friendly, clear, and personalized message for the user.
+3. Be specific: If there are conditional instructions (e.g., "if empty", "remove lid"), make sure to mention them conversationally.
+
+Top 5 Visual Matches:
+{top5_text}
+
+Return a JSON object:
+{{
+  "selected_item": "The exact name of the item from the list",
+  "reasoning": "Briefly explain why this is the best match.",
+  "disposal_instruction": "A personalized, comprehensive synthesis of all provided disposal context entries."
+}}
+
+Respond ONLY with valid JSON, no additional text."""
     
     # Convert image to base64 data URL
     buffered = io.BytesIO()
@@ -155,96 +163,114 @@ def classify(image_path, model, processor, cached_k, df):
     base64_image = base64.b64encode(buffered.read()).decode('utf-8')
     image_data_url = f"data:image/jpeg;base64,{base64_image}"
     
-    # Call Grok API using direct HTTP POST
+    # Call Groq API using direct HTTP POST
     try:
-        print("Calling Grok LLM API for final classification...")
+        print("Calling Groq LLM API for final classification...")
         
-        if not XAI_API_KEY:
-            print("xAI API key not configured. Falling back to top prediction from model.")
+        if not GROQ_API_KEY:
+            print("Groq API key not configured. Falling back to top prediction from model.")
             return results
         
         headers = {
-            "Authorization": f"Bearer {XAI_API_KEY}",
+            "Authorization": f"Bearer {GROQ_API_KEY}",
             "Content-Type": "application/json"
         }
         
         payload = {
-            "model": "grok-vision-beta",
+            "model": "meta-llama/llama-4-scout-17b-16e-instruct",
             "messages": [
-                {
-                    "role": "system",
-                    "content": "You are an AI assistant specialized in waste classification. Analyze images and return responses as valid JSON only."
-                },
                 {
                     "role": "user",
                     "content": [
+                        {
+                            "type": "text",
+                            "text": custom_prompt
+                        },
                         {
                             "type": "image_url",
                             "image_url": {
                                 "url": image_data_url
                             }
-                        },
-                        {
-                            "type": "text",
-                            "text": custom_prompt
                         }
                     ]
                 }
             ],
-            "temperature": 0.7
+            "temperature": 1,
+            "max_completion_tokens": 1024,
+            "top_p": 1,
+            "stream": False,
+            "response_format": {"type": "json_object"},
+            "stop": None
         }
         
-        response = requests.post(XAI_API_URL, headers=headers, json=payload, timeout=30)
+        response = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=30)
         
         if response.status_code != 200:
-            print(f"⚠ Grok API returned status {response.status_code}: {response.text}")
+            print(f"⚠ Groq API returned status {response.status_code}: {response.text}")
             print("✓ Falling back to top model prediction")
             print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
             return results
         
         response_data = response.json()
         response_text = response_data['choices'][0]['message']['content']
-        print("Grok Classification Result:")
+        print("Groq Classification Result:")
         print(response_text)
-        
-        # Check if response looks like an error
-        if 'error' in response_text.lower() or 'fail' in response_text.lower():
-            print("⚠ Grok returned an error message")
-            print("✓ Falling back to top model prediction")
-            print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
-            return results
         
         # Try to parse as JSON
         try:
             llm_result = json_lib.loads(response_text)
             
             # Check if it's an error response
-            if 'error' in llm_result or 'Error' in llm_result or 'message' in llm_result:
-                print("⚠ Grok returned an error response:", llm_result)
+            if 'error' in llm_result or 'Error' in llm_result:
+                print("⚠ Groq returned an error response:", llm_result)
                 print("✓ Falling back to top model prediction")
                 print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
                 return results
             
+            # Map Groq response to our format
+            if 'selected_item' in llm_result:
+                llm_result['item'] = llm_result.pop('selected_item')
+            
+            # Map disposal_instruction to instruction
+            if 'disposal_instruction' in llm_result:
+                llm_result['instruction'] = llm_result.pop('disposal_instruction')
+            
+            # Get category from results if not present
+            if 'category' not in llm_result and 'item' in llm_result:
+                # Try to find matching category from results
+                for r in results:
+                    if r['item'].lower() == llm_result['item'].lower():
+                        llm_result['category'] = r['category']
+                        if 'instruction' not in llm_result:
+                            llm_result['instruction'] = r['instruction']
+                        break
+                if 'category' not in llm_result:
+                    llm_result['category'] = results[0]['category']
+            
+            # Add instruction from database if not present
+            if 'instruction' not in llm_result:
+                llm_result['instruction'] = results[0]['instruction']
+            
             # Validate that the result has required fields
             if 'item' in llm_result and 'category' in llm_result:
-                print("✓ Grok API succeeded - using LLM result")
+                print("✓ Groq API succeeded - using LLM result")
                 # Return results array with LLM result as first item
                 llm_result_array = [llm_result] + results[1:]
                 return llm_result_array
             else:
-                print("⚠ Grok response missing required fields:", llm_result)
+                print("⚠ Groq response missing required fields:", llm_result)
                 print("✓ Falling back to top model prediction")
                 print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
                 return results
                 
         except json_lib.JSONDecodeError as json_err:
-            print(f"⚠ Could not parse Grok response as JSON: {json_err}")
+            print(f"⚠ Could not parse Groq response as JSON: {json_err}")
             print("✓ Falling back to top model prediction")
             print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
             return results
         
     except Exception as e:
-        print(f"⚠ Error calling Grok API: {e}")
+        print(f"⚠ Error calling Groq API: {e}")
         print("✓ Falling back to top model prediction")
         print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
         return results

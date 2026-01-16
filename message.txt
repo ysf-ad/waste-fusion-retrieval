@@ -1,0 +1,305 @@
+interface Env {
+  GROQ_API_KEY: string;
+  ENVIRONMENT?: string;
+}
+
+interface ClassificationRequest {
+  imageDataUrl?: string;
+  imageBase64?: string;
+  customPrompt?: string;
+}
+
+interface ClassificationResponse {
+  item_name: string;
+  category: string; // Allow any category string
+}
+
+interface GroqMessage {
+  role: "user" | "assistant";
+  content: string | Array<{
+    type: "text" | "image_url";
+    text?: string;
+    image_url?: {
+      url: string;
+    };
+  }>;
+}
+
+interface GroqRequest {
+  model: string;
+  messages: GroqMessage[];
+  temperature: number;
+  max_completion_tokens: number;
+  top_p: number;
+  stream: boolean;
+  response_format: { type: "json_object" };
+  stop: null;
+}
+
+// Helper function to convert ArrayBuffer to base64
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    // Handle CORS
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        },
+      });
+    }
+
+    // Only allow POST requests
+    if (request.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+
+    try {
+      const contentType = request.headers.get("content-type") || "";
+      let imageDataUrl: string;
+      let customPrompt: string | undefined;
+
+      // Check if it's raw image binary data (MCU format)
+      if (contentType.startsWith("image/jpeg") || contentType.startsWith("image/jpg")) {
+        const imageBuffer = await request.arrayBuffer();
+        const base64 = arrayBufferToBase64(imageBuffer);
+        imageDataUrl = `data:image/jpeg;base64,${base64}`;
+      } else if (contentType.startsWith("application/json")) {
+        // Web app format: JSON with imageDataUrl or imageBase64
+        const body: ClassificationRequest = await request.json();
+
+        if (body.imageDataUrl) {
+          // Web app format: full data URL
+          if (!body.imageDataUrl.startsWith("data:image/")) {
+            return new Response(JSON.stringify({ error: "Invalid image data URL format" }), {
+              status: 400,
+              headers: {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*",
+              },
+            });
+          }
+          imageDataUrl = body.imageDataUrl;
+        } else if (body.imageBase64) {
+          // Legacy MCU format: just base64 string
+          imageDataUrl = `data:image/jpeg;base64,${body.imageBase64}`;
+        } else {
+          return new Response(JSON.stringify({ error: "Either imageDataUrl or imageBase64 is required" }), {
+            status: 400,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+            },
+          });
+        }
+
+        customPrompt = body.customPrompt;
+      } else {
+        return new Response(JSON.stringify({
+          error: "Unsupported content type. Use image/jpeg for raw binary or application/json for structured data"
+        }), {
+          status: 400,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // Check if API key is configured
+      if (!env.GROQ_API_KEY) {
+        return new Response(JSON.stringify({ error: "Groq API key not configured" }), {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // Use the same prompt as the web app by default, but allow custom override
+      const webAppPrompt = `# System Prompt: Waste Classification from Image
+
+You are an image-to-text classifier for municipal waste sorting.  
+Given **one image**, output **exactly one JSON object** with two keys:
+
+- \`"item_name"\` — a one- or two-word common name for the dominant item in the image (lowercase).
+- \`"category"\` — one of: \`"bottles and cans"\`, \`"garbage"\`, \`"paper products"\`.
+
+---
+
+## Output rules
+- **JSON only**. No markdown, no prose, no trailing commas.
+- If multiple items appear, pick the **visually dominant** item.
+- If the item is unclear, use a **generic** name (e.g., \`"plastic wrapper"\`) and choose the **safest category** per rules below.
+- Do **not** include extra fields.
+
+---
+
+## Categorization rules
+- **bottles and cans**: glass bottles/jars, metal cans/foil, plastic bottles/containers, aluminum cans, beverage containers.
+- **paper products**: clean paper/cardboard, newspapers, magazines, books, paper bags, cardboard boxes, office paper.
+- **garbage**: food scraps, peels, coffee grounds/filters, tea bags, paper towels/napkins soiled with food, plastic bags/film, chip bags, candy wrappers, styrofoam, diapers, ceramics, mixed-material pouches, heavily soiled paper/cardboard, broken glass shards, yard waste.
+
+If unsure or the item doesn't clearly fit the other categories, classify as **garbage**.
+
+---
+
+## Style constraints
+- \`"item_name"\`: 1–2 words, lowercase, common noun (e.g., \`"banana peel"\`, \`"aluminum can"\`).
+- \`"category"\`: exactly \`"bottles and cans"\`, \`"garbage"\`, or \`"paper products"\`.
+
+---
+
+## Examples
+
+**Example 1** (photo of a clear PET water bottle):
+{"item_name":"plastic bottle","category":"bottles and cans"}
+
+**Example 2** (photo of a banana skin):
+{"item_name":"banana peel","category":"garbage"}
+
+**Example 3** (photo of a chip packet):
+{"item_name":"chip bag","category":"garbage"}`;
+
+      // Use custom prompt if provided, otherwise use the web app's default prompt
+      const promptToUse = customPrompt || webAppPrompt;
+
+      // Prepare the Groq request
+      const groqRequest: GroqRequest = {
+        model: "meta-llama/llama-4-scout-17b-16e-instruct",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: promptToUse
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: imageDataUrl
+                }
+              }
+            ]
+          }
+        ],
+        temperature: 1,
+        max_completion_tokens: 1024,
+        top_p: 1,
+        stream: false,
+        response_format: { type: "json_object" },
+        stop: null
+      };
+
+      // Make request to Groq API
+      const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(groqRequest),
+      });
+
+      if (!groqResponse.ok) {
+        const errorText = await groqResponse.text();
+        console.error("Groq API error:", errorText);
+        return new Response(JSON.stringify({
+          error: "Failed to classify image",
+          details: errorText
+        }), {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      const groqData = await groqResponse.json() as any;
+      const classificationText = groqData.choices[0]?.message?.content;
+
+      if (!classificationText) {
+        return new Response(JSON.stringify({ error: "No classification result received" }), {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // Parse the JSON response from Groq
+      let classification: ClassificationResponse;
+      try {
+        classification = JSON.parse(classificationText);
+      } catch (parseError) {
+        console.error("Failed to parse Groq response:", classificationText);
+        return new Response(JSON.stringify({
+          error: "Invalid classification response format",
+          rawResponse: classificationText
+        }), {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      // Validate the classification response
+      if (!classification.item_name || !classification.category) {
+        return new Response(JSON.stringify({
+          error: "Invalid classification response structure",
+          classification
+        }), {
+          status: 500,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      }
+
+      return new Response(JSON.stringify(classification), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+
+    } catch (error) {
+      console.error("Worker error:", error);
+      return new Response(JSON.stringify({
+        error: "Internal server error",
+        message: error instanceof Error ? error.message : "Unknown error"
+      }), {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    }
+  },
+};
