@@ -98,11 +98,10 @@ def classify(image_path, model, processor, cached_k, df):
             "instruction": instruction
         })
     
-    # Convert image to base64
+    # Save image to JPEG bytes
     buffered = io.BytesIO()
     image.save(buffered, format="JPEG")
-    img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-    image_data_url = f"data:image/jpeg;base64,{img_base64}"
+    buffered.seek(0)
     
     # Build prompt with top 5 results
     top5_text = "\n".join([
@@ -129,8 +128,10 @@ def classify(image_path, model, processor, cached_k, df):
         print("Calling LLM API for final classification...")
         response = requests.post(
             LLM_API_URL,
-            json={
-                "imageDataUrl": image_data_url,
+            files={
+                "image": ("image.jpg", buffered, "image/jpeg")
+            },
+            data={
                 "customPrompt": prompt
             },
             timeout=30
