@@ -70,7 +70,6 @@
 
                 <!-- Right: Classification Info -->
                 <div class="info-section">
-                    <span id="confidence-badge" class="confidence-badge"></span>
                     <h2 id="item-name" class="item-name">Item Name</h2>
                     <p id="item-category" class="item-category">Category</p>
 
@@ -132,7 +131,6 @@
         const backBtn = document.getElementById('back-btn');
 
         // Result elements
-        const confidenceBadge = document.getElementById('confidence-badge');
         const itemName = document.getElementById('item-name');
         const itemCategory = document.getElementById('item-category');
         const instructionText = document.getElementById('instruction-text');
@@ -156,10 +154,18 @@
             const cat = (category || '').toLowerCase();
             let binKey = 'GARBAGE BIN'; // default
             
-            if (cat.includes('recycl') || cat.includes('blue')) binKey = 'BLUE BIN';
-            else if (cat.includes('compost') || cat.includes('organic') || cat.includes('green')) binKey = 'GREEN BIN';
-            else if (cat.includes('garbage') || cat.includes('landfill') || cat.includes('grey') || cat.includes('gray')) binKey = 'GARBAGE BIN';
-            else if (cat.includes('hazard') || cat.includes('electronic') || cat.includes('special')) binKey = 'SPECIAL DISPOSAL';
+            // Match exact categories from waste-wizard.csv
+            if (cat === 'blue bin' || cat.includes('recycl')) binKey = 'BLUE BIN';
+            else if (cat === 'green bin' || cat.includes('compost') || cat.includes('organic')) binKey = 'GREEN BIN';
+            else if (cat === 'garbage bin' || cat === 'garbage' || cat.includes('landfill')) binKey = 'GARBAGE BIN';
+            else if (cat === 'hhw' || cat.includes('hazard')) binKey = 'HHW';
+            else if (cat === 'electronic waste' || cat.includes('electronic')) binKey = 'ELECTRONIC WASTE';
+            else if (cat === 'oversized item' || cat.includes('oversized')) binKey = 'OVERSIZED ITEM';
+            else if (cat === 'depot') binKey = 'DEPOT';
+            else if (cat === 'christmas tree') binKey = 'CHRISTMAS TREE';
+            else if (cat === 'yard waste') binKey = 'YARD WASTE';
+            else if (cat === 'metal') binKey = 'BLUE BIN';  // Metal items go to recycling
+            else if (cat === 'not accepted') binKey = 'NOT ACCEPTED';
             else if (cat.includes('black')) binKey = 'BLACK BIN';
             else if (cat.includes('yellow')) binKey = 'YELLOW BIN';
             
@@ -167,7 +173,13 @@
                 'BLUE BIN': { class: 'bin-blue', color: 'Blue', icon: '♻️' },
                 'GREEN BIN': { class: 'bin-green', color: 'Green', icon: '🌱' },
                 'GARBAGE BIN': { class: 'bin-grey', color: 'Garbage', icon: '🗑️' },
-                'SPECIAL DISPOSAL': { class: 'bin-red', color: 'Special', icon: '⚠️' },
+                'HHW': { class: 'bin-red', color: 'HHW', icon: '☠️' },
+                'ELECTRONIC WASTE': { class: 'bin-orange', color: 'Electronic', icon: '🔌' },
+                'OVERSIZED ITEM': { class: 'bin-purple', color: 'Oversized', icon: '📦' },
+                'DEPOT': { class: 'bin-brown', color: 'Depot', icon: '🏪' },
+                'CHRISTMAS TREE': { class: 'bin-green', color: 'Tree', icon: '🎄' },
+                'YARD WASTE': { class: 'bin-green', color: 'Yard', icon: '🍂' },
+                'NOT ACCEPTED': { class: 'bin-black', color: 'Not Accepted', icon: '🚫' },
                 'BLACK BIN': { class: 'bin-black', color: 'Black', icon: '🗑️' },
                 'YELLOW BIN': { class: 'bin-yellow', color: 'Yellow', icon: '♻️' }
             };
@@ -460,13 +472,6 @@
             }
             
             const category = result.category || translations[currentLang]['unknown'];
-            // Handle confidence - API might return 0-1 or 0-100
-            let confidence = result.confidence || 0;
-            if (confidence <= 1) {
-                confidence = (confidence * 100).toFixed(1);
-            } else {
-                confidence = parseFloat(confidence).toFixed(1);
-            }
             
             // Get instruction - translate if in French mode and it's not a fallback
             let instruction = result.instruction || translations[currentLang]['please dispose of this item properly.'];
@@ -484,7 +489,6 @@
             const translatedCategory = translations[currentLang][categoryLower] || category;
 
             // Update UI
-            confidenceBadge.textContent = `${confidence}% ${translations[currentLang]['confidence']}`;
             itemName.textContent = name;
             itemCategory.textContent = translatedCategory;
             binNameInline.textContent = binInfo.name;
@@ -602,11 +606,23 @@
                 'landfill': 'Landfill',
                 'hazardous': 'Hazardous',
                 'electronic': 'Electronic',
+                'hhw': 'HHW',
+                'oversized item': 'Oversized Item',
+                'depot': 'Depot',
+                'yard waste': 'Yard Waste',
+                'christmas tree': 'Christmas Tree',
+                'not accepted': 'Not Accepted',
                 // Bin Display Names
                 'BLUE BIN': 'BLUE BIN',
                 'GREEN BIN': 'GREEN BIN',
                 'GARBAGE BIN': 'GARBAGE BIN',
-                'SPECIAL DISPOSAL': 'SPECIAL DISPOSAL',
+                'HHW': 'HHW',
+                'ELECTRONIC WASTE': 'ELECTRONIC WASTE',
+                'OVERSIZED ITEM': 'OVERSIZED ITEM',
+                'DEPOT': 'DEPOT',
+                'CHRISTMAS TREE': 'CHRISTMAS TREE',
+                'YARD WASTE': 'YARD WASTE',
+                'NOT ACCEPTED': 'NOT ACCEPTED',
                 'BLACK BIN': 'BLACK BIN',
                 'YELLOW BIN': 'YELLOW BIN'
             },
@@ -641,11 +657,23 @@
                 'landfill': 'Décharge',
                 'hazardous': 'Dangereux',
                 'electronic': 'Électronique',
+                'hhw': 'DDD',  // Déchets Domestiques Dangereux
+                'oversized item': 'Objet Volumineux',
+                'depot': 'Dépôt',
+                'yard waste': 'Déchets de Jardin',
+                'christmas tree': 'Sapin de Noël',
+                'not accepted': 'Non Accepté',
                 // Bin Display Names
                 'BLUE BIN': 'BAC BLEU',
                 'GREEN BIN': 'BAC VERT',
                 'GARBAGE BIN': 'POUBELLE',
-                'SPECIAL DISPOSAL': 'ÉLIMINATION SPÉCIALE',
+                'HHW': 'DDD',  // Déchets Domestiques Dangereux
+                'ELECTRONIC WASTE': 'DÉCHETS ÉLECTRONIQUES',
+                'OVERSIZED ITEM': 'OBJET VOLUMINEUX',
+                'DEPOT': 'DÉPÔT',
+                'CHRISTMAS TREE': 'SAPIN DE NOËL',
+                'YARD WASTE': 'DÉCHETS DE JARDIN',
+                'NOT ACCEPTED': 'NON ACCEPTÉ',
                 'BLACK BIN': 'BAC NOIR',
                 'YELLOW BIN': 'BAC JAUNE'
             }

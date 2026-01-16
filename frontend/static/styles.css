@@ -454,6 +454,8 @@ body.high-contrast .confidence-badge {
 .bin-yellow { background: #eab308; color: #1f2937; }
 .bin-brown { background: #92400e; }
 .bin-red { background: #dc2626; }
+.bin-orange { background: #f97316; }
+.bin-purple { background: #9333ea; }
 
 body.high-contrast .bin-indicator {
     border: 3px solid #FFFF00 !important;
@@ -468,7 +470,9 @@ body.high-contrast .bin-gray,
 body.high-contrast .bin-black,
 body.high-contrast .bin-yellow,
 body.high-contrast .bin-brown,
-body.high-contrast .bin-red {
+body.high-contrast .bin-red,
+body.high-contrast .bin-orange,
+body.high-contrast .bin-purple {
     background: #000000 !important;
     border: 3px solid #FFFF00 !important;
     color: #FFFF00 !important;
