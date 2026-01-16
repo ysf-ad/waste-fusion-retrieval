@@ -87,6 +87,10 @@
                             <p id="why-text">Explanation about the classification.</p>
                         </div>
                     </div>
+
+                    <div class="timing-info" id="timing-info" style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 8px; font-size: 0.9em; color: #666;">
+                        ⏱️ Inference time: <span id="inference-time" style="font-weight: bold; color: #333;">-</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -130,8 +134,10 @@
         const binName = document.getElementById('bin-name');
         const whyText = document.getElementById('why-text');
         const errorContainer = document.getElementById('error-container');
+        const inferenceTimeDisplay = document.getElementById('inference-time');
 
         let stream = null;
+        let inferenceStartTime = null;
 
         // Utility functions
         function showPage(page) {
@@ -268,6 +274,10 @@
             const formData = new FormData();
             formData.append('file', blob, 'capture.jpg');
 
+            // Start timing
+            inferenceStartTime = performance.now();
+            console.log('[Timing] Inference started at:', new Date().toISOString());
+
             try {
                 const response = await fetch(API_ENDPOINT, {
                     method: 'POST',
@@ -279,9 +289,20 @@
                 }
 
                 const data = await response.json();
-                displayResult(data, blob);
+                
+                // Calculate inference time
+                const inferenceEndTime = performance.now();
+                const inferenceTime = inferenceEndTime - inferenceStartTime;
+                console.log('[Timing] Inference completed at:', new Date().toISOString());
+                console.log('[Timing] Total inference time:', inferenceTime.toFixed(2), 'ms');
+                console.log('[Timing] Total inference time:', (inferenceTime / 1000).toFixed(2), 'seconds');
+                
+                displayResult(data, blob, inferenceTime);
             } catch (error) {
                 console.error('API error:', error);
+                const inferenceEndTime = performance.now();
+                const inferenceTime = inferenceEndTime - inferenceStartTime;
+                console.log('[Timing] Inference failed after:', inferenceTime.toFixed(2), 'ms');
                 showError(error.message);
             }
         }
@@ -332,8 +353,15 @@
 
         let autoReturnTimer = null;
 
-        function displayResult(data, blob) {
+        function displayResult(data, blob, inferenceTime) {
             errorContainer.style.display = 'none';
+
+            // Display timing information
+            if (inferenceTime) {
+                const seconds = (inferenceTime / 1000).toFixed(2);
+                inferenceTimeDisplay.textContent = `${seconds}s (${inferenceTime.toFixed(0)}ms)`;
+                console.log('[Timing] Displaying inference time:', seconds, 'seconds');
+            }
 
             // Draw captured image to canvas
             if (blob) {
