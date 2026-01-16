@@ -3,10 +3,11 @@ import io
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from PIL import Image
 import torch
 import os
-from inference.inference import load_resources, encode_database, classify
+from inference.inference import load_resources, encode_database, classify, translate_text_to_french
 
 app = FastAPI()
 
@@ -35,6 +36,18 @@ if model is None or df is None:
 print("Encoding database...")
 cached_k = encode_database(model, tokenizer, df)
 print("Server ready!")
+
+class TranslateRequest(BaseModel):
+    text: str
+
+@app.post("/translate")
+async def translate(request: TranslateRequest):
+    """Translate English text to French using Grok API"""
+    try:
+        translated = translate_text_to_french(request.text)
+        return JSONResponse(content={"translated_text": translated})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Translation failed: {str(e)}")
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):

@@ -9,4 +9,7 @@ matplotlib
 seaborn
 requests
 python-dotenv
-xai-sdk
+sentencepiece
+fastapi
+uvicorn[standard]
+python-multipart

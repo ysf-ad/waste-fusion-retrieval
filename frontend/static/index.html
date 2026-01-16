@@ -324,7 +324,7 @@
                 console.log('[Timing] Total inference time:', inferenceTime.toFixed(2), 'ms');
                 console.log('[Timing] Total inference time:', (inferenceTime / 1000).toFixed(2), 'seconds');
                 
-                displayResult(data, blob, inferenceTime);
+                await displayResult(data, blob, inferenceTime);
             } catch (error) {
                 console.error('API error:', error);
                 const inferenceEndTime = performance.now();
@@ -379,8 +379,45 @@
         }
 
         let autoReturnTimer = null;
+        
+        // Translation cache to avoid repeated API calls
+        const translationCache = {};
+        
+        // Function to translate text to French using the API
+        async function translateToFrench(text) {
+            // Check cache first
+            if (translationCache[text]) {
+                return translationCache[text];
+            }
+            
+            try {
+                const response = await fetch('/api/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+                
+                if (!response.ok) {
+                    console.error('Translation failed:', response.statusText);
+                    return text; // Return original text if translation fails
+                }
+                
+                const data = await response.json();
+                const translatedText = data.translated_text || text;
+                
+                // Cache the translation
+                translationCache[text] = translatedText;
+                
+                return translatedText;
+            } catch (error) {
+                console.error('Translation error:', error);
+                return text; // Return original text on error
+            }
+        }
 
-        function displayResult(data, blob, inferenceTime) {
+        async function displayResult(data, blob, inferenceTime) {
             errorContainer.style.display = 'none';
 
             // Display timing information
@@ -410,11 +447,15 @@
                 reader.readAsDataURL(blob);
             }
 
+            // Get current language first
+            const currentLang = localStorage.getItem('language') || 'en';
+            
             // Get top result
             const result = data.results && data.results[0] ? data.results[0] : data;
 
-            const name = result.item || 'Unknown Item';
-            const category = result.category || 'Unknown';
+            // Translate item name if it's unknown
+            const name = result.item || translations[currentLang]['unknown item'];
+            const category = result.category || translations[currentLang]['unknown'];
             // Handle confidence - API might return 0-1 or 0-100
             let confidence = result.confidence || 0;
             if (confidence <= 1) {
@@ -422,10 +463,16 @@
             } else {
                 confidence = parseFloat(confidence).toFixed(1);
             }
-            let instruction = result.instruction || 'Please dispose of this item properly.';
+            
+            // Get instruction - translate if in French mode and it's not a fallback
+            let instruction = result.instruction || translations[currentLang]['please dispose of this item properly.'];
+            
+            // If we have a real instruction (not fallback) and language is French, translate it
+            if (currentLang === 'fr' && result.instruction) {
+                instruction = await translateToFrench(result.instruction);
+            }
 
             // Get bin info based on category
-            const currentLang = localStorage.getItem('language') || 'en';
             const binInfo = getBinColor(category, currentLang);
             
             // Translate category to current language
@@ -433,7 +480,7 @@
             const translatedCategory = translations[currentLang][categoryLower] || category;
 
             // Update UI
-            confidenceBadge.textContent = `${confidence}% confidence`;
+            confidenceBadge.textContent = `${confidence}% ${translations[currentLang]['confidence']}`;
             itemName.textContent = name;
             itemCategory.textContent = translatedCategory;
             binNameInline.textContent = binInfo.color + ' Bin';
@@ -533,6 +580,11 @@
                 placeInBin: 'Place this item in the',
                 why: 'Why?',
                 inferenceTime: 'Inference time:',
+                // Default messages
+                'unknown item': 'Unknown Item',
+                'unknown': 'Unknown',
+                'please dispose of this item properly.': 'Please dispose of this item properly.',
+                'confidence': 'confidence',
                 // Categories
                 'blue bin': 'Blue Bin',
                 'green bin': 'Green Bin',
@@ -567,6 +619,11 @@
                 placeInBin: 'Placez cet objet dans la',
                 why: 'Pourquoi ?',
                 inferenceTime: 'Temps d\'inférence:',
+                // Default messages
+                'unknown item': 'Objet Inconnu',
+                'unknown': 'Inconnu',
+                'please dispose of this item properly.': 'Veuillez éliminer cet objet correctement.',
+                'confidence': 'confiance',
                 // Categories
                 'blue bin': 'Bac Bleu',
                 'green bin': 'Bac Vert',

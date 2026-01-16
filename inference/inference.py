@@ -18,11 +18,14 @@ import requests
 import json
 import json as json_lib
 from dotenv import load_dotenv
-from xai_sdk import Client
-from xai_sdk.chat import user, system
+from transformers import MarianMTModel, MarianTokenizer
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Global translation model variables
+translation_model = None
+translation_tokenizer = None
 
 # --- Configuration ---
 # Get the base directory (project root)
@@ -39,6 +42,8 @@ if not XAI_API_KEY:
     print("WARNING: XAI_API_KEY not found in environment variables. Please set it in .env file.")
 
 def load_resources():
+    global translation_model, translation_tokenizer
+    
     print(f"Loading model on {DEVICE}...")
     print(f"Looking for checkpoint at: {MODEL_CHECKPOINT}")
     print(f"Looking for CSV at: {CSV_FILE}")
@@ -65,6 +70,19 @@ def load_resources():
         return None, None, None, None
     df = pd.read_csv(CSV_FILE)
     print(f"CSV loaded successfully with {len(df)} rows.")
+    
+    # 5. Load Translation Model (MarianMT)
+    print("Loading translation model (Helsinki-NLP/opus-mt-en-fr)...")
+    try:
+        translation_model_name = "Helsinki-NLP/opus-mt-en-fr"
+        translation_tokenizer = MarianTokenizer.from_pretrained(translation_model_name)
+        translation_model = MarianMTModel.from_pretrained(translation_model_name)
+        translation_model.to(DEVICE)
+        translation_model.eval()
+        print("Translation model loaded successfully.")
+    except Exception as e:
+        print(f"WARNING: Could not load translation model: {e}")
+        print("Translation will be disabled.")
     
     return model, processor, tokenizer, df
 
@@ -205,3 +223,33 @@ def classify(image_path, model, processor, cached_k, df):
         print("✓ Falling back to top model prediction")
         print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
         return results[0]
+def translate_text_to_french(text):
+    """
+    Translate English text to French using local MarianMT model
+    """
+    global translation_model, translation_tokenizer
+    
+    if translation_model is None or translation_tokenizer is None:
+        print("WARNING: Translation model not loaded. Returning original text.")
+        return text
+    
+    try:
+        print(f"Translating to French: {text[:50]}...")
+        
+        # Tokenize the input text
+        inputs = translation_tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
+        inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
+        
+        # Generate translation
+        with torch.no_grad():
+            translated_tokens = translation_model.generate(**inputs)
+        
+        # Decode the translated text
+        translated_text = translation_tokenizer.decode(translated_tokens[0], skip_special_tokens=True)
+        
+        print(f"Translation result: {translated_text[:50]}...")
+        return translated_text
+        
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return text  # Return original text on error
