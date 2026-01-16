@@ -155,16 +155,10 @@ def classify(image_path, model, processor, cached_k, df):
         # Create chat with image and prompt
         chat = client.chat.create(model="llama-3.3-70b-versatile")
         chat.append(system("You are an AI assistant specialized in waste classification. Analyze images and return responses as valid JSON only."))
-        chat.append(user([
-            {
-                "type": "image",
-                "image": f"data:image/jpeg;base64,{base64_image}"
-            },
-            {
-                "type": "text",
-                "text": prompt
-            }
-        ]))
+        chat.append(user(
+            text=prompt,
+            image=f"data:image/jpeg;base64,{base64_image}"
+        ))
         
         # Get response
         response = chat.sample()
