@@ -374,6 +374,45 @@ def save_photo():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/translate', methods=['POST'])
+def translate_text():
+    """Translate text from English to French using the inference API"""
+    try:
+        data = request.json
+        text = data.get('text', '')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        # Extract the base URL from API_ENDPOINT
+        # API_ENDPOINT is like https://api.biswa.ca/predict
+        # We need https://api.biswa.ca/translate
+        api_base = API_ENDPOINT.rsplit('/', 1)[0]  # Remove /predict
+        translate_url = f"{api_base}/translate"
+        
+        print(f"Translating via: {translate_url}")
+        
+        response = requests.post(
+            translate_url,
+            json={'text': text},
+            timeout=30
+        )
+        
+        if response.ok:
+            result = response.json()
+            return jsonify({
+                'translated_text': result.get('translated_text', text),
+                'original_text': text
+            }), 200
+        else:
+            print(f"Translation API error: {response.status_code}")
+            return jsonify({'translated_text': text}), 200  # Return original on error
+            
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return jsonify({'translated_text': data.get('text', '')}), 200  # Return original on error
+
+
 if __name__ == '__main__':
     print("Starting Waste Classifier Pi Camera Service...")
     print(f"Capture delay: {CAPTURE_DELAY} seconds")
