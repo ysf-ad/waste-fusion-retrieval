@@ -18,7 +18,8 @@ import requests
 import json
 import json as json_lib
 from dotenv import load_dotenv
-from openai import OpenAI
+from xai_sdk import Client
+from xai_sdk.chat import user, system
 
 # Load environment variables from .env file
 load_dotenv()
@@ -33,9 +34,9 @@ MODEL_ID_IMG = "facebook/dinov2-large"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Grok API Configuration
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    print("WARNING: GROQ_API_KEY not found in environment variables. Please set it in .env file.")
+XAI_API_KEY = os.getenv("XAI_API_KEY")
+if not XAI_API_KEY:
+    print("WARNING: XAI_API_KEY not found in environment variables. Please set it in .env file.")
 
 def load_resources():
     print(f"Loading model on {DEVICE}...")
@@ -133,50 +134,41 @@ def classify(image_path, model, processor, cached_k, df):
     
     Respond ONLY with valid JSON, no additional text."""
     
-    # Call Grok LLM API
+    # Call Grok LLM API using official xAI SDK
     try:
         print("Calling Grok LLM API for final classification...")
         
-        if not GROQ_API_KEY:
-            print("Grok API key not configured. Falling back to top prediction from model.")
+        if not XAI_API_KEY:
+            print("xAI API key not configured. Falling back to top prediction from model.")
             return results[0]
         
         # Encode image to base64
         buffered.seek(0)
         base64_image = base64.b64encode(buffered.read()).decode('utf-8')
         
-        # Initialize Grok client (uses OpenAI-compatible API)
-        client = OpenAI(
-            api_key=GROQ_API_KEY,
-            base_url="https://api.groq.com/openai/v1"
+        # Initialize xAI client
+        client = Client(
+            api_key=XAI_API_KEY,
+            timeout=3600
         )
         
-        # Call Grok API with vision
-        message = client.chat.completions.create(
-            model="grok-vision-beta",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
-                        },
-                        {
-                            "type": "text",
-                            "text": prompt
-                        }
-                    ]
-                }
-            ],
-            temperature=0.3,
-            max_tokens=500
-        )
+        # Create chat with image and prompt
+        chat = client.chat.create(model="llama-3.3-70b-versatile")
+        chat.append(system("You are an AI assistant specialized in waste classification. Analyze images and return responses as valid JSON only."))
+        chat.append(user([
+            {
+                "type": "image",
+                "image": f"data:image/jpeg;base64,{base64_image}"
+            },
+            {
+                "type": "text",
+                "text": prompt
+            }
+        ]))
         
-        # Parse LLM response
-        response_text = message.choices[0].message.content
+        # Get response
+        response = chat.sample()
+        response_text = response.content
         print("Grok Classification Result:")
         print(response_text)
         
