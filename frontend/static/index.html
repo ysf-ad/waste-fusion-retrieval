@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +7,28 @@
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+    <!-- Settings Bar -->
+    <div class="settings-bar">
+        <div class="settings-controls">
+            <!-- Language Switcher -->
+            <div class="setting-group">
+                <label for="language-select">🌐</label>
+                <select id="language-select" class="setting-select">
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                </select>
+            </div>
+            
+            <!-- High Contrast Toggle -->
+            <div class="setting-group">
+                <label for="contrast-toggle">🎨</label>
+                <button id="contrast-toggle" class="toggle-btn" aria-label="Toggle high contrast mode">
+                    <span class="toggle-indicator"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Camera Page -->
     <div id="camera-page" class="page camera-page active">
         <div class="header-bar">
@@ -14,15 +36,15 @@
                 <h1>♻️ BINIT</h1>
             </div>
             
-            <button id="capture-btn" class="capture-btn-compact">
+            <button id="capture-btn" class="capture-btn-compact" data-i18n="takePhoto">
                 📷 Take Photo
             </button>
             
             <div class="instructions-section">
-                <h3>How to Use</h3>
-                <p>1. Position item in camera view</p>
-                <p>2. Wait for automatic capture</p>
-                <p>3. View classification results</p>
+                <h3 data-i18n="howToUse">How to Use</h3>
+                <p data-i18n="instruction1">1. Position item in camera view</p>
+                <p data-i18n="instruction2">2. Wait for automatic capture</p>
+                <p data-i18n="instruction3">3. View classification results</p>
             </div>
         </div>
 
@@ -34,8 +56,8 @@
             </div>
             <!-- Fallback message when camera not available -->
             <div id="camera-fallback" class="camera-fallback" style="display: none;">
-                <p>📷 Camera not available</p>
-                <p class="fallback-hint">Camera requires HTTPS. Use file upload instead.</p>
+                <p>📷 <span data-i18n="cameraNotAvailable">Camera not available</span></p>
+                <p class="fallback-hint" data-i18n="cameraHttpsHint">Camera requires HTTPS. Use file upload instead.</p>
             </div>
         </div>
     </div>
@@ -44,13 +66,13 @@
     <div id="loading-page" class="page">
         <div class="loading">
             <div class="spinner"></div>
-            <p class="loading-text">Analyzing your item...</p>
+            <p class="loading-text" data-i18n="analyzing">Analyzing your item...</p>
         </div>
     </div>
 
     <!-- Result Page -->
     <div id="result-page" class="page result-page">
-        <button id="back-btn" class="back-btn">
+        <button id="back-btn" class="back-btn" data-i18n="scanAnother">
             ← Scan Another Item
         </button>
 
@@ -69,7 +91,7 @@
 
                     <div class="instruction-box">
                         <span class="icon">☑️</span>
-                        <p class="text" id="instruction-text">Place this item in the <span class="bin-highlight" id="bin-name-inline">Bin</span>.</p>
+                        <p class="text" id="instruction-text"><span data-i18n="placeInBin">Place this item in the</span> <span class="bin-highlight" id="bin-name-inline">Bin</span>.</p>
                     </div>
 
                     <div id="bin-indicator" class="bin-indicator bin-blue">
@@ -80,7 +102,7 @@
                     <div class="why-section">
                         <div class="why-header">
                             <span class="icon">i</span>
-                            <span>Why?</span>
+                            <span data-i18n="why">Why?</span>
                         </div>
                         <div class="why-content">
                             <span class="info-icon">ℹ️</span>
@@ -89,7 +111,7 @@
                     </div>
 
                     <div class="timing-info" id="timing-info" style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 8px; font-size: 0.9em; color: #666;">
-                        ⏱️ Inference time: <span id="inference-time" style="font-weight: bold; color: #333;">-</span>
+                        ⏱️ <span data-i18n="inferenceTime">Inference time:</span> <span id="inference-time" style="font-weight: bold; color: #333;">-</span>
                     </div>
                 </div>
             </div>
@@ -483,6 +505,80 @@
                 stream.getTracks().forEach(track => track.stop());
             }
         });
+
+        // ===== INTERNATIONALIZATION & ACCESSIBILITY =====
+        
+        // Translation dictionary
+        const translations = {
+            en: {
+                takePhoto: '📷 Take Photo',
+                howToUse: 'How to Use',
+                instruction1: '1. Position item in camera view',
+                instruction2: '2. Wait for automatic capture',
+                instruction3: '3. View classification results',
+                cameraNotAvailable: 'Camera not available',
+                cameraHttpsHint: 'Camera requires HTTPS. Use file upload instead.',
+                analyzing: 'Analyzing your item...',
+                scanAnother: '← Scan Another Item',
+                placeInBin: 'Place this item in the',
+                why: 'Why?',
+                inferenceTime: 'Inference time:'
+            },
+            fr: {
+                takePhoto: '📷 Prendre une photo',
+                howToUse: 'Mode d\'emploi',
+                instruction1: '1. Positionner l\'objet dans le champ de la caméra',
+                instruction2: '2. Attendre la capture automatique',
+                instruction3: '3. Afficher les résultats de la classification',
+                cameraNotAvailable: 'Caméra non disponible',
+                cameraHttpsHint: 'La caméra nécessite HTTPS. Utilisez le téléchargement de fichier à la place.',
+                analyzing: 'Analyse de votre objet...',
+                scanAnother: '← Analyser un autre objet',
+                placeInBin: 'Placez cet objet dans la',
+                why: 'Pourquoi ?',
+                inferenceTime: 'Temps d\'inférence:'
+            }
+        };
+
+        // Language management
+        function setLanguage(lang) {
+            localStorage.setItem('language', lang);
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+        }
+
+        const languageSelect = document.getElementById('language-select');
+        languageSelect.addEventListener('change', (e) => {
+            setLanguage(e.target.value);
+        });
+
+        // Load saved language preference
+        const savedLanguage = localStorage.getItem('language') || 'en';
+        languageSelect.value = savedLanguage;
+        setLanguage(savedLanguage);
+
+        // High contrast mode management
+        function toggleHighContrast() {
+            const isActive = document.body.classList.toggle('high-contrast');
+            localStorage.setItem('highContrast', isActive);
+            const contrastBtn = document.getElementById('contrast-toggle');
+            contrastBtn.classList.toggle('active', isActive);
+        }
+
+        const contrastToggle = document.getElementById('contrast-toggle');
+        contrastToggle.addEventListener('click', toggleHighContrast);
+
+        // Load saved contrast preference
+        const savedContrast = localStorage.getItem('highContrast') === 'true';
+        if (savedContrast) {
+            document.body.classList.add('high-contrast');
+            contrastToggle.classList.add('active');
+        }
     </script>
 </body>
 </html>
