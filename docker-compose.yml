@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   # Backend API (GPU inference server)
@@ -5,8 +6,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: waste-fusion-api
     ports:
       - "9000:9000"
+    volumes:
+      - .:/app
+      - /app/__pycache__  # Prevent syncing Python cache
+    environment:
+      - XAI_API_KEY=${XAI_API_KEY}
+      - PYTHONUNBUFFERED=1  # Real-time logging output
+    command: uvicorn inference.inference_api:app --host 0.0.0.0 --port 9000 --reload
     deploy:
       resources:
         reservations:
@@ -15,3 +24,9 @@ services:
               count: 1
               capabilities: [gpu]
     restart: unless-stopped
+    networks:
+      - waste-fusion
+
+networks:
+  waste-fusion:
+    driver: bridge
