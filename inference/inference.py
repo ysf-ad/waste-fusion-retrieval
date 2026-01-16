@@ -39,8 +39,8 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 # Groq API Configuration
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-if not XAI_API_KEY:
-    print("WARNING: XAI_API_KEY not found in environment variables. Please set it in .env file.")
+if not GROQ_API_KEY:
+    print("WARNING: GROQ_API_KEY not found in environment variables. Please set it in .env file.")
 
 def load_resources():
     global translation_model, translation_tokenizer
