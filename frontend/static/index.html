@@ -374,6 +374,9 @@
                         canvas.height = img.height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0);
+                        
+                        // Save photo with results after displaying
+                        savePhotoWithResults(canvas.toDataURL('image/jpeg'), data, inferenceTime);
                     };
                     img.src = e.target.result;
                 };
@@ -425,6 +428,32 @@
             errorContainer.textContent = 'Error: ' + message;
             errorContainer.style.display = 'block';
             showPage(resultPage);
+        }
+
+        async function savePhotoWithResults(photoDataUrl, results, inferenceTime) {
+            try {
+                console.log('[Storage] Saving photo with results...');
+                const response = await fetch('/api/save-photo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        photo: photoDataUrl,
+                        results: results,
+                        inference_time: inferenceTime
+                    })
+                });
+                
+                if (response.ok) {
+                    const saveResult = await response.json();
+                    console.log('[Storage] Photo saved successfully:', saveResult.photo_id);
+                } else {
+                    console.warn('[Storage] Failed to save photo:', response.status);
+                }
+            } catch (error) {
+                console.error('[Storage] Error saving photo:', error);
+            }
         }
 
         function resetCamera() {

@@ -12,6 +12,7 @@ import threading
 import requests
 from flask import Flask, Response, jsonify, send_file, request
 from flask_cors import CORS
+from datetime import datetime
 
 # Try to import Pi-specific libraries (will fail on non-Pi systems)
 try:
@@ -29,6 +30,12 @@ API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://api.biswa.ca/predict')
 
 # Use environment variable or default to local directory
 STATIC_DIR = os.getenv('STATIC_DIR', os.path.join(os.path.dirname(__file__), 'static'))
+
+# Photo storage configuration
+PHOTOS_DIR = os.getenv('PHOTOS_DIR', os.path.join(os.path.dirname(__file__), 'photos'))
+os.makedirs(PHOTOS_DIR, exist_ok=True)
+os.makedirs(os.path.join(PHOTOS_DIR, 'originals'), exist_ok=True)
+os.makedirs(os.path.join(PHOTOS_DIR, 'metadata'), exist_ok=True)
 
 app = Flask(__name__, static_folder=STATIC_DIR, static_url_path='')
 CORS(app)
@@ -313,6 +320,57 @@ def predict_proxy():
             content_type=response.headers.get('Content-Type', 'application/json')
         )
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/save-photo', methods=['POST'])
+def save_photo():
+    """Save photo and results after classification"""
+    try:
+        data = request.json
+        photo_base64 = data.get('photo')
+        results = data.get('results')
+        inference_time = data.get('inference_time')
+        
+        if not photo_base64:
+            return jsonify({'error': 'No photo provided'}), 400
+        
+        # Generate timestamp-based filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        photo_id = timestamp
+        
+        # Decode base64 photo
+        photo_data = base64.b64decode(photo_base64.split(',')[1] if ',' in photo_base64 else photo_base64)
+        
+        # Save photo
+        photo_path = os.path.join(PHOTOS_DIR, 'originals', f'{photo_id}.jpg')
+        with open(photo_path, 'wb') as f:
+            f.write(photo_data)
+        
+        # Save metadata
+        metadata = {
+            'timestamp': datetime.now().isoformat(),
+            'photo_id': photo_id,
+            'filename': f'{photo_id}.jpg',
+            'results': results,
+            'inference_time_ms': inference_time
+        }
+        
+        metadata_path = os.path.join(PHOTOS_DIR, 'metadata', f'{photo_id}.json')
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+        
+        print(f"Photo saved: {photo_path}")
+        print(f"Metadata saved: {metadata_path}")
+        
+        return jsonify({
+            'status': 'success',
+            'photo_id': photo_id,
+            'photo_path': photo_path
+        }), 200
+        
+    except Exception as e:
+        print(f"Error saving photo: {e}")
         return jsonify({'error': str(e)}), 500
 
 
