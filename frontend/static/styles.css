@@ -20,6 +20,12 @@ body.high-contrast {
     color: #FFFFFF !important;
 }
 
+body.high-contrast * {
+    color: #FFFFFF !important;
+    background-color: #000000 !important;
+    border-color: #FFFF00 !important;
+}
+
 body.high-contrast .header-bar,
 body.high-contrast .page,
 body.high-contrast .result-card,
@@ -38,6 +44,57 @@ body.high-contrast button {
 body.high-contrast button:hover {
     background: #FFFF00 !important;
     color: #000000 !important;
+}
+
+body.high-contrast h1,
+body.high-contrast h2,
+body.high-contrast h3,
+body.high-contrast h4,
+body.high-contrast h5,
+body.high-contrast h6,
+body.high-contrast p,
+body.high-contrast span,
+body.high-contrast div,
+body.high-contrast label {
+    color: #FFFFFF !important;
+}
+
+body.high-contrast .item-name,
+body.high-contrast .item-category,
+body.high-contrast .instruction-box,
+body.high-contrast .instruction-box .text,
+body.high-contrast .bin-name,
+body.high-contrast .why-header,
+body.high-contrast .why-content p,
+body.high-contrast .confidence-badge,
+body.high-contrast .back-btn,
+body.high-contrast .loading-text {
+    color: #FFFFFF !important;
+    background: #000000 !important;
+}
+
+body.high-contrast .instruction-box,
+body.high-contrast .why-section,
+body.high-contrast .why-content {
+    background: #000000 !important;
+    border: 1px solid #FFFF00 !important;
+}
+
+body.high-contrast .back-btn {
+    border: 2px solid #FFFF00 !important;
+    background: #000000 !important;
+    color: #FFFF00 !important;
+}
+
+body.high-contrast .back-btn:hover {
+    background: #FFFF00 !important;
+    color: #000000 !important;
+}
+
+body.high-contrast .confidence-badge {
+    background: #000000 !important;
+    color: #FFFF00 !important;
+    border: 1px solid #FFFF00 !important;
 }
 
 /* Page Container */
@@ -397,6 +454,25 @@ body.high-contrast button:hover {
 .bin-yellow { background: #eab308; color: #1f2937; }
 .bin-brown { background: #92400e; }
 .bin-red { background: #dc2626; }
+
+body.high-contrast .bin-indicator {
+    border: 3px solid #FFFF00 !important;
+    background: #000000 !important;
+    color: #FFFF00 !important;
+}
+
+body.high-contrast .bin-blue,
+body.high-contrast .bin-green,
+body.high-contrast .bin-grey,
+body.high-contrast .bin-gray,
+body.high-contrast .bin-black,
+body.high-contrast .bin-yellow,
+body.high-contrast .bin-brown,
+body.high-contrast .bin-red {
+    background: #000000 !important;
+    border: 3px solid #FFFF00 !important;
+    color: #FFFF00 !important;
+}
 
 /* Why Section */
 .why-section {
