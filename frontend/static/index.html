@@ -15,11 +15,15 @@
             </div>
             
             <button id="capture-btn" class="capture-btn-compact" data-i18n="takePhoto">
-                📷 Take Photo
+                Take Photo
             </button>
             
             <button id="language-btn" class="header-btn language-btn">FR</button>
-            <button id="contrast-btn" class="header-btn contrast-btn">🎨</button>
+            
+            <div class="contrast-button-group">
+                <button id="contrast-btn" class="header-btn contrast-btn">High Contrast</button>
+                <span class="toggle-indicator"></span>
+            </div>
             
             <div class="instructions-section">
                 <h3 data-i18n="howToUse">How to Use</h3>
@@ -148,15 +152,35 @@
             page.classList.add('active');
         }
 
-        function getBinColor(category) {
+        function getBinColor(category, lang = 'en') {
             const cat = (category || '').toLowerCase();
-            if (cat.includes('recycl') || cat.includes('blue')) return { class: 'bin-blue', name: 'BLUE BIN', color: 'Blue', icon: '♻️' };
-            if (cat.includes('compost') || cat.includes('organic') || cat.includes('green')) return { class: 'bin-green', name: 'GREEN BIN', color: 'Green', icon: '🌱' };
-            if (cat.includes('garbage') || cat.includes('landfill') || cat.includes('grey') || cat.includes('gray')) return { class: 'bin-grey', name: 'GARBAGE BIN', color: 'Garbage', icon: '🗑️' };
-            if (cat.includes('hazard') || cat.includes('electronic') || cat.includes('special')) return { class: 'bin-red', name: 'SPECIAL DISPOSAL', color: 'Special', icon: '⚠️' };
-            if (cat.includes('black')) return { class: 'bin-black', name: 'BLACK BIN', color: 'Black', icon: '🗑️' };
-            if (cat.includes('yellow')) return { class: 'bin-yellow', name: 'YELLOW BIN', color: 'Yellow', icon: '♻️' };
-            return { class: 'bin-grey', name: 'GARBAGE BIN', color: 'Garbage', icon: '🗑️' };
+            let binKey = 'GARBAGE BIN'; // default
+            
+            if (cat.includes('recycl') || cat.includes('blue')) binKey = 'BLUE BIN';
+            else if (cat.includes('compost') || cat.includes('organic') || cat.includes('green')) binKey = 'GREEN BIN';
+            else if (cat.includes('garbage') || cat.includes('landfill') || cat.includes('grey') || cat.includes('gray')) binKey = 'GARBAGE BIN';
+            else if (cat.includes('hazard') || cat.includes('electronic') || cat.includes('special')) binKey = 'SPECIAL DISPOSAL';
+            else if (cat.includes('black')) binKey = 'BLACK BIN';
+            else if (cat.includes('yellow')) binKey = 'YELLOW BIN';
+            
+            const binData = {
+                'BLUE BIN': { class: 'bin-blue', color: 'Blue', icon: '♻️' },
+                'GREEN BIN': { class: 'bin-green', color: 'Green', icon: '🌱' },
+                'GARBAGE BIN': { class: 'bin-grey', color: 'Garbage', icon: '🗑️' },
+                'SPECIAL DISPOSAL': { class: 'bin-red', color: 'Special', icon: '⚠️' },
+                'BLACK BIN': { class: 'bin-black', color: 'Black', icon: '🗑️' },
+                'YELLOW BIN': { class: 'bin-yellow', color: 'Yellow', icon: '♻️' }
+            };
+            
+            const data = binData[binKey];
+            const translatedName = translations[lang][binKey] || binKey;
+            
+            return { 
+                class: data.class, 
+                name: translatedName, 
+                color: data.color, 
+                icon: data.icon 
+            };
         }
 
         const cameraFallback = document.getElementById('camera-fallback');
@@ -398,15 +422,20 @@
             } else {
                 confidence = parseFloat(confidence).toFixed(1);
             }
-            const instruction = result.instruction || 'Please dispose of this item properly.';
+            let instruction = result.instruction || 'Please dispose of this item properly.';
 
             // Get bin info based on category
-            const binInfo = getBinColor(category);
+            const currentLang = localStorage.getItem('language') || 'en';
+            const binInfo = getBinColor(category, currentLang);
+            
+            // Translate category to current language
+            const categoryLower = category.toLowerCase();
+            const translatedCategory = translations[currentLang][categoryLower] || category;
 
             // Update UI
             confidenceBadge.textContent = `${confidence}% confidence`;
             itemName.textContent = name;
-            itemCategory.textContent = category;
+            itemCategory.textContent = translatedCategory;
             binNameInline.textContent = binInfo.color + ' Bin';
             binIndicator.className = 'bin-indicator ' + binInfo.class;
             binName.textContent = binInfo.name;
@@ -492,7 +521,7 @@
         // Translation dictionary
         const translations = {
             en: {
-                takePhoto: '📷 Take Photo',
+                takePhoto: 'Take Photo',
                 howToUse: 'How to Use',
                 instruction1: '1. Position item in camera view',
                 instruction2: '2. Wait for automatic capture',
@@ -503,10 +532,30 @@
                 scanAnother: '← Scan Another Item',
                 placeInBin: 'Place this item in the',
                 why: 'Why?',
-                inferenceTime: 'Inference time:'
+                inferenceTime: 'Inference time:',
+                // Categories
+                'blue bin': 'Blue Bin',
+                'green bin': 'Green Bin',
+                'garbage bin': 'Garbage Bin',
+                'special disposal': 'Special Disposal',
+                'black bin': 'Black Bin',
+                'yellow bin': 'Yellow Bin',
+                'recycling': 'Recycling',
+                'compost': 'Compost',
+                'organic': 'Organic',
+                'landfill': 'Landfill',
+                'hazardous': 'Hazardous',
+                'electronic': 'Electronic',
+                // Bin Display Names
+                'BLUE BIN': 'BLUE BIN',
+                'GREEN BIN': 'GREEN BIN',
+                'GARBAGE BIN': 'GARBAGE BIN',
+                'SPECIAL DISPOSAL': 'SPECIAL DISPOSAL',
+                'BLACK BIN': 'BLACK BIN',
+                'YELLOW BIN': 'YELLOW BIN'
             },
             fr: {
-                takePhoto: '📷 Prendre une photo',
+                takePhoto: 'Prendre une photo',
                 howToUse: 'Mode d\'emploi',
                 instruction1: '1. Positionner l\'objet dans le champ de la caméra',
                 instruction2: '2. Attendre la capture automatique',
@@ -517,7 +566,27 @@
                 scanAnother: '← Analyser un autre objet',
                 placeInBin: 'Placez cet objet dans la',
                 why: 'Pourquoi ?',
-                inferenceTime: 'Temps d\'inférence:'
+                inferenceTime: 'Temps d\'inférence:',
+                // Categories
+                'blue bin': 'Bac Bleu',
+                'green bin': 'Bac Vert',
+                'garbage bin': 'Poubelle',
+                'special disposal': 'Élimination Spéciale',
+                'black bin': 'Bac Noir',
+                'yellow bin': 'Bac Jaune',
+                'recycling': 'Recyclage',
+                'compost': 'Compost',
+                'organic': 'Organique',
+                'landfill': 'Décharge',
+                'hazardous': 'Dangereux',
+                'electronic': 'Électronique',
+                // Bin Display Names
+                'BLUE BIN': 'BAC BLEU',
+                'GREEN BIN': 'BAC VERT',
+                'GARBAGE BIN': 'POUBELLE',
+                'SPECIAL DISPOSAL': 'ÉLIMINATION SPÉCIALE',
+                'BLACK BIN': 'BAC NOIR',
+                'YELLOW BIN': 'BAC JAUNE'
             }
         };
 
