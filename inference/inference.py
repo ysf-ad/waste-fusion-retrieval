@@ -126,14 +126,21 @@ def classify(image_path, model, processor, cached_k, df):
     # Call LLM API
     try:
         print("Calling LLM API for final classification...")
+        
+        # Encode image to base64 data URL
+        buffered.seek(0)
+        base64_image = base64.b64encode(buffered.read()).decode('utf-8')
+        image_data_url = f"data:image/jpeg;base64,{base64_image}"
+        
+        # Prepare request with correct format
+        payload = {
+            "imageDataUrl": image_data_url,
+            "customPrompt": prompt
+        }
+        
         response = requests.post(
             LLM_API_URL,
-            files={
-                "image": ("image.jpg", buffered, "image/jpeg")
-            },
-            data={
-                "customPrompt": prompt
-            },
+            json=payload,
             timeout=30
         )
         response.raise_for_status()
