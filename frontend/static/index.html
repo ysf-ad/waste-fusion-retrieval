@@ -7,28 +7,6 @@
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <!-- Settings Bar -->
-    <div class="settings-bar">
-        <div class="settings-controls">
-            <!-- Language Switcher -->
-            <div class="setting-group">
-                <label for="language-select">🌐</label>
-                <select id="language-select" class="setting-select">
-                    <option value="en">English</option>
-                    <option value="fr">Français</option>
-                </select>
-            </div>
-            
-            <!-- High Contrast Toggle -->
-            <div class="setting-group">
-                <label for="contrast-toggle">🎨</label>
-                <button id="contrast-toggle" class="toggle-btn" aria-label="Toggle high contrast mode">
-                    <span class="toggle-indicator"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Camera Page -->
     <div id="camera-page" class="page camera-page active">
         <div class="header-bar">
@@ -39,6 +17,9 @@
             <button id="capture-btn" class="capture-btn-compact" data-i18n="takePhoto">
                 📷 Take Photo
             </button>
+            
+            <button id="language-btn" class="header-btn language-btn">FR</button>
+            <button id="contrast-btn" class="header-btn contrast-btn">🎨</button>
             
             <div class="instructions-section">
                 <h3 data-i18n="howToUse">How to Use</h3>
@@ -550,27 +531,32 @@
                     el.textContent = translations[lang][key];
                 }
             });
+            
+            // Update language button text (opposite of current language)
+            const languageBtn = document.getElementById('language-btn');
+            languageBtn.textContent = lang === 'en' ? 'FR' : 'EN';
         }
 
-        const languageSelect = document.getElementById('language-select');
-        languageSelect.addEventListener('change', (e) => {
-            setLanguage(e.target.value);
+        const languageBtn = document.getElementById('language-btn');
+        languageBtn.addEventListener('click', () => {
+            const currentLang = localStorage.getItem('language') || 'en';
+            const newLang = currentLang === 'en' ? 'fr' : 'en';
+            setLanguage(newLang);
         });
 
         // Load saved language preference
         const savedLanguage = localStorage.getItem('language') || 'en';
-        languageSelect.value = savedLanguage;
         setLanguage(savedLanguage);
 
         // High contrast mode management
         function toggleHighContrast() {
             const isActive = document.body.classList.toggle('high-contrast');
             localStorage.setItem('highContrast', isActive);
-            const contrastBtn = document.getElementById('contrast-toggle');
+            const contrastBtn = document.getElementById('contrast-btn');
             contrastBtn.classList.toggle('active', isActive);
         }
 
-        const contrastToggle = document.getElementById('contrast-toggle');
+        const contrastToggle = document.getElementById('contrast-btn');
         contrastToggle.addEventListener('click', toggleHighContrast);
 
         // Load saved contrast preference
