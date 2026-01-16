@@ -143,6 +143,7 @@
 
         let stream = null;
         let inferenceStartTime = null;
+        let flipImage = false;  // Will be set from config
 
         // Utility functions
         function showPage(page) {
@@ -256,6 +257,19 @@
         }
         
         async function startCamera() {
+            // Load flip configuration from backend
+            try {
+                const configResponse = await fetch('/api/config');
+                if (configResponse.ok) {
+                    const config = await configResponse.json();
+                    flipImage = config.flip_image || false;
+                    console.log('Flip image setting loaded:', flipImage);
+                }
+            } catch (e) {
+                console.log('Could not load config, using default flip setting');
+                flipImage = false;
+            }
+
             // First, check if Pi camera service is available
             try {
                 const response = await fetch(PI_SERVICE.status);
@@ -449,7 +463,16 @@
                         canvas.width = img.width;
                         canvas.height = img.height;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
+                        
+                        // Apply flip if enabled
+                        if (flipImage) {
+                            ctx.scale(-1, 1);
+                            ctx.drawImage(img, -img.width, 0);
+                            canvas.classList.add('flipped');
+                        } else {
+                            ctx.drawImage(img, 0, 0);
+                            canvas.classList.remove('flipped');
+                        }
                         
                         // Save photo with results after displaying
                         savePhotoWithResults(canvas.toDataURL('image/jpeg'), data, inferenceTime);

@@ -652,3 +652,7 @@ body.high-contrast .bin-purple {
         font-size: 1.4rem;
     }
 }
+/* Image Flip Effect */
+#canvas-display.flipped {
+    transform: scaleX(-1);
+}

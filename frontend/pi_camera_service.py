@@ -27,6 +27,7 @@ except ImportError:
 MOTION_SENSOR_PIN = 17  # GPIO pin for motion sensor
 CAPTURE_DELAY = 3     # Seconds to wait after motion before capturing
 API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://api.biswa.ca/predict')
+FLIP_IMAGE = os.getenv('FLIP_IMAGE', 'false').lower() == 'true'
 
 # Use environment variable or default to local directory
 STATIC_DIR = os.getenv('STATIC_DIR', os.path.join(os.path.dirname(__file__), 'static'))
@@ -278,7 +279,8 @@ def get_config():
     return jsonify({
         'capture_delay': CAPTURE_DELAY,
         'motion_sensor_pin': MOTION_SENSOR_PIN,
-        'api_endpoint': API_ENDPOINT
+        'api_endpoint': API_ENDPOINT,
+        'flip_image': FLIP_IMAGE
     })
 
 
