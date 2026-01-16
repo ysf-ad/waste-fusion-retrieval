@@ -12,6 +12,10 @@ import pandas as pd
 from PIL import Image
 import os
 import argparse
+import base64
+import io
+import requests
+import json
 
 # --- Configuration ---
 # Get the base directory (project root)
@@ -21,6 +25,7 @@ CSV_FILE = os.path.join(BASE_DIR, "waste-wizard.csv")
 MODEL_ID_TXT = "BAAI/bge-large-en-v1.5"
 MODEL_ID_IMG = "facebook/dinov2-large"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+LLM_API_URL = "https://waste-classifier.yousifaldakoki.workers.dev/"
 
 def load_resources():
     print(f"Loading model on {DEVICE}...")
@@ -92,14 +97,53 @@ def classify(image_path, model, processor, cached_k, df):
             "confidence": float(score),
             "instruction": instruction
         })
-    return results
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--image", type=str, required=True, help="Path to image to classify")
-    args = parser.parse_args()
-
-    model, processor, tokenizer, df = load_resources()
-    if model:
-        cached_k = encode_database(model, tokenizer, df)
-        classify(args.image, model, processor, cached_k, df)
+    
+    # Convert image to base64
+    buffered = io.BytesIO()
+    image.save(buffered, format="JPEG")
+    img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    image_data_url = f"data:image/jpeg;base64,{img_base64}"
+    
+    # Build prompt with top 5 results
+    top5_text = "\n".join([
+        f"{i+1}. {r['item']} (Category: {r['category']}, Confidence: {r['confidence']:.3f})\n   Instruction: {r['instruction']}"
+        for i, r in enumerate(results)
+    ])
+    
+    prompt = f"""Analyze this waste item image and the top 5 model predictions below. 
+    Determine which prediction is most accurate based on the visual content.
+    
+    Top 5 Predictions:
+    {top5_text}
+    
+    Return a JSON response with:
+    - "item": the correct item name
+    - "category": the disposal category
+    - "instruction": the disposal instruction
+    - "reasoning": brief explanation of your choice
+    
+    Respond ONLY with valid JSON, no additional text."""
+    
+    # Call LLM API
+    try:
+        print("Calling LLM API for final classification...")
+        response = requests.post(
+            LLM_API_URL,
+            json={
+                "imageDataUrl": image_data_url,
+                "customPrompt": prompt
+            },
+            timeout=30
+        )
+        response.raise_for_status()
+        
+        # Parse LLM response
+        llm_result = response.json()
+        print("LLM Classification Result:")
+        print(json.dumps(llm_result, indent=2))
+        return llm_result
+        
+    except Exception as e:
+        print(f"Error calling LLM API: {e}")
+        print("Falling back to top prediction from model.")
+        return results[0]
