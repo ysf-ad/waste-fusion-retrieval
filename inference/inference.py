@@ -16,6 +16,12 @@ import base64
 import io
 import requests
 import json
+import json as json_lib
+from dotenv import load_dotenv
+from openai import OpenAI
+
+# Load environment variables from .env file
+load_dotenv()
 
 # --- Configuration ---
 # Get the base directory (project root)
@@ -25,7 +31,11 @@ CSV_FILE = os.path.join(BASE_DIR, "waste-wizard.csv")
 MODEL_ID_TXT = "BAAI/bge-large-en-v1.5"
 MODEL_ID_IMG = "facebook/dinov2-large"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-LLM_API_URL = "https://waste-classifier.yousifaldakoki.workers.dev/"
+
+# Grok API Configuration
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    print("WARNING: GROQ_API_KEY not found in environment variables. Please set it in .env file.")
 
 def load_resources():
     print(f"Loading model on {DEVICE}...")
@@ -123,35 +133,62 @@ def classify(image_path, model, processor, cached_k, df):
     
     Respond ONLY with valid JSON, no additional text."""
     
-    # Call LLM API
+    # Call Grok LLM API
     try:
-        print("Calling LLM API for final classification...")
+        print("Calling Grok LLM API for final classification...")
         
-        # Encode image to base64 data URL
+        if not GROQ_API_KEY:
+            print("Grok API key not configured. Falling back to top prediction from model.")
+            return results[0]
+        
+        # Encode image to base64
         buffered.seek(0)
         base64_image = base64.b64encode(buffered.read()).decode('utf-8')
-        image_data_url = f"data:image/jpeg;base64,{base64_image}"
         
-        # Prepare request with correct format
-        payload = {
-            "imageDataUrl": image_data_url,
-            "customPrompt": prompt
-        }
-        
-        response = requests.post(
-            LLM_API_URL,
-            json=payload,
-            timeout=30
+        # Initialize Grok client (uses OpenAI-compatible API)
+        client = OpenAI(
+            api_key=GROQ_API_KEY,
+            base_url="https://api.groq.com/openai/v1"
         )
-        response.raise_for_status()
+        
+        # Call Grok API with vision
+        message = client.chat.completions.create(
+            model="grok-vision-beta",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt
+                        }
+                    ]
+                }
+            ],
+            temperature=0.3,
+            max_tokens=500
+        )
         
         # Parse LLM response
-        llm_result = response.json()
-        print("LLM Classification Result:")
-        print(json.dumps(llm_result, indent=2))
-        return llm_result
+        response_text = message.choices[0].message.content
+        print("Grok Classification Result:")
+        print(response_text)
+        
+        # Try to parse as JSON
+        try:
+            llm_result = json_lib.loads(response_text)
+            return llm_result
+        except json_lib.JSONDecodeError:
+            print("Could not parse LLM response as JSON. Falling back to top prediction.")
+            return results[0]
         
     except Exception as e:
-        print(f"Error calling LLM API: {e}")
+        print(f"Error calling Grok API: {e}")
         print("Falling back to top prediction from model.")
         return results[0]

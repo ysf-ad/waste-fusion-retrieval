@@ -8,3 +8,5 @@ gradio
 matplotlib
 seaborn
 requests
+openai
+python-dotenv
