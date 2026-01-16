@@ -166,15 +166,42 @@ def classify(image_path, model, processor, cached_k, df):
         print("Grok Classification Result:")
         print(response_text)
         
+        # Check if response looks like an error
+        if 'error' in response_text.lower() or 'fail' in response_text.lower():
+            print("⚠ Grok returned an error message")
+            print("✓ Falling back to top model prediction")
+            print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
+            return results[0]
+        
         # Try to parse as JSON
         try:
             llm_result = json_lib.loads(response_text)
-            return llm_result
-        except json_lib.JSONDecodeError:
-            print("Could not parse LLM response as JSON. Falling back to top prediction.")
+            
+            # Check if it's an error response (common error formats)
+            if 'error' in llm_result or 'Error' in llm_result or 'message' in llm_result:
+                print("⚠ Grok returned an error response:", llm_result)
+                print("✓ Falling back to top model prediction")
+                print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
+                return results[0]
+            
+            # Validate that the result has required fields
+            if 'item' in llm_result and 'category' in llm_result:
+                print("✓ Grok API succeeded - using LLM result")
+                return llm_result
+            else:
+                print("⚠ Grok response missing required fields:", llm_result)
+                print("✓ Falling back to top model prediction")
+                print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
+                return results[0]
+                
+        except json_lib.JSONDecodeError as json_err:
+            print(f"⚠ Could not parse Grok response as JSON: {json_err}")
+            print("✓ Falling back to top model prediction")
+            print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
             return results[0]
         
     except Exception as e:
-        print(f"Error calling Grok API: {e}")
-        print("Falling back to top prediction from model.")
+        print(f"⚠ Error calling Grok API: {e}")
+        print("✓ Falling back to top model prediction")
+        print(f"Top prediction: {results[0]['item']} ({results[0]['category']})")
         return results[0]
