@@ -109,7 +109,7 @@ def on_motion_stopped():
 
 def delayed_capture():
     """Countdown and capture image immediately when motion detected"""
-    global capture_in_progress, latest_capture, latest_capture_time, event_queue
+    global capture_in_progress, latest_capture, latest_capture_time, event_queue, motion_enabled
     
     if capture_in_progress:
         return
@@ -131,6 +131,9 @@ def delayed_capture():
     time.sleep(1)
     print("Capturing now!")
     
+    # Pause motion sensor to prevent double-triggering
+    motion_enabled = False
+    
     try:
         if camera:
             # Capture to bytes
@@ -145,6 +148,8 @@ def delayed_capture():
             event_queue.append({'event': 'image_captured', 'data': {}})
     except Exception as e:
         print(f"Capture failed: {e}")
+        # Re-enable motion if capture failed, as frontend won't get the event
+        motion_enabled = True
     finally:
         capture_in_progress = False
 
