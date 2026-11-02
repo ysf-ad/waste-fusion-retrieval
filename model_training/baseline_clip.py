@@ -73,7 +73,7 @@ def main():
             idx = name_to_idx[f]
             folder_path = os.path.join(TRAIN_IMAGES_DIR, f)
             images = [os.path.join(folder_path, img) for img in os.listdir(folder_path) 
-                      if img.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
+                        if img.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
             
             # Deterministic Split
             images.sort()

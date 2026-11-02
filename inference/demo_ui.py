@@ -3,7 +3,7 @@ import torch
 import pandas as pd
 from PIL import Image
 from transformers import AutoProcessor, AutoTokenizer
-from model import CrossAttentionMatcher
+from inference.model import CrossAttentionMatcher
 import os
 import re
 

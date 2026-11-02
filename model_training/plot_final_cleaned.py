@@ -60,13 +60,13 @@ for k_val in [1, 10, 30, 50]:
     
     # We annotate at the error position: 100.0 - val
     ax.annotate(f'{v23_val:.1f}%', xy=(k_val, 100.0 - v23_val), xytext=(0, 10), 
-               textcoords='offset points', ha='center', fontsize=8, color='#2ecc71', fontweight='bold')
+                textcoords='offset points', ha='center', fontsize=8, color='#2ecc71', fontweight='bold')
     
     ax.annotate(f'{clip_val:.1f}%', xy=(k_val, 100.0 - clip_val), xytext=(0, -15), 
-               textcoords='offset points', ha='center', fontsize=8, color='#3498db')
+                textcoords='offset points', ha='center', fontsize=8, color='#3498db')
     
     ax.annotate(f'{dino_val:.1f}%', xy=(k_val, 100.0 - dino_val), xytext=(0, -25), 
-               textcoords='offset points', ha='center', fontsize=8, color='#e74c3c')
+                textcoords='offset points', ha='center', fontsize=8, color='#e74c3c')
 
 ax.set_xlabel('K (Number of Retrieved Items)', fontsize=12, fontweight='bold')
 ax.set_ylabel('Recall Ratio (Inverse-Log Scale to 100%)', fontsize=12, fontweight='bold')
@@ -95,8 +95,8 @@ print(f"{'Model':<30} {'R@1':<8} {'R@10':<8} {'R@30':<8} {'R@50':<8}")
 print("-" * 72)
 
 for name, df in [("CLIP (Zero-Shot)", clip_df), 
-                 ("DINO Linear (Supervised)", dino_df),
-                 ("QK Fusion V2.3 (Ours)", v23_df)]:
+                    ("DINO Linear (Supervised)", dino_df),
+                    ("QK Fusion V2.3 (Ours)", v23_df)]:
     r1 = df[df['k'] == 1]['recall'].values[0]
     r10 = df[df['k'] == 10]['recall'].values[0]
     r30 = df[df['k'] == 30]['recall'].values[0]

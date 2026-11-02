@@ -1,0 +1,40 @@
+# Raspberry Pi 5 with Camera and GPIO support
+FROM python:3.11-bookworm
+
+# Install C libraries for camera (NOT python3-* packages)
+RUN apt-get update && apt-get install -y \
+    libcamera0.1 \
+    libcamera-dev \
+    libcap-dev \
+    libatlas-base-dev \
+    ffmpeg \
+    build-essential \
+    libopenjp2-7 \
+    python3-dev \
+    pybind11-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for caching
+COPY requirements.txt .
+
+# Install Python packages via pip
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy static files and Python service
+COPY static/ /app/static/
+COPY pi_camera_service.py /app/
+
+# Configuration via environment variables
+ENV CAPTURE_DELAY=15
+ENV MOTION_SENSOR_PIN=17
+ENV API_ENDPOINT=https://api.biswa.ca/predict
+
+# Expose port
+EXPOSE 80
+
+# Run the camera service
+CMD ["python", "pi_camera_service.py"]

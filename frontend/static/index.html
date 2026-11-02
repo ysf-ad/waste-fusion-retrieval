@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BINIT</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <!-- Camera Page -->
+    <div id="camera-page" class="page camera-page active">
+        <div class="header-bar">
+            <div class="title-section">
+                <h1>♻️ BINIT</h1>
+            </div>
+
+            <button id="capture-btn" class="capture-btn-compact" data-i18n="takePhoto">
+                Take Photo
+            </button>
+
+            <button id="language-btn" class="header-btn language-btn">FR</button>
+
+            <div class="contrast-button-group">
+                <button id="contrast-btn" class="header-btn contrast-btn">High Contrast</button>
+                <span class="toggle-indicator"></span>
+            </div>
+
+            <div class="instructions-section">
+                <h3 data-i18n="howToUse">How to Use</h3>
+                <p data-i18n="instruction1">1. Position item in camera view</p>
+                <p data-i18n="instruction2">2. Wait for automatic capture</p>
+                <p data-i18n="instruction3">3. View classification results</p>
+            </div>
+        </div>
+
+        <div class="camera-container" id="camera-wrapper">
+            <img id="video" src="/api/stream" style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                onerror="console.error('Stream image failed to load')" onload="console.log('Stream loaded')" />
+            <!-- Countdown overlay -->
+            <div id="countdown-overlay" class="countdown-overlay" style="display: none;">
+                <span id="countdown-number">3</span>
+            </div>
+            <!-- Fallback message when camera not available -->
+            <div id="camera-fallback" class="camera-fallback" style="display: none;">
+                <p>📷 <span data-i18n="cameraNotAvailable">Camera not available</span></p>
+                <p class="fallback-hint" data-i18n="cameraHttpsHint">Camera requires HTTPS. Use file upload instead.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Page -->
+    <div id="loading-page" class="page">
+        <div class="loading">
+            <div class="spinner"></div>
+            <p class="loading-text" data-i18n="analyzing">Analyzing your item...</p>
+        </div>
+    </div>
+
+    <!-- Result Page -->
+    <div id="result-page" class="page result-page">
+        <button id="back-btn" class="back-btn" data-i18n="scanAnother">
+            ← Scan Another Item
+        </button>
+
+        <div class="result-card">
+            <div class="result-content">
+                <!-- Left: Captured Image -->
+                <div class="image-section">
+                    <canvas id="canvas-display"></canvas>
+                </div>
+
+                <!-- Right: Classification Info -->
+                <div class="info-section">
+                    <h2 id="item-name" class="item-name">Item Name</h2>
+                    <p id="item-category" class="item-category">Category</p>
+
+                    <div class="instruction-box">
+                        <span class="icon">☑️</span>
+                        <p class="text" id="instruction-text"><span data-i18n="placeInBin">Place this item in the</span>
+                            <span class="bin-highlight" id="bin-name-inline">Bin</span>.
+                        </p>
+                    </div>
+
+                    <div id="bin-indicator" class="bin-indicator bin-blue">
+                        <span class="recycle-icon">♻️</span>
+                        <span id="bin-name">BLUE BIN</span>
+                    </div>
+
+                    <div class="why-section">
+                        <div class="why-header">
+                            <span class="icon">ℹ️</span>
+                            <span data-i18n="why">INSTRUCTIONS</span>
+                        </div>
+                        <div class="why-content">
+                            <span class="info-icon">ℹ️</span>
+                            <p id="why-text">Explanation about the classification.</p>
+                        </div>
+                    </div>
+
+                    <div class="timing-info" id="timing-info"
+                        style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 8px; font-size: 0.9em; color: #666;">
+                        ⏱️ <span data-i18n="inferenceTime">Inference time:</span> <span id="inference-time"
+                            style="font-weight: bold; color: #333;">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-container" class="error-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        // API Endpoint - Points to the backend API via Cloudflare Tunnel
+        // Use local proxy to avoid CORS issues
+        const API_ENDPOINT = '/api/predict';
+
+        // Pi Camera Service endpoints (local)
+        const PI_SERVICE = {
+            status: '/api/status',
+            capture: '/api/capture',
+            latestImage: '/api/latest-image',
+            stream: '/api/stream',
+            config: '/api/config'
+        };
+
+        // Check for Pi camera service
+        let usingPiCamera = false;
+
+        // Elements
+        const cameraPage = document.getElementById('camera-page');
+        const loadingPage = document.getElementById('loading-page');
+        const resultPage = document.getElementById('result-page');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas-display');
+        const captureBtn = document.getElementById('capture-btn');
+        const backBtn = document.getElementById('back-btn');
+
+        // Result elements
+        const itemName = document.getElementById('item-name');
+        const itemCategory = document.getElementById('item-category');
+        const instructionText = document.getElementById('instruction-text');
+        const binNameInline = document.getElementById('bin-name-inline');
+        const binIndicator = document.getElementById('bin-indicator');
+        const binName = document.getElementById('bin-name');
+        const whyText = document.getElementById('why-text');
+        const errorContainer = document.getElementById('error-container');
+        const inferenceTimeDisplay = document.getElementById('inference-time');
+
+        let stream = null;
+        let inferenceStartTime = null;
+        let flipImage = false;  // Will be set from config
+
+        // Utility functions
+        function showPage(page) {
+            [cameraPage, loadingPage, resultPage].forEach(p => p.classList.remove('active'));
+            page.classList.add('active');
+        }
+
+        function getBinColor(category, lang = 'en') {
+            const cat = (category || '').toLowerCase();
+            let binKey = 'GARBAGE BIN'; // default
+
+            // Match exact categories from waste-wizard.csv
+            if (cat === 'blue bin' || cat.includes('recycl')) binKey = 'BLUE BIN';
+            else if (cat === 'green bin' || cat.includes('compost') || cat.includes('organic')) binKey = 'GREEN BIN';
+            else if (cat === 'garbage bin' || cat === 'garbage' || cat.includes('landfill')) binKey = 'GARBAGE BIN';
+            else if (cat === 'hhw' || cat.includes('hazard')) binKey = 'HHW';
+            else if (cat === 'electronic waste' || cat.includes('electronic')) binKey = 'ELECTRONIC WASTE';
+            else if (cat === 'oversized item' || cat.includes('oversized')) binKey = 'OVERSIZED ITEM';
+            else if (cat === 'depot') binKey = 'DEPOT';
+            else if (cat === 'christmas tree') binKey = 'CHRISTMAS TREE';
+            else if (cat === 'yard waste') binKey = 'YARD WASTE';
+            else if (cat === 'metal') binKey = 'BLUE BIN';  // Metal items go to recycling
+            else if (cat === 'not accepted') binKey = 'NOT ACCEPTED';
+            else if (cat.includes('black')) binKey = 'BLACK BIN';
+            else if (cat.includes('yellow')) binKey = 'YELLOW BIN';
+
+            const binData = {
+                'BLUE BIN': { class: 'bin-blue', color: 'Blue', icon: '♻️' },
+                'GREEN BIN': { class: 'bin-green', color: 'Green', icon: '🌱' },
+                'GARBAGE BIN': { class: 'bin-grey', color: 'Garbage', icon: '🗑️' },
+                'HHW': { class: 'bin-red', color: 'HHW', icon: '☠️' },
+                'ELECTRONIC WASTE': { class: 'bin-orange', color: 'Electronic', icon: '🔌' },
+                'OVERSIZED ITEM': { class: 'bin-purple', color: 'Oversized', icon: '📦' },
+                'DEPOT': { class: 'bin-brown', color: 'Depot', icon: '🏪' },
+                'CHRISTMAS TREE': { class: 'bin-green', color: 'Tree', icon: '🎄' },
+                'YARD WASTE': { class: 'bin-green', color: 'Yard', icon: '🍂' },
+                'NOT ACCEPTED': { class: 'bin-black', color: 'Not Accepted', icon: '🚫' },
+                'BLACK BIN': { class: 'bin-black', color: 'Black', icon: '🗑️' },
+                'YELLOW BIN': { class: 'bin-yellow', color: 'Yellow', icon: '♻️' }
+            };
+
+            const data = binData[binKey];
+            const translatedName = translations[lang][binKey] || binKey;
+
+            return {
+                class: data.class,
+                name: translatedName,
+                color: data.color,
+                icon: data.icon
+            };
+        }
+
+        const cameraFallback = document.getElementById('camera-fallback');
+        const countdownOverlay = document.getElementById('countdown-overlay');
+        const countdownNumber = document.getElementById('countdown-number');
+
+        // Countdown function
+        async function showCountdown() {
+            return new Promise((resolve) => {
+                countdownOverlay.style.display = 'flex';
+                let count = 3;
+                countdownNumber.textContent = count;
+
+                const interval = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdownNumber.textContent = count;
+                    } else {
+                        clearInterval(interval);
+                        countdownOverlay.style.display = 'none';
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
+
+        // Camera functions
+        function connectToEventStream() {
+            const eventSource = new EventSource('/api/events');
+
+            eventSource.addEventListener('motion_detected', (e) => {
+                // Motion detected on backend
+            });
+
+            eventSource.addEventListener('countdown', (e) => {
+                const data = JSON.parse(e.data);
+                // Show countdown overlay
+                countdownOverlay.style.display = 'flex';
+                countdownNumber.textContent = data.number;
+            });
+
+            eventSource.addEventListener('image_captured', async (e) => {
+                countdownOverlay.style.display = 'none';
+
+                // Fetch the captured image and process it
+                await captureFromPiAndProcess();
+            });
+
+            eventSource.addEventListener('heartbeat', (e) => {
+                // Keep connection alive
+            });
+
+            eventSource.onerror = (error) => {
+                console.error('EventSource error:', error);
+                // Attempt to reconnect after 5 seconds
+                setTimeout(() => {
+                    eventSource.close();
+                    connectToEventStream();
+                }, 5000);
+            };
+        }
+
+        async function startCamera() {
+            // Load flip configuration from backend
+            try {
+                const configResponse = await fetch('/api/config');
+                if (configResponse.ok) {
+                    const config = await configResponse.json();
+                    flipImage = config.flip_image || false;
+                    console.log('Flip image setting loaded:', flipImage);
+                }
+            } catch (e) {
+                console.log('Could not load config, using default flip setting');
+                flipImage = false;
+            }
+
+            // First, check if Pi camera service is available
+            try {
+                const response = await fetch(PI_SERVICE.status);
+                if (response.ok) {
+                    const status = await response.json();
+                    if (status.pi_available && status.camera_ready) {
+                        console.log('Pi camera service detected - using MJPEG stream');
+                        usingPiCamera = true;
+                        // MJPEG stream is now directly loaded in img tag src
+                        video.style.display = 'block';
+                        cameraFallback.style.display = 'none';
+
+                        // Connect to SSE for real-time motion detection events
+                        connectToEventStream();
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.log('Pi camera service not available, falling back to browser camera');
+            }
+
+            // Fallback to browser camera
+            // Check if mediaDevices is available (requires HTTPS or localhost)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                console.warn('Camera API not available. Likely due to HTTP access.');
+                showCameraFallback();
+                return;
+            }
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                cameraFallback.style.display = 'none';
+            } catch (error) {
+                console.error('Camera error:', error);
+                showCameraFallback();
+            }
+        }
+
+        function showCameraFallback() {
+            video.style.display = 'none';
+            cameraFallback.style.display = 'flex';
+            captureBtn.disabled = true;
+            captureBtn.style.opacity = '0.5';
+        }
+
+        async function processImage(blob) {
+            const formData = new FormData();
+            formData.append('file', blob, 'capture.jpg');
+
+            // Start timing
+            inferenceStartTime = performance.now();
+            console.log('[Timing] Inference started at:', new Date().toISOString());
+
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Calculate inference time
+                const inferenceEndTime = performance.now();
+                const inferenceTime = inferenceEndTime - inferenceStartTime;
+                console.log('[Timing] Inference completed at:', new Date().toISOString());
+                console.log('[Timing] Total inference time:', inferenceTime.toFixed(2), 'ms');
+                console.log('[Timing] Total inference time:', (inferenceTime / 1000).toFixed(2), 'seconds');
+
+                await displayResult(data, blob, inferenceTime);
+            } catch (error) {
+                console.error('API error:', error);
+                const inferenceEndTime = performance.now();
+                const inferenceTime = inferenceEndTime - inferenceStartTime;
+                console.log('[Timing] Inference failed after:', inferenceTime.toFixed(2), 'ms');
+                showError(error.message);
+            }
+        }
+
+        async function captureAndProcess() {
+            // Show countdown
+            await showCountdown();
+
+            // Show loading
+            showPage(loadingPage);
+
+            if (usingPiCamera) {
+                await captureFromPiAndProcess();
+            } else {
+                // Capture image to canvas from browser camera
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+
+                // Convert to blob and send to API
+                canvas.toBlob(async (blob) => {
+                    await processImage(blob);
+                }, 'image/jpeg', 0.9);
+            }
+        }
+
+        async function captureFromPiAndProcess() {
+            try {
+                // Get the captured image from Pi
+                const imgResponse = await fetch(PI_SERVICE.latestImage);
+                if (!imgResponse.ok) {
+                    throw new Error('Failed to get captured image');
+                }
+
+                const blob = await imgResponse.blob();
+
+                // FREEZE THE VIDEO: Replace stream with static captured image
+                // Add a timestamp to prevent caching
+                video.src = PI_SERVICE.latestImage + '?t=' + new Date().getTime();
+
+                // Show loading page
+                showPage(loadingPage);
+
+                // Process the image
+                await processImage(blob);
+            } catch (error) {
+                console.error('Pi capture processing error:', error);
+                showError('Failed to process captured image: ' + error.message);
+            }
+        }
+
+        let autoReturnTimer = null;
+
+        // Translation cache to avoid repeated API calls
+        const translationCache = {};
+
+        // Function to translate text to French using the API
+        async function translateToFrench(text) {
+            // Check cache first
+            if (translationCache[text]) {
+                return translationCache[text];
+            }
+
+            try {
+                const response = await fetch('/api/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (!response.ok) {
+                    console.error('Translation failed:', response.statusText);
+                    return text; // Return original text if translation fails
+                }
+
+                const data = await response.json();
+                const translatedText = data.translated_text || text;
+
+                // Cache the translation
+                translationCache[text] = translatedText;
+
+                return translatedText;
+            } catch (error) {
+                console.error('Translation error:', error);
+                return text; // Return original text on error
+            }
+        }
+
+        async function displayResult(data, blob, inferenceTime) {
+            errorContainer.style.display = 'none';
+
+            // Display timing information
+            if (inferenceTime) {
+                const seconds = (inferenceTime / 1000).toFixed(2);
+                inferenceTimeDisplay.textContent = `${seconds}s (${inferenceTime.toFixed(0)}ms)`;
+                console.log('[Timing] Displaying inference time:', seconds, 'seconds');
+            }
+
+            // Draw captured image to canvas
+            if (blob) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.getElementById('canvas-display');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+
+                        // Apply flip if enabled
+                        if (flipImage) {
+                            ctx.scale(-1, 1);
+                            ctx.drawImage(img, -img.width, 0);
+                            canvas.classList.add('flipped');
+                        } else {
+                            ctx.drawImage(img, 0, 0);
+                            canvas.classList.remove('flipped');
+                        }
+
+                        // Save photo with results after displaying
+                        savePhotoWithResults(canvas.toDataURL('image/jpeg'), data, inferenceTime);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(blob);
+            }
+
+            // Get current language first
+            const currentLang = localStorage.getItem('language') || 'en';
+
+            // Get top result
+            const result = data.results && data.results[0] ? data.results[0] : data;
+
+            // Translate item name if in French mode
+            let name = result.item || translations[currentLang]['unknown item'];
+            if (currentLang === 'fr' && result.item) {
+                name = await translateToFrench(result.item);
+            }
+
+            const category = result.category || translations[currentLang]['unknown'];
+
+            // Get instruction - translate if in French mode and it's not a fallback
+            let instruction = result.instruction || translations[currentLang]['please dispose of this item properly.'];
+
+            // If we have a real instruction (not fallback) and language is French, translate it
+            if (currentLang === 'fr' && result.instruction) {
+                instruction = await translateToFrench(result.instruction);
+            }
+
+            // Get bin info based on category
+            const binInfo = getBinColor(category, currentLang);
+
+            // Translate category to current language
+            const categoryLower = category.toLowerCase();
+            const translatedCategory = translations[currentLang][categoryLower] || category;
+
+            // Update UI
+            itemName.textContent = name;
+            itemCategory.textContent = translatedCategory;
+            binNameInline.textContent = binInfo.name;
+            binIndicator.className = 'bin-indicator ' + binInfo.class;
+            binName.textContent = binInfo.name;
+            document.querySelector('.recycle-icon').textContent = binInfo.icon;
+            whyText.textContent = instruction;
+
+            showPage(resultPage);
+
+            // Disable motion detection while showing results
+            if (usingPiCamera) {
+                fetch('/api/motion/disable', { method: 'POST' });
+            }
+
+            // Auto-return to camera after 15 seconds
+            if (autoReturnTimer) clearTimeout(autoReturnTimer);
+            autoReturnTimer = setTimeout(() => {
+                resetCamera();
+            }, 15000);
+        }
+
+        function showError(message) {
+            errorContainer.textContent = 'Error: ' + message;
+            errorContainer.style.display = 'block';
+            showPage(resultPage);
+        }
+
+        async function savePhotoWithResults(photoDataUrl, results, inferenceTime) {
+            try {
+                console.log('[Storage] Saving photo with results...');
+                const response = await fetch('/api/save-photo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        photo: photoDataUrl,
+                        results: results,
+                        inference_time: inferenceTime
+                    })
+                });
+
+                if (response.ok) {
+                    const saveResult = await response.json();
+                    console.log('[Storage] Photo saved successfully:', saveResult.photo_id);
+                } else {
+                    console.warn('[Storage] Failed to save photo:', response.status);
+                }
+            } catch (error) {
+                console.error('[Storage] Error saving photo:', error);
+            }
+        }
+
+        function resetCamera() {
+            if (autoReturnTimer) {
+                clearTimeout(autoReturnTimer);
+                autoReturnTimer = null;
+            }
+
+            // Re-enable motion detection when returning to camera
+            if (usingPiCamera) {
+                fetch('/api/motion/enable', { method: 'POST' });
+                // UNFREEZE: Restore the live stream
+                video.src = PI_SERVICE.stream;
+            }
+
+            showPage(cameraPage);
+        }
+
+        // Event listeners
+        captureBtn.addEventListener('click', captureAndProcess);
+        backBtn.addEventListener('click', resetCamera);
+
+        // Start camera on load
+        startCamera();
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // ===== INTERNATIONALIZATION & ACCESSIBILITY =====
+
+        // Translation dictionary
+        const translations = {
+            en: {
+                takePhoto: 'Take Photo',
+                howToUse: 'How to Use',
+                instruction1: '1. Position item in camera view',
+                instruction2: '2. Wait for automatic capture',
+                instruction3: '3. View classification results',
+                cameraNotAvailable: 'Camera not available',
+                cameraHttpsHint: 'Camera requires HTTPS. Use file upload instead.',
+                analyzing: 'Analyzing your item...',
+                scanAnother: '← Scan Another Item',
+                placeInBin: 'Place this item in the',
+                why: 'Why?',
+                inferenceTime: 'Inference time:',
+                // Default messages
+                'unknown item': 'Unknown Item',
+                'unknown': 'Unknown',
+                'please dispose of this item properly.': 'Please dispose of this item properly.',
+                'confidence': 'confidence',
+                // Categories
+                'blue bin': 'Blue Bin',
+                'green bin': 'Green Bin',
+                'garbage bin': 'Garbage Bin',
+                'special disposal': 'Special Disposal',
+                'black bin': 'Black Bin',
+                'yellow bin': 'Yellow Bin',
+                'recycling': 'Recycling',
+                'compost': 'Compost',
+                'organic': 'Organic',
+                'landfill': 'Landfill',
+                'hazardous': 'Hazardous',
+                'electronic': 'Electronic',
+                'hhw': 'HHW',
+                'oversized item': 'Oversized Item',
+                'depot': 'Depot',
+                'yard waste': 'Yard Waste',
+                'christmas tree': 'Christmas Tree',
+                'not accepted': 'Not Accepted',
+                // Bin Display Names
+                'BLUE BIN': 'BLUE BIN',
+                'GREEN BIN': 'GREEN BIN',
+                'GARBAGE BIN': 'GARBAGE BIN',
+                'HHW': 'HHW',
+                'ELECTRONIC WASTE': 'ELECTRONIC WASTE',
+                'OVERSIZED ITEM': 'OVERSIZED ITEM',
+                'DEPOT': 'DEPOT',
+                'CHRISTMAS TREE': 'CHRISTMAS TREE',
+                'YARD WASTE': 'YARD WASTE',
+                'NOT ACCEPTED': 'NOT ACCEPTED',
+                'BLACK BIN': 'BLACK BIN',
+                'YELLOW BIN': 'YELLOW BIN'
+            },
+            fr: {
+                takePhoto: 'Prendre une photo',
+                howToUse: 'Mode d\'emploi',
+                instruction1: '1. Positionner l\'objet dans le champ de la caméra',
+                instruction2: '2. Attendre la capture automatique',
+                instruction3: '3. Afficher les résultats de la classification',
+                cameraNotAvailable: 'Caméra non disponible',
+                cameraHttpsHint: 'La caméra nécessite HTTPS. Utilisez le téléchargement de fichier à la place.',
+                analyzing: 'Analyse de votre objet...',
+                scanAnother: '← Analyser un autre objet',
+                placeInBin: 'Placez cet objet dans la',
+                why: 'Pourquoi ?',
+                inferenceTime: 'Temps d\'inférence:',
+                // Default messages
+                'unknown item': 'Objet Inconnu',
+                'unknown': 'Inconnu',
+                'please dispose of this item properly.': 'Veuillez éliminer cet objet correctement.',
+                'confidence': 'confiance',
+                // Categories
+                'blue bin': 'Bac Bleu',
+                'green bin': 'Bac Vert',
+                'garbage bin': 'Poubelle',
+                'special disposal': 'Élimination Spéciale',
+                'black bin': 'Bac Noir',
+                'yellow bin': 'Bac Jaune',
+                'recycling': 'Recyclage',
+                'compost': 'Compost',
+                'organic': 'Organique',
+                'landfill': 'Décharge',
+                'hazardous': 'Dangereux',
+                'electronic': 'Électronique',
+                'hhw': 'DDD',  // Déchets Domestiques Dangereux
+                'oversized item': 'Objet Volumineux',
+                'depot': 'Dépôt',
+                'yard waste': 'Déchets de Jardin',
+                'christmas tree': 'Sapin de Noël',
+                'not accepted': 'Non Accepté',
+                // Bin Display Names
+                'BLUE BIN': 'BAC BLEU',
+                'GREEN BIN': 'BAC VERT',
+                'GARBAGE BIN': 'POUBELLE',
+                'HHW': 'DDD',  // Déchets Domestiques Dangereux
+                'ELECTRONIC WASTE': 'DÉCHETS ÉLECTRONIQUES',
+                'OVERSIZED ITEM': 'OBJET VOLUMINEUX',
+                'DEPOT': 'DÉPÔT',
+                'CHRISTMAS TREE': 'SAPIN DE NOËL',
+                'YARD WASTE': 'DÉCHETS DE JARDIN',
+                'NOT ACCEPTED': 'NON ACCEPTÉ',
+                'BLACK BIN': 'BAC NOIR',
+                'YELLOW BIN': 'BAC JAUNE'
+            }
+        };
+
+        // Language management
+        function setLanguage(lang) {
+            localStorage.setItem('language', lang);
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+
+            // Update language button text (opposite of current language)
+            const languageBtn = document.getElementById('language-btn');
+            languageBtn.textContent = lang === 'en' ? 'FR' : 'EN';
+        }
+
+        const languageBtn = document.getElementById('language-btn');
+        languageBtn.addEventListener('click', () => {
+            const currentLang = localStorage.getItem('language') || 'en';
+            const newLang = currentLang === 'en' ? 'fr' : 'en';
+            setLanguage(newLang);
+        });
+
+        // Load saved language preference
+        const savedLanguage = localStorage.getItem('language') || 'en';
+        setLanguage(savedLanguage);
+
+        // High contrast mode management
+        function toggleHighContrast() {
+            const isActive = document.body.classList.toggle('high-contrast');
+            localStorage.setItem('highContrast', isActive);
+            const contrastBtn = document.getElementById('contrast-btn');
+            contrastBtn.classList.toggle('active', isActive);
+        }
+
+        const contrastToggle = document.getElementById('contrast-btn');
+        contrastToggle.addEventListener('click', toggleHighContrast);
+
+        // Load saved contrast preference
+        const savedContrast = localStorage.getItem('highContrast') === 'true';
+        if (savedContrast) {
+            document.body.classList.add('high-contrast');
+            contrastToggle.classList.add('active');
+        }
+    </script>
+</body>
+
+</html>
