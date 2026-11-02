@@ -31,7 +31,7 @@ COPY pi_camera_service.py /app/
 # Configuration via environment variables
 ENV CAPTURE_DELAY=15
 ENV MOTION_SENSOR_PIN=17
-ENV API_ENDPOINT=https://api.biswa.ca/predict
+ENV API_ENDPOINT=https://waste-wizard-clef.yousifaldakoki.workers.dev/
 
 # Expose port
 EXPOSE 80
