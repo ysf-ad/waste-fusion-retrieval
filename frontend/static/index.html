@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BINIT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Lexend:wght@300;400;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -20,12 +21,17 @@
                 Take Photo
             </button>
 
+            <button id="upload-btn" class="header-btn" data-i18n="uploadPhoto" style="display: none;">Upload Photo</button>
+            <input type="file" id="file-input" accept="image/*" hidden />
+
             <button id="language-btn" class="header-btn language-btn">FR</button>
 
             <div class="contrast-button-group">
                 <button id="contrast-btn" class="header-btn contrast-btn">High Contrast</button>
                 <span class="toggle-indicator"></span>
             </div>
+
+            <button id="debug-btn" class="header-btn" style="display: none;">Debug</button>
 
             <div class="instructions-section">
                 <h3 data-i18n="howToUse">How to Use</h3>
@@ -48,48 +54,83 @@
         </div>
     </div>
 
-    <!-- Loading Page -->
-    <div id="loading-page" class="page">
-        <div class="loading">
+    <!-- Scanning Page -->
+    <div id="loading-page" class="page scan-page">
+        <div class="panel left-panel">
+            <div class="image-wrapper scan-frame">
+                <img id="scan-image" alt="" />
+                <div class="scan-beam"></div>
+                <i></i><i></i><i></i><i></i>
+            </div>
+        </div>
+        <div class="panel right-panel">
+            <h2 class="action-text" data-i18n="analyzing">Analyzing your item...</h2>
             <div class="spinner"></div>
-            <p class="loading-text" data-i18n="analyzing">Analyzing your item...</p>
+        </div>
+        <div class="bottom-bar">
+            <span>How Long It Took Benny To Process Your Query: <span id="scan-time">0.0s</span></span>
         </div>
     </div>
 
     <!-- Result Page -->
-    <div id="result-page" class="page result-page">
-        <button id="back-btn" class="back-btn" data-i18n="scanAnother">← Scan Another Item</button>
-
-        <div class="result-container">
-            <!-- Left Panel -->
-            <div class="left-panel">
-                <div class="image-wrapper">
-                    <canvas id="canvas-display"></canvas>
-                </div>
-                <div class="info-wrapper">
-                    <h3 class="info-title">
-                        <span class="info-icon">ℹ️</span>
-                        <span id="item-name">Item Name</span>
-                    </h3>
-                    <p class="info-desc" id="why-text">Explanation about the classification.</p>
-                </div>
+    <div id="result-page" class="page result-page theme-grey layout-bin">
+        <div id="left-panel" class="panel left-panel">
+            <div class="image-wrapper">
+                <canvas id="canvas-display"></canvas>
             </div>
-
-            <!-- Right Panel -->
-            <div class="right-panel">
-                <h2 class="action-text" id="action-text">PLACE IN</h2>
-                <h1 class="bin-text" id="bin-name-large">RECYCLING BIN</h1>
-                <div class="icon-wrapper" id="large-icon-container">
-                    <!-- Dynamic SVG inserted here -->
-                </div>
+            <div id="info-wrapper" class="info-wrapper">
+                <h3 class="info-title">
+                    <span class="info-icon">i</span>
+                    <span id="item-name">Item Name</span>
+                </h3>
+                <p class="info-desc" id="why-text">Explanation about the classification.</p>
             </div>
+        </div>
+
+        <div id="right-panel" class="panel right-panel">
+            <h2 class="action-text" id="action-text">PLACE IN</h2>
+            <h1 class="bin-text" id="bin-name-large">RECYCLING BIN</h1>
+            <div class="icon-wrapper" id="large-icon-container"></div>
         </div>
 
         <div class="bottom-bar">
-            How Long It Took Benny To Process Your Query: <span id="inference-time">-</span>
+            <span>How Long It Took Benny To Process Your Query: <span id="inference-time">-</span></span>
+            <button id="back-btn" class="back-btn" data-i18n="scanAnother">← Scan Another Item</button>
         </div>
 
         <div id="error-container" class="error-message" style="display: none;"></div>
+    </div>
+
+    <!-- Debug panel -->
+    <button id="debug-fab" hidden>Debug</button>
+    <div id="debug-panel" hidden>
+        <div class="debug-head">
+            <span>Debug mode</span>
+            <div><button id="debug-hide">Hide</button><button id="debug-exit">Exit</button></div>
+        </div>
+        <div class="debug-group">Screens</div>
+        <div class="debug-grid">
+            <button data-debug="camera">Camera</button>
+            <button data-debug="countdown">Countdown</button>
+            <button data-debug="fallback">No camera</button>
+            <button data-debug="scan">Scanning</button>
+            <button data-debug="error">Error</button>
+        </div>
+        <div class="debug-group">Results</div>
+        <div class="debug-grid">
+            <button data-debug="recycle">Recycling</button>
+            <button data-debug="litter">Litter</button>
+            <button data-debug="compost">Compost</button>
+            <button data-debug="hhw">Hazardous</button>
+            <button data-debug="alert">Not accepted</button>
+            <button data-debug="ewaste">E-waste</button>
+        </div>
+        <div class="debug-group">Options</div>
+        <div class="debug-grid">
+            <button data-debug="lang">EN / FR</button>
+            <button data-debug="contrast">Contrast</button>
+            <label><input type="checkbox" id="debug-long" /> Long text</label>
+        </div>
     </div>
 
     <script>
@@ -115,6 +156,10 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas-display');
         const captureBtn = document.getElementById('capture-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        let uploadMode = false; // uploaded photos are never mirrored
+        let debugMode = false;
         const backBtn = document.getElementById('back-btn');
 
         // Result Elements
@@ -125,19 +170,55 @@
         const largeIconContainer = document.getElementById('large-icon-container');
         const inferenceTimeDisplay = document.getElementById('inference-time');
         const errorContainer = document.getElementById('error-container');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        const infoWrapper = document.getElementById('info-wrapper');
+        let scanTimer = null;
+        let scanImageUrl = null;
 
         // Utility functions
         function showPage(page) {
             [cameraPage, loadingPage, resultPage].forEach(p => p.classList.remove('active'));
             page.classList.add('active');
+            if (page !== loadingPage) stopScanTimer();
         }
 
-        // SVG Path Definitions
+        // Scanning screen helpers
+        function setScanImage(blob) {
+            if (scanImageUrl) URL.revokeObjectURL(scanImageUrl);
+            scanImageUrl = URL.createObjectURL(blob);
+            const img = document.getElementById('scan-image');
+            img.src = scanImageUrl;
+            img.style.transform = flipImage && !uploadMode ? 'scaleX(-1)' : '';
+        }
+        function startScanTimer() {
+            const el = document.getElementById('scan-time');
+            clearInterval(scanTimer);
+            el.textContent = '0.0s';
+            scanTimer = setInterval(() => {
+                el.textContent = ((performance.now() - inferenceStartTime) / 1000).toFixed(1) + 's';
+            }, 100);
+        }
+        function stopScanTimer() { clearInterval(scanTimer); }
+
+        // HHW puts the bin name on the left and the instructions on the right
+        function applyLayout(layout) {
+            if (layout === 'layout-hhw') {
+                leftPanel.appendChild(binNameLarge);
+                rightPanel.insertBefore(whyText, largeIconContainer);
+            } else {
+                infoWrapper.appendChild(whyText);
+                rightPanel.insertBefore(binNameLarge, largeIconContainer);
+            }
+        }
+
+        // Icons
+        const arm = (r) => `<g transform="rotate(${r} 50 50)"><path d="M44 16.5A34 34 0 0 1 80.8 35.6" fill="none" stroke="currentColor" stroke-width="11"/><path d="M91.7 30.5L86.7 48.3L69.9 40.7Z"/></g>`;
         const SVGS = {
-            recycle: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.06 11.53L12 2.76 6.94 11.53c-.38.66.1 1.47.86 1.47h10.4c.76 0 1.24-.81.86-1.47zM5.53 13.94l-5 8.66c-.38.66.1 1.47.86 1.47h10.4c.76 0 1.24-.81.86-1.47l-5-8.66c-.38-.66-1.34-.66-1.72 0zm12.94 0l-5 8.66c-.38.66-.38 1.62 0 2.28l5 8.66c.38.66 1.34.66 1.72 0l5-8.66c.38-.66.38-1.62 0-2.28l-5-8.66c-.38-.66-1.34-.66-1.72 0z" transform="scale(0.8) translate(3,0)"/></svg>`,
-            trash: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-3.5l-1-1h-5l-1 1H5v2h14V4zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM8 9h2v8H8V9zm4 0h2v8h-2V9z"/></svg>`,
-            exclamation: `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M11 7h2v6h-2zm0 8h2v2h-2z" fill="var(--bg-color)"/></svg>`,
-            biohazard: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 21h22L12 2zm0 3.8l7.1 12.2H4.9L12 5.8zM12 11a2 2 0 100 4 2 2 0 000-4z"/><path d="M12 14.5c-1.4 0-2.5-1.1-2.5-2.5h-1c0 2 1.5 3.5 3.5 3.5s3.5-1.5 3.5-3.5h-1c0 1.4-1.1 2.5-2.5 2.5z"/></svg>`
+            recycle: `<svg viewBox="0 0 100 100" fill="currentColor">${arm(0)}${arm(120)}${arm(240)}</svg>`,
+            trash: `<svg viewBox="0 0 100 120" fill="currentColor"><path d="M35 30V17a9 9 0 0 1 9-9h12a9 9 0 0 1 9 9v13" fill="none" stroke="currentColor" stroke-width="7"/><rect x="2" y="28" width="96" height="9" rx="4.5"/><path d="M11 40h78l-7 62a11 11 0 0 1-11 10H29a11 11 0 0 1-11-10z"/><path d="M38 55l3 40M62 55l-3 40" style="stroke:var(--pb)" stroke-width="6" stroke-linecap="round"/></svg>`,
+            exclamation: `<svg viewBox="0 0 100 100" fill="currentColor"><circle cx="50" cy="50" r="50"/><rect x="42" y="17" width="16" height="44" rx="8" style="fill:var(--pb)"/><circle cx="50" cy="78" r="9" style="fill:var(--pb)"/></svg>`,
+            biohazard: `<svg viewBox="0 0 100 90" fill="currentColor"><path d="M50 7L93 82H7Z" style="fill:var(--pb)" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><g fill="none" stroke="currentColor" stroke-width="4.5"><circle cx="50" cy="47" r="10"/><circle cx="58.7" cy="62" r="10"/><circle cx="41.3" cy="62" r="10"/></g><circle cx="50" cy="57" r="3.5"/></svg>`
         };
 
         function getThemeDetails(category, lang = 'en') {
@@ -147,6 +228,7 @@
             let action = 'PLACE IN';
             let binTitle = 'LITTER BIN';
             let icon = SVGS.trash;
+            let layout = 'layout-bin';
 
             if (cat === 'blue bin' || cat.includes('recycl') || cat === 'metal') {
                 theme = 'theme-blue';
@@ -159,11 +241,13 @@
             } else if (cat === 'hhw' || cat.includes('hazard')) {
                 theme = 'theme-orange';
                 action = 'FOLLOW INSTRUCTIONS';
+                layout = 'layout-hhw';
                 binTitle = 'HOUSEHOLD HAZARDOUS WASTE';
                 icon = SVGS.biohazard;
             } else if (cat === 'not accepted' || cat.includes('special')) {
                 theme = 'theme-red';
                 action = 'SEE INSTRUCTIONS';
+                layout = 'layout-alert';
                 binTitle = 'FOR DISPOSAL';
                 icon = SVGS.exclamation;
             } else if (cat === 'electronic waste' || cat.includes('electronic')) {
@@ -191,7 +275,7 @@
             if (lang === 'fr' && translateMap['fr'][action]) action = translateMap['fr'][action];
             if (lang === 'fr' && translateMap['fr'][binTitle]) binTitle = translateMap['fr'][binTitle];
 
-            return { theme, action, binTitle, icon };
+            return { theme, action, binTitle, icon, layout };
         }
 
         const cameraFallback = document.getElementById('camera-fallback');
@@ -260,6 +344,8 @@
                 }
             } catch (e) {}
 
+            uploadBtn.style.display = '';
+
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showCameraFallback();
                 return;
@@ -288,6 +374,7 @@
             const formData = new FormData();
             formData.append('file', blob, 'capture.jpg');
             inferenceStartTime = performance.now();
+            startScanTimer();
             try {
                 const response = await fetch(API_ENDPOINT, { method: 'POST', body: formData });
                 if (!response.ok) throw new Error(`Server error: ${response.status}`);
@@ -301,7 +388,7 @@
 
         async function captureAndProcess() {
             await showCountdown();
-            showPage(loadingPage);
+            uploadMode = false;
             if (usingPiCamera) {
                 await captureFromPiAndProcess();
             } else {
@@ -309,7 +396,11 @@
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0);
-                canvas.toBlob(async (blob) => { await processImage(blob); }, 'image/jpeg', 0.9);
+                canvas.toBlob(async (blob) => {
+                    setScanImage(blob);
+                    showPage(loadingPage);
+                    await processImage(blob);
+                }, 'image/jpeg', 0.9);
             }
         }
 
@@ -318,6 +409,7 @@
                 const imgResponse = await fetch(PI_SERVICE.latestImage);
                 if (!imgResponse.ok) throw new Error('Failed to get captured image');
                 const blob = await imgResponse.blob();
+                setScanImage(blob);
                 video.src = PI_SERVICE.latestImage + '?t=' + new Date().getTime();
                 showPage(loadingPage);
                 await processImage(blob);
@@ -362,7 +454,7 @@
                         canvas.width = img.width;
                         canvas.height = img.height;
                         const ctx = canvas.getContext('2d');
-                        if (flipImage) {
+                        if (flipImage && !uploadMode) {
                             ctx.scale(-1, 1);
                             ctx.drawImage(img, -img.width, 0);
                             canvas.classList.add('flipped');
@@ -392,7 +484,8 @@
             const themeDetails = getThemeDetails(category, currentLang);
 
             // Update UI Elements
-            resultPage.className = `page result-page ${themeDetails.theme}`;
+            resultPage.className = `page result-page ${themeDetails.theme} ${themeDetails.layout}`;
+            applyLayout(themeDetails.layout);
             itemName.textContent = name;
             whyText.textContent = instruction;
             actionText.textContent = themeDetails.action;
@@ -402,11 +495,11 @@
             showPage(resultPage);
 
             if (usingPiCamera) {
-                fetch('/api/motion/disable', { method: 'POST' });
+                if (!debugMode) fetch('/api/motion/disable', { method: 'POST' });
             }
 
             if (autoReturnTimer) clearTimeout(autoReturnTimer);
-            autoReturnTimer = setTimeout(() => { resetCamera(); }, 15000);
+            if (!debugMode) autoReturnTimer = setTimeout(() => { resetCamera(); }, 15000);
         }
 
         function showError(message) {
@@ -416,6 +509,7 @@
         }
 
         async function savePhotoWithResults(photoDataUrl, results, inferenceTime) {
+            if (debugMode) return; // never store fake debug photos
             try {
                 await fetch('/api/save-photo', {
                     method: 'POST',
@@ -439,6 +533,16 @@
             showPage(cameraPage);
         }
 
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
+            fileInput.value = '';
+            if (!file) return;
+            uploadMode = true;
+            setScanImage(file);
+            showPage(loadingPage);
+            await processImage(file);
+        });
         captureBtn.addEventListener('click', captureAndProcess);
         backBtn.addEventListener('click', resetCamera);
         startCamera();
@@ -450,14 +554,14 @@
         // Dictionary and Language Control
         const translations = {
             en: {
-                takePhoto: 'Take Photo', howToUse: 'How to Use',
+                takePhoto: 'Take Photo', uploadPhoto: 'Upload Photo', howToUse: 'How to Use',
                 instruction1: '1. Position item in camera view', instruction2: '2. Wait for automatic capture', instruction3: '3. View classification results',
                 cameraNotAvailable: 'Camera not available', cameraHttpsHint: 'Camera requires HTTPS. Use file upload instead.',
                 analyzing: 'Analyzing your item...', scanAnother: '← Scan Another Item',
                 'unknown item': 'Unknown Item', 'unknown': 'Unknown', 'please dispose of this item properly.': 'Please dispose of this item properly.'
             },
             fr: {
-                takePhoto: 'Prendre une photo', howToUse: 'Mode d\'emploi',
+                takePhoto: 'Prendre une photo', uploadPhoto: 'Téléverser une photo', howToUse: 'Mode d\'emploi',
                 instruction1: '1. Positionner l\'objet dans le champ de la caméra', instruction2: '2. Attendre la capture automatique', instruction3: '3. Afficher les résultats de la classification',
                 cameraNotAvailable: 'Caméra non disponible', cameraHttpsHint: 'La caméra nécessite HTTPS. Utilisez le téléchargement de fichier à la place.',
                 analyzing: 'Analyse de votre objet...', scanAnother: '← Analyser un autre objet',
@@ -495,6 +599,99 @@
             document.body.classList.add('high-contrast');
             contrastToggle.classList.add('active');
         }
+
+        // ---------- Debug mode: jump to any screen with sample data ----------
+        const DEBUG_ENABLED = true; // set to false to hide the Debug button on the kiosk
+        const debugBtn = document.getElementById('debug-btn');
+        const debugPanel = document.getElementById('debug-panel');
+        const debugFab = document.getElementById('debug-fab');
+        let debugBlob = null;
+        let debugFallbackOn = false;
+
+        const DEBUG_SAMPLES = {
+            recycle: ['blue bin', 'Paper Envelopes with Plastic Windows', 'You can place this paper envelope with a plastic window in the Blue Bin for recycling. Make sure to remove any contents and flatten the envelope before disposing of it.'],
+            litter: ['garbage', 'Chip Bag', 'Foil-lined snack bags cannot be recycled. Place this item in the litter bin.'],
+            compost: ['green bin', 'Banana Peel', 'Fruit and vegetable scraps go in the Green Bin for composting.'],
+            hhw: ['hhw', 'Household Batteries', 'Batteries can start fires in collection trucks. Take them to a household hazardous waste depot or a battery drop-off point.'],
+            alert: ['not accepted', 'Broken Ceramic Plate', 'Ceramics are not accepted in curbside bins. Wrap it safely and check your municipal guide for disposal options.'],
+            ewaste: ['electronic waste', 'Phone Charger', 'Drop off electronics at an e-waste depot. Do not place them in the garbage or recycling.']
+        };
+        const DEBUG_LONG = ' This is deliberately long placeholder text used to check wrapping, spacing and overflow on every layout and in both languages.';
+
+        function getDebugBlob() {
+            if (debugBlob) return Promise.resolve(debugBlob);
+            const c = document.createElement('canvas');
+            c.width = 800; c.height = 480;
+            const g = c.getContext('2d');
+            const bg = g.createLinearGradient(0, 0, 800, 480);
+            bg.addColorStop(0, '#dfe6ee'); bg.addColorStop(1, '#9aa7b8');
+            g.fillStyle = bg; g.fillRect(0, 0, 800, 480);
+            g.fillStyle = '#fff'; g.fillRect(130, 100, 540, 280);
+            g.fillStyle = '#c3ccd8'; g.fillRect(170, 230, 190, 100);
+            g.fillStyle = '#6b7788'; g.font = '700 40px sans-serif'; g.textAlign = 'center';
+            g.fillText('DEBUG SAMPLE', 400, 175);
+            return new Promise((res) => c.toBlob((b) => { debugBlob = b; res(b); }, 'image/jpeg', 0.9));
+        }
+
+        function hideCameraFallback() {
+            cameraFallback.style.display = 'none';
+            video.style.display = 'block';
+            captureBtn.disabled = false;
+            captureBtn.style.opacity = '';
+        }
+
+        async function debugResult(key) {
+            const [category, item, instruction] = DEBUG_SAMPLES[key];
+            const long = document.getElementById('debug-long').checked;
+            uploadMode = false;
+            await displayResult(
+                { results: [{ category, item: long ? item + ' with Extra Long Mixed Material Packaging' : item, instruction: long ? instruction + DEBUG_LONG : instruction }] },
+                await getDebugBlob(), 1260
+            );
+        }
+
+        const debugActions = {
+            camera: () => showPage(cameraPage),
+            countdown: () => { showPage(cameraPage); showCountdown(); },
+            fallback: () => {
+                showPage(cameraPage);
+                debugFallbackOn = !debugFallbackOn;
+                if (debugFallbackOn) showCameraFallback(); else hideCameraFallback();
+            },
+            scan: async () => {
+                uploadMode = false;
+                setScanImage(await getDebugBlob());
+                inferenceStartTime = performance.now();
+                startScanTimer();
+                showPage(loadingPage);
+            },
+            error: () => showError('Sample error: could not reach the classifier (Server error: 500)'),
+            lang: () => document.getElementById('language-btn').click(),
+            contrast: () => contrastToggle.click()
+        };
+
+        function setDebug(on) {
+            debugMode = on;
+            debugPanel.hidden = !on;
+            debugFab.hidden = true;
+            if (on) {
+                if (autoReturnTimer) clearTimeout(autoReturnTimer);
+            } else {
+                if (debugFallbackOn) { debugFallbackOn = false; hideCameraFallback(); }
+                showPage(cameraPage);
+            }
+        }
+
+        debugBtn.style.display = DEBUG_ENABLED ? '' : 'none';
+        debugBtn.addEventListener('click', () => setDebug(true));
+        document.getElementById('debug-exit').addEventListener('click', () => setDebug(false));
+        document.getElementById('debug-hide').addEventListener('click', () => { debugPanel.hidden = true; debugFab.hidden = false; });
+        debugFab.addEventListener('click', () => { debugFab.hidden = true; debugPanel.hidden = false; });
+        debugPanel.addEventListener('click', (e) => {
+            const key = e.target.dataset.debug;
+            if (!key) return;
+            if (DEBUG_SAMPLES[key]) debugResult(key); else debugActions[key]();
+        });
     </script>
 </body>
 </html>
