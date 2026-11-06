@@ -316,21 +316,25 @@ def predict_proxy():
     file = request.files['file']
     
     try:
-        image_bytes = file.read()
-        media_type = file.content_type or 'image/jpeg'
-        image_data_url = (
-            f'data:{media_type};base64,'
-            f'{base64.b64encode(image_bytes).decode("ascii")}'
-        )
+        files = {
+            'file': (
+                file.filename or 'capture.jpg',
+                file.read(),
+                file.content_type or 'image/jpeg'
+            )
+        }
         response = requests.post(
             API_ENDPOINT,
-            json={'imageDataUrl': image_data_url, 'mode': 'exact'},
+            files=files,
+            data={'mode': 'exact'},
             timeout=30
         )
 
-        if response.headers.get('Content-Type', '').startswith('application/json'):
+        response_body = response.content
+        content_type = response.headers.get('Content-Type', 'application/json')
+        if response.ok and content_type.startswith('application/json'):
             data = response.json()
-            if response.ok and 'results' not in data and (
+            if 'results' not in data and (
                 data.get('selected_item') or data.get('item_name')
             ):
                 selected_item = data.get('selected_item') or data.get('item_name')
@@ -343,13 +347,11 @@ def predict_proxy():
                     }]
                 }
             response_body = json.dumps(data).encode('utf-8')
-        else:
-            response_body = response.content
 
         return Response(
             response_body,
             status=response.status_code,
-            content_type=response.headers.get('Content-Type', 'application/json')
+            content_type=content_type
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
