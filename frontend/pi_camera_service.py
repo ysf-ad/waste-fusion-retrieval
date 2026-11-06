@@ -26,7 +26,9 @@ except ImportError:
 # --- Configuration ---
 MOTION_SENSOR_PIN = 17  # GPIO pin for motion sensor
 CAPTURE_DELAY = 3     # Seconds to wait after motion before capturing
-API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://waste-wizard-clef.yousifaldakoki.workers.dev/')
+API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://waste-wizard-clef.yousifaldakoki.workers.dev/predict')
+if not API_ENDPOINT.rstrip('/').endswith('/predict'):
+    API_ENDPOINT = API_ENDPOINT.rstrip('/') + '/predict'
 FLIP_IMAGE = os.getenv('FLIP_IMAGE', 'false').lower() == 'true'
 
 # Use environment variable or default to local directory
@@ -308,21 +310,44 @@ def disable_motion():
 @app.route('/api/predict', methods=['POST'])
 def predict_proxy():
     """Proxy prediction requests to avoid CORS issues"""
-    import requests
-    
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
     file = request.files['file']
     
     try:
-        # Forward the file to the actual API
-        files = {'file': (file.filename, file.stream, file.content_type)}
-        response = requests.post(API_ENDPOINT, files=files, timeout=30)
-        
-        # Return the API response
+        image_bytes = file.read()
+        media_type = file.content_type or 'image/jpeg'
+        image_data_url = (
+            f'data:{media_type};base64,'
+            f'{base64.b64encode(image_bytes).decode("ascii")}'
+        )
+        response = requests.post(
+            API_ENDPOINT,
+            json={'imageDataUrl': image_data_url, 'mode': 'exact'},
+            timeout=30
+        )
+
+        if response.headers.get('Content-Type', '').startswith('application/json'):
+            data = response.json()
+            if response.ok and 'results' not in data and (
+                data.get('selected_item') or data.get('item_name')
+            ):
+                selected_item = data.get('selected_item') or data.get('item_name')
+                data = {
+                    'results': [{
+                        'item': selected_item,
+                        'category': data.get('category'),
+                        'confidence': data.get('match_probability'),
+                        'instruction': data.get('instruction', '')
+                    }]
+                }
+            response_body = json.dumps(data).encode('utf-8')
+        else:
+            response_body = response.content
+
         return Response(
-            response.content,
+            response_body,
             status=response.status_code,
             content_type=response.headers.get('Content-Type', 'application/json')
         )
