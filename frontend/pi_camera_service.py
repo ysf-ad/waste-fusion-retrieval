@@ -26,7 +26,7 @@ except ImportError:
 # --- Configuration ---
 MOTION_SENSOR_PIN = 17  # GPIO pin for motion sensor
 CAPTURE_DELAY = 3     # Seconds to wait after motion before capturing
-API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://api.biswa.ca/predict')
+API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://waste-wizard-clef.yousifaldakoki.workers.dev/')
 FLIP_IMAGE = os.getenv('FLIP_IMAGE', 'false').lower() == 'true'
 
 # Use environment variable or default to local directory
@@ -266,8 +266,8 @@ def video_stream():
                 frame = jpeg_buffer.getvalue()
                 
                 yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n'
-                       b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
+                        b'Content-Type: image/jpeg\r\n'
+                        b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
                 
                 request_obj.release()
                 time.sleep(0.05)  # ~20 FPS
