@@ -41,7 +41,8 @@ body { font-family: var(--body); background: #6d93d0; min-height: 100vh; color: 
 .layout-info .left-panel { padding: 1.2em; }
 .layout-info .image-wrapper { max-height: 32%; }
 .layout-info .info-wrapper { align-items: stretch; justify-content: flex-start; text-align: left; }
-.layout-info .info-title { justify-content: flex-start; flex-shrink: 0; font-size: 2em; overflow-wrap: anywhere; }
+.layout-info .info-title { justify-content: flex-start; flex-shrink: 0; font-size: 3.6em; overflow-wrap: anywhere; }
+.layout-info .info-icon { display: none; }
 .layout-info .info-desc { font-size: max(14px, 1.1em); line-height: 1.4; white-space: pre-wrap; }
 .result-checks { margin: .7em 0; font-size: max(14px, 1.15em); line-height: 1.4; font-weight: 600; white-space: pre-wrap; }
 .policy-instructions { width: 100%; text-align: left; font-size: max(14px, 1.2em); line-height: 1.4; }

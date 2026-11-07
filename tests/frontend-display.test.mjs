@@ -45,7 +45,7 @@ for (const [category, theme] of [
     assert.equal(h.ctx.binNameLarge.textContent, category);
     assert.equal(h.ctx.actionText.textContent, 'PREDICTED POLICY BIN');
     assert.match(h.ctx.resultPage.className, new RegExp(theme));
-    assert.deepEqual(h.get('instruction-list').children.map(x => x.textContent), ['[Reference] API instructions']);
+    assert.deepEqual(h.get('instruction-list').children.map(x => x.textContent), ['API instructions']);
     assert.equal(h.ctx.inferenceTimeDisplay.textContent, '1.23s');
     assert.equal(h.ctx.page, h.ctx.resultPage);
     assert.equal(h.requests[0].url, '/api/motion/disable');
@@ -72,10 +72,10 @@ test('exact policy bin stays visible with unresolved checks and source instructi
   await h.run('displayResult(data, null, 1)');
   assert.equal(h.ctx.binNameLarge.textContent, 'Blue Bin');
   assert.match(h.get('result-checks').textContent, /Identity is tentative/);
-  assert.match(h.get('result-checks').textContent, /unresolved instructions/);
+  assert.doesNotMatch(h.get('result-checks').textContent, /unresolved instructions|\bbelow\b/);
   assert.match(h.get('result-checks').textContent, /manual review/);
   assert.equal(h.get('instructions-title').textContent, 'Source instructions — Containers');
-  assert.deepEqual(h.get('instruction-list').children.map(x => x.textContent), ['[Check first] Empty first']);
+  assert.deepEqual(h.get('instruction-list').children.map(x => x.textContent), ['Empty first']);
   assert.match(h.get('api-summary').textContent, /fixture-build/);
   assert.deepEqual(JSON.parse(h.get('api-response').textContent), h.ctx.data);
 });
@@ -116,7 +116,7 @@ test('applicable instructions lead, checks remain, excluded rules stay in API de
     {state:'check',text:'Verify contents'}, {state:'does_not_apply',text:'Hazardous contents only'},
     {state:'applies',text:'Remove lid'}, {state:'applies',text:'Recycle lid separately'}, {state:'reference',text:'Consider reuse'}]};
   await h.run('displayResult(data, null, 1)');
-  assert.deepEqual(h.get('instruction-list').children.map(x=>x.textContent), ['[Applies] Remove lid','[Applies] Recycle lid separately','[Check first] Verify contents','[Reference] Consider reuse']);
+  assert.deepEqual(h.get('instruction-list').children.map(x=>x.textContent), ['Remove lid','Recycle lid separately','Verify contents','Consider reuse']);
   assert.match(h.get('api-response').textContent,/Hazardous contents only/);
   assert.doesNotMatch(h.get('api-response').textContent+h.get('api-summary').textContent,/jev/i);
   assert.equal(h.ctx.data.provider,'jev');

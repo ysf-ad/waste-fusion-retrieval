@@ -539,7 +539,6 @@
             document.getElementById('instructions-title').textContent = `Source instructions — ${info.sourceBin}`;
             const list = document.getElementById('instruction-list');
             list.replaceChildren();
-            const labels = { applies: 'Applies', check: 'Check first', does_not_apply: 'Does not apply', reference: 'Reference' };
             // Multiple instructions may apply together; do not turn this into a single winner.
             const priority = { applies: 0, check: 1, reference: 2 };
             const visibleRules = info.rules.filter(rule => rule.state !== 'does_not_apply')
@@ -547,7 +546,7 @@
             for (const rule of visibleRules) {
                 const row = document.createElement('li');
                 row.className = `rule-${rule.state}`;
-                row.textContent = `[${labels[rule.state]}] ${rule.text}`;
+                row.textContent = rule.text;
                 list.appendChild(row);
             }
             if (!visibleRules.length) {

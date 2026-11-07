@@ -31,8 +31,8 @@ test('exact null-category sentinel does not hide identity or policy; checks stay
     assert.equal(h.ctx.whyText.textContent, 'Match score: 99%');
     assert.equal(h.ctx.binNameLarge.textContent, 'Blue Bin');
     assert.equal(h.ctx.actionText.textContent, 'PREDICTED POLICY BIN');
-    assert.match(h.nodes['result-checks'].textContent, /unresolved/);
-    assert.match(h.nodes['instruction-list'].children[0].textContent, /^\[Check first\]/);
+    assert.equal(h.nodes['result-checks'].textContent, '');
+    assert.equal(h.nodes['instruction-list'].children[0].textContent, exact.rule_evaluation[0].text);
     assert.match(h.nodes['api-summary'].textContent, /Observed condition: unknown/);
     assert.deepEqual(JSON.parse(h.nodes['api-response'].textContent), exact);
 });

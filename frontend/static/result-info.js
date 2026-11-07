@@ -23,7 +23,6 @@
         }
         const checks = [];
         if (data.identity_uncertain) checks.push('Identity is tentative; verify the item.');
-        if (data.policy_conditions_pending || rules.some(rule => rule.state === 'check')) checks.push('Check the unresolved instructions below before disposal.');
         if (data.special_handling) checks.push('Special handling required; follow the source instructions.');
         if (Array.isArray(data.clarification)) for (const value of data.clarification) {
             const question = typeof value === 'string' ? value : text(value?.question) || text(value?.id);
