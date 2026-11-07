@@ -52,6 +52,7 @@ motion_detected_flag = False
 capture_in_progress = False
 event_queue = []  # Queue for SSE events
 motion_enabled = True  # Flag to enable/disable motion detection
+camera_lock = threading.Lock()  # Serialize preview and the existing JPEG capture calls
 
 
 def init_hardware():
@@ -132,6 +133,7 @@ def delayed_capture():
     event_queue.append({'event': 'countdown', 'data': {'number': 1}})
     time.sleep(1)
     print("Capturing now!")
+    event_queue.append({'event': 'countdown', 'data': {'number': 0}})
     
     # Pause motion sensor to prevent double-triggering
     motion_enabled = False
@@ -140,7 +142,8 @@ def delayed_capture():
         if camera:
             # Capture to bytes
             stream = io.BytesIO()
-            camera.capture_file(stream, format='jpeg')
+            with camera_lock:
+                camera.capture_file(stream, format='jpeg')
             stream.seek(0)
             latest_capture = stream.getvalue()
             latest_capture_time = time.time()
@@ -148,8 +151,11 @@ def delayed_capture():
             
             # Notify frontend to process the captured image
             event_queue.append({'event': 'image_captured', 'data': {}})
+        else:
+            raise RuntimeError('Camera not available')
     except Exception as e:
         print(f"Capture failed: {e}")
+        event_queue.append({'event': 'capture_error', 'data': {'message': str(e)}})
         # Re-enable motion if capture failed, as frontend won't get the event
         motion_enabled = True
     finally:
@@ -213,7 +219,8 @@ def manual_capture():
     
     try:
         stream = io.BytesIO()
-        camera.capture_file(stream, format='jpeg')
+        with camera_lock:
+            camera.capture_file(stream, format='jpeg')
         stream.seek(0)
         latest_capture = stream.getvalue()
         latest_capture_time = time.time()
@@ -258,20 +265,26 @@ def video_stream():
     def generate():
         while True:
             try:
-                # Capture frame directly from camera
-                request_obj = camera.capture_request()
-                img = request_obj.make_image('main')
-                
-                # Encode to JPEG
-                jpeg_buffer = io.BytesIO()
-                img.save(jpeg_buffer, format='JPEG', quality=85)
-                frame = jpeg_buffer.getvalue()
+                # Release the camera request BEFORE yielding to a slow preview client.
+                with camera_lock:
+                    request_obj = camera.capture_request()
+                    img = None
+                    try:
+                        img = request_obj.make_image('main')
+                        jpeg_buffer = io.BytesIO()
+                        img.save(jpeg_buffer, format='JPEG', quality=85)
+                        frame = jpeg_buffer.getvalue()
+                    finally:
+                        try:
+                            if img is not None:
+                                img.close()
+                        finally:
+                            request_obj.release()
                 
                 yield (b'--frame\r\n'
                         b'Content-Type: image/jpeg\r\n'
                         b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
                 
-                request_obj.release()
                 time.sleep(0.05)  # ~20 FPS
             except Exception as e:
                 print(f"Stream error: {e}")

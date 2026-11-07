@@ -289,9 +289,8 @@
                 countdownNumber.textContent = count;
                 const interval = setInterval(() => {
                     count--;
-                    if (count > 0) {
-                        countdownNumber.textContent = count;
-                    } else {
+                    countdownNumber.textContent = count;
+                    if (count === 0) {
                         clearInterval(interval);
                         countdownOverlay.style.display = 'none';
                         resolve();
@@ -300,23 +299,23 @@
             });
         }
 
+        let eventSource = null;
         function connectToEventStream() {
-            const eventSource = new EventSource('/api/events');
+            if (eventSource) return; // Reuse native reconnection; do not create competing queues.
+            eventSource = new EventSource('/api/events');
             eventSource.addEventListener('countdown', (e) => {
                 const data = JSON.parse(e.data);
-                countdownOverlay.style.display = 'flex';
+                countdownOverlay.style.display = data.number > 0 ? 'flex' : 'none';
                 countdownNumber.textContent = data.number;
             });
             eventSource.addEventListener('image_captured', async (e) => {
                 countdownOverlay.style.display = 'none';
                 await captureFromPiAndProcess();
             });
-            eventSource.onerror = (error) => {
-                setTimeout(() => {
-                    eventSource.close();
-                    connectToEventStream();
-                }, 5000);
-            };
+            eventSource.addEventListener('capture_error', (e) => {
+                countdownOverlay.style.display = 'none';
+                showError('Capture failed: ' + JSON.parse(e.data).message);
+            });
         }
 
         async function startCamera() {
@@ -387,10 +386,21 @@
         }
 
         async function captureAndProcess() {
+            if (usingPiCamera && captureBtn.disabled) return;
+            if (usingPiCamera) captureBtn.disabled = true;
+            clearTimeout(autoReturnTimer);
             await showCountdown();
             uploadMode = false;
             if (usingPiCamera) {
-                await captureFromPiAndProcess();
+                try {
+                    const response = await fetch(PI_SERVICE.capture);
+                    if (!response.ok) throw new Error(`Capture failed: ${response.status}`);
+                    await captureFromPiAndProcess();
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    captureBtn.disabled = false;
+                }
             } else {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
