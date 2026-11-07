@@ -21,14 +21,6 @@
             const instruction = text(legacy.instruction) || text(data.instruction);
             if (instruction) rules.push({ text: instruction, state: 'reference' });
         }
-        // Keep every source line when an older response assesses only some rules.
-        const counts = new Map();
-        for (const rule of rules) counts.set(rule.text, (counts.get(rule.text) || 0) + 1);
-        for (const instruction of Array.isArray(data.instructions) ? data.instructions : []) {
-            if (typeof instruction !== 'string') continue;
-            if (counts.get(instruction)) counts.set(instruction, counts.get(instruction) - 1);
-            else rules.push({ text: instruction, state: 'reference' });
-        }
         const checks = [];
         if (data.identity_uncertain) checks.push('Identity is tentative; verify the item.');
         if (data.policy_conditions_pending || rules.some(rule => rule.state === 'check')) checks.push('Check the unresolved instructions below before disposal.');

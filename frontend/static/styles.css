@@ -49,14 +49,8 @@ body { font-family: var(--body); background: #6d93d0; min-height: 100vh; color: 
 .policy-instructions ul { padding-left: 1.3em; }
 .policy-instructions li { margin-bottom: .7em; white-space: pre-wrap; overflow-wrap: anywhere; }
 .rule-check { font-weight: 600; border-left: .25em solid #8a4400; padding-left: .5em; }
+.rule-applies { font-weight: 600; }
 .rule-does_not_apply { opacity: .75; }
-.rule-applies { border-left: .25em solid currentColor; padding-left: .5em; }
-.instruction-summary { margin: .8em 0 .2em; padding: .6em .8em; border: 1px solid currentColor; border-radius: .6em; font-size: max(14px, 1.1em); font-weight: 600; }
-.extra-details { width: 100%; margin-top: .8em; text-align: left; font-size: max(14px, 1.05em); line-height: 1.5; }
-.extra-details summary { cursor: pointer; min-height: 36px; padding: .5em 0; font-weight: 600; }
-.extra-details ul { padding-left: 1.3em; }
-.extra-details li { margin: .5em 0; overflow-wrap: anywhere; }
-.detail-note { font-size: .85em; line-height: 1.5; margin: .5em 0; }
 .layout-info .right-panel { justify-content: flex-start; overflow-y: auto; padding: 1.5em; }
 .layout-info .action-text { font-size: 1.7em; }
 .layout-info .bin-text { font-size: 3.6em; margin: .4em 0; overflow-wrap: anywhere; }

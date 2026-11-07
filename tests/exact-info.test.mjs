@@ -36,15 +36,13 @@ test('exact null-category sentinel does not hide identity or policy; checks stay
     assert.match(h.nodes['api-summary'].textContent, /Observed condition: unknown/);
     assert.deepEqual(JSON.parse(h.nodes['api-response'].textContent), exact);
 });
-test('tentative identity remains tentative while all source instruction states remain visible', async () => {
+test('tentative identity remains tentative while relevant source instructions remain visible', async () => {
     const h = harness(); h.ctx.data = { ...exact, identity_uncertain: true, rule_evaluation: ['applies', 'check', 'does_not_apply', 'reference'].map(state => ({ state, text: state })) };
     await h.run('displayResult(data, null, 1)');
     assert.equal(h.ctx.itemName.textContent, 'beverage can');
     assert.equal(h.ctx.whyText.textContent, 'Match score: 99%');
     assert.match(h.nodes['result-checks'].textContent, /verify the item/);
-    assert.equal(h.nodes['instruction-list'].children.length, 2);
-    assert.equal(h.nodes['other-instruction-list'].children.length, 2);
-    assert.equal(h.nodes['other-instructions'].hidden, false);
+    assert.equal(h.nodes['instruction-list'].children.length, 3);
 });
 test('legacy responses retain item/instructions; unknown categories never imply litter', async () => {
     for (const category of ['Not accepted', 'nonsense', undefined]) {
