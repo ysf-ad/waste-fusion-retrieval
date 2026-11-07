@@ -90,20 +90,24 @@
                 </h3>
                 <p class="info-desc" id="why-text">Explanation about the classification.</p>
                 <p id="result-checks" class="result-checks" role="status"></p>
-                <section class="policy-instructions" aria-label="Source instructions">
-                    <h4 id="instructions-title">Source instructions</h4>
-                    <ul id="instruction-list"></ul>
-                </section>
+                <p class="prediction-note">Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.</p>
             </div>
         </div>
 
         <div id="right-panel" class="panel right-panel">
-            <h2 class="action-text" id="action-text">PLACE IN</h2>
-            <h1 class="bin-text" id="bin-name-large">RECYCLING BIN</h1>
-            <div class="icon-wrapper" id="large-icon-container"></div>
-            <p class="prediction-note">Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.</p>
+            <div class="destination-heading">
+                <div id="destination-text">
+                    <h2 class="action-text" id="action-text">PLACE IN</h2>
+                    <h1 class="bin-text" id="bin-name-large">RECYCLING BIN</h1>
+                </div>
+                <div class="icon-wrapper" id="large-icon-container"></div>
+            </div>
+            <section class="policy-instructions" aria-label="Source instructions">
+                <h4 id="instructions-title">Source instructions</h4>
+                <ul id="instruction-list"></ul>
+            </section>
             <details id="api-details" class="api-details">
-                <summary>API details / full response</summary>
+                <summary>Full response</summary>
                 <p id="api-summary"></p>
                 <pre id="api-response"></pre>
             </details>
@@ -242,10 +246,10 @@
         function applyLayout(layout) {
             if (layout === 'layout-hhw') {
                 leftPanel.appendChild(binNameLarge);
-                rightPanel.insertBefore(whyText, largeIconContainer);
+                rightPanel.insertBefore(whyText, rightPanel.firstChild);
             } else {
                 infoWrapper.insertBefore(whyText, document.getElementById('result-checks'));
-                rightPanel.insertBefore(binNameLarge, largeIconContainer);
+                document.getElementById('destination-text').appendChild(binNameLarge);
             }
         }
 

@@ -36,3 +36,20 @@ arbitrary phone uploads still need preprocessing. Evidence is saved alongside
 the release as `live-prediction.json`, `live-response.json`, and
 `original-dimensions-attempt.json`. The screenshot renders that recorded real
 response against the matching resized photo; rendering makes no further model calls.
+
+## Passive instruction layout
+
+The original analyzing screen, spinner and scan beam predate these changes
+(present in commit `6e46d22`). The result screen keeps its two panels and moves
+the existing instruction list to the wider destination panel. The bin heading
+and icon are compact; Full response stays closed and subtle. No additional
+controls, tabs or decisions were added.
+
+At 800 × 480, browser geometry checks rendered all 2,205 catalogue entries with
+every source instruction in each visible state (`applies`, `check`, `reference`):
+6,615 layouts passed without instruction clipping, overlap with Full response,
+or panel scrolling. The current catalogue contains at most three instructions
+per entry. A separate mock with six instructions also fit, with every line
+visible. The longest current source text was checked visually. These checks
+exercise the real renderer with mocked applicability states, not model accuracy;
+they do not guarantee unlimited future text or smaller displays will fit.
