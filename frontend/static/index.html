@@ -76,7 +76,12 @@
     <div id="result-page" class="page result-page theme-grey layout-bin">
         <div id="left-panel" class="panel left-panel">
             <div class="image-wrapper">
-                <canvas id="canvas-display"></canvas>
+                <img id="result-image" alt="Original photo submitted for this prediction" hidden />
+                <canvas id="canvas-display" hidden aria-hidden="true"></canvas>
+            </div>
+            <p id="image-preview-label" class="image-preview-label" hidden></p>
+            <div class="image-preview-actions">
+                <a id="image-preview-link" target="_blank" rel="noopener" hidden>Open original photo</a>
             </div>
             <div id="info-wrapper" class="info-wrapper">
                 <h3 class="info-title">
@@ -202,6 +207,26 @@
             const img = document.getElementById('scan-image');
             img.src = scanImageUrl;
             img.style.transform = flipImage && !uploadMode ? 'scaleX(-1)' : '';
+            // Preview the exact submitted Blob, not a re-encoded or previous canvas.
+            const preview = document.getElementById('result-image');
+            preview.src = scanImageUrl;
+            preview.hidden = false;
+            const label = document.getElementById('image-preview-label');
+            label.textContent = `Submitted photo · ${blob.size.toLocaleString('en-US')} bytes`;
+            label.hidden = false;
+            const link = document.getElementById('image-preview-link');
+            link.href = scanImageUrl;
+            link.hidden = false;
+        }
+        function clearImagePreview() {
+            if (scanImageUrl) URL.revokeObjectURL(scanImageUrl);
+            scanImageUrl = null;
+            for (const id of ['scan-image', 'result-image', 'image-preview-link']) {
+                const element = document.getElementById(id);
+                element.removeAttribute(id === 'image-preview-link' ? 'href' : 'src');
+            }
+            for (const id of ['result-image', 'image-preview-label', 'image-preview-link']) document.getElementById(id).hidden = true;
+            document.getElementById('image-preview-label').textContent = '';
         }
         function startScanTimer() {
             const el = document.getElementById('scan-time');
@@ -576,6 +601,7 @@
         }
 
         function resetCamera() {
+            clearImagePreview();
             if (autoReturnTimer) {
                 clearTimeout(autoReturnTimer);
                 autoReturnTimer = null;

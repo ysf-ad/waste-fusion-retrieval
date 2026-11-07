@@ -6,7 +6,7 @@ workers_dev = true
 [vars]
 DECISION_PROVIDER = "jev"
 DECISION_TIMEOUT_MS = "1700"
-BUILD_ID = "jev-image10mb-20261107-r1"
+BUILD_ID = "jev-exact-upload-20261107-r2"
 WASTEWIZARD_ALLOW_PUBLIC = "true"
 REQUIRE_RATE_LIMITER = "true"
 CORS_ALLOWED_ORIGINS = "*"

@@ -51,7 +51,9 @@ async function canonicalRequest(request) {
     const files = [...form.values()].filter(value => typeof value !== 'string');
     if (files.length !== 1 || !['image/jpeg', 'image/png'].includes(files[0].type)) throw Object.assign(new Error('Upload exactly one JPEG or PNG file.'), { status: 400 });
     if (files[0].size > MAX_IMAGE_BYTES) throw Object.assign(new Error(IMAGE_LIMIT_MESSAGE), { status: 413 });
-    body = { image: `data:${files[0].type};base64,${base64(new Uint8Array(await files[0].arrayBuffer()))}` };
+    if (form.getAll('mode').length > 1) throw Object.assign(new Error('Upload at most one mode field.'), { status: 400 });
+    body = { image: `data:${files[0].type};base64,${base64(new Uint8Array(await files[0].arrayBuffer()))}`,
+      ...(form.has('mode') ? { mode: form.get('mode') } : {}) };
   } else if (type === 'application/json') {
     try { body = JSON.parse(new TextDecoder().decode(bytes)); }
     catch { throw Object.assign(new Error('Malformed JSON.'), { status: 400 }); }

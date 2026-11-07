@@ -1,0 +1,64 @@
+{
+  "health": {
+    "ready": true,
+    "provider": "jev",
+    "model": "jev-1.14.0",
+    "modes": [
+      "compact",
+      "exact",
+      "trashnet",
+      "taco",
+      "realwaste",
+      "realwaste8"
+    ],
+    "build_id": "jev-exact-upload-20261107-r2",
+    "public_inference": true,
+    "rate_limits": {
+      "per_ip_per_minute": 60,
+      "per_location_per_minute": 120,
+      "approximate": true
+    },
+    "rate_limit_enforced": true,
+    "automatic_routing_enabled": false,
+    "image": {
+      "format": "JPEG/PNG",
+      "suggested_width": 384,
+      "suggested_height": 384,
+      "minimum_side": 280,
+      "maximum_side": 1568,
+      "maximum_bytes": 10000000,
+      "maximum_base64_chars": 13333336,
+      "maximum_request_bytes": 13398872
+    }
+  },
+  "probes": [
+    {
+      "duplicate": false,
+      "status": 400,
+      "body": {
+        "error": "Use compact, exact, trashnet, taco, realwaste or realwaste8 decision mode.",
+        "code": "invalid_mode",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false,
+        "server_time_ms": 0,
+        "item_name": "Unidentified item",
+        "api_version": "2026-10-28",
+        "build_id": "jev-exact-upload-20261107-r2",
+        "edge_time_ms": 0
+      }
+    },
+    {
+      "duplicate": true,
+      "status": 400,
+      "body": {
+        "error": "Upload at most one mode field.",
+        "code": "invalid_request",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false
+      }
+    }
+  ],
+  "paid_predictions": 0
+}
