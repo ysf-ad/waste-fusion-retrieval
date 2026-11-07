@@ -6,7 +6,7 @@
     --body: 'Lexend', 'Segoe UI', Arial, sans-serif;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--body); background: #6d93d0; min-height: 100vh; color: #1f2937; overflow: hidden; }
+body { font-family: var(--body); background: #6d93d0; min-height: 100vh; color: #1f2937; overflow: hidden; transform: rotate(180deg); transform-origin: center; }
 
 /* ---------- Themes (page, 3 panel gradient stops, edge, text colours, icon) ---------- */
 .theme-blue, .camera-page, .scan-page {
