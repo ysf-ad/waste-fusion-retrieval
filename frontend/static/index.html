@@ -84,6 +84,11 @@
                     <span id="item-name">Item Name</span>
                 </h3>
                 <p class="info-desc" id="why-text">Explanation about the classification.</p>
+                <p id="result-checks" class="result-checks" role="status"></p>
+                <section class="policy-instructions" aria-label="Source instructions">
+                    <h4 id="instructions-title">Source instructions</h4>
+                    <ul id="instruction-list"></ul>
+                </section>
             </div>
         </div>
 
@@ -91,6 +96,12 @@
             <h2 class="action-text" id="action-text">PLACE IN</h2>
             <h1 class="bin-text" id="bin-name-large">RECYCLING BIN</h1>
             <div class="icon-wrapper" id="large-icon-container"></div>
+            <p class="prediction-note">Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.</p>
+            <details id="api-details" class="api-details">
+                <summary>API details / full response</summary>
+                <p id="api-summary"></p>
+                <pre id="api-response"></pre>
+            </details>
         </div>
 
         <div class="bottom-bar">
@@ -133,6 +144,7 @@
         </div>
     </div>
 
+    <script src="result-info.js"></script>
     <script>
         // API Endpoints
         const API_ENDPOINT = '/api/predict';
@@ -207,7 +219,7 @@
                 leftPanel.appendChild(binNameLarge);
                 rightPanel.insertBefore(whyText, largeIconContainer);
             } else {
-                infoWrapper.appendChild(whyText);
+                infoWrapper.insertBefore(whyText, document.getElementById('result-checks'));
                 rightPanel.insertBefore(binNameLarge, largeIconContainer);
             }
         }
@@ -419,6 +431,7 @@
                 const imgResponse = await fetch(PI_SERVICE.latestImage);
                 if (!imgResponse.ok) throw new Error('Failed to get captured image');
                 const blob = await imgResponse.blob();
+                console.info(`Pi camera JPEG: ${blob.size} bytes`);
                 setScanImage(blob);
                 video.src = PI_SERVICE.latestImage + '?t=' + new Date().getTime();
                 showPage(loadingPage);
@@ -449,6 +462,7 @@
         }
 
         async function displayResult(data, blob, inferenceTime) {
+            const info = predictionInfo(data);
             errorContainer.style.display = 'none';
 
             if (inferenceTime) {
@@ -480,27 +494,37 @@
             }
 
             const currentLang = localStorage.getItem('language') || 'en';
-            const result = data.results && data.results[0] ? data.results[0] : data;
+            const themedBin = /^(blue bin|green bin|garbage|recycling|metal|compost|organic|hhw|household hazardous|electronic)/i.test(info.bin) ? info.bin : 'not accepted';
+            const themeDetails = getThemeDetails(themedBin, currentLang);
 
-            let name = result.item || translations[currentLang]['unknown item'];
-            let instruction = result.instruction || translations[currentLang]['please dispose of this item properly.'];
-            
-            if (currentLang === 'fr') {
-                if (result.item) name = await translateToFrench(result.item);
-                if (result.instruction) instruction = await translateToFrench(result.instruction);
-            }
-
-            const category = result.category || 'unknown';
-            const themeDetails = getThemeDetails(category, currentLang);
-
-            // Update UI Elements
-            resultPage.className = `page result-page ${themeDetails.theme} ${themeDetails.layout}`;
-            applyLayout(themeDetails.layout);
-            itemName.textContent = name;
-            whyText.textContent = instruction;
-            actionText.textContent = themeDetails.action;
-            binNameLarge.textContent = themeDetails.binTitle;
+            // Always keep identity, policy guidance and unresolved conditions distinct.
+            // Source text and diagnostics remain verbatim; no translation API rewrites them.
+            resultPage.className = `page result-page ${themeDetails.theme} layout-info`;
+            applyLayout('layout-bin');
+            itemName.textContent = info.item;
+            whyText.textContent = info.matchScore === null ? 'Match score: not returned' : `Match score: ${Number((info.matchScore * 100).toFixed(1))}%`;
+            actionText.textContent = 'PREDICTED POLICY BIN';
+            binNameLarge.textContent = info.bin || 'NOT CONFIRMED';
             largeIconContainer.innerHTML = themeDetails.icon;
+            document.getElementById('result-checks').textContent = info.checks.join('\n');
+            document.getElementById('instructions-title').textContent = `Source instructions — ${info.sourceBin}`;
+            const list = document.getElementById('instruction-list');
+            list.replaceChildren();
+            const labels = { applies: 'Applies', check: 'Check first', does_not_apply: 'Does not apply', reference: 'Reference' };
+            for (const rule of info.rules) {
+                const row = document.createElement('li');
+                row.className = `rule-${rule.state}`;
+                row.textContent = `[${labels[rule.state]}] ${rule.text}`;
+                list.appendChild(row);
+            }
+            if (!info.rules.length) {
+                const row = document.createElement('li');
+                row.textContent = 'No source instructions returned by the API.';
+                list.appendChild(row);
+            }
+            document.getElementById('api-details').open = false;
+            document.getElementById('api-summary').textContent = `Status: ${info.status}\nObserved condition: ${info.condition}\nLegacy display category: ${info.legacyCategory}\nIdentity model score: ${info.score} (not calibrated accuracy)\nBuild: ${data.build_id || 'Not returned'}\nAPI category: ${data.category ?? 'null / not returned'}\nPolicy bin: ${data.policy_category || 'Not returned'}`;
+            document.getElementById('api-response').textContent = JSON.stringify(data, null, 2);
 
             showPage(resultPage);
 
@@ -509,10 +533,30 @@
             }
 
             if (autoReturnTimer) clearTimeout(autoReturnTimer);
-            if (!debugMode) autoReturnTimer = setTimeout(() => { resetCamera(); }, 15000);
+            if (!debugMode) autoReturnTimer = setTimeout(() => { resetCamera(); }, 60000);
         }
 
+        document.getElementById('api-details').addEventListener('toggle', (event) => {
+            if (autoReturnTimer) clearTimeout(autoReturnTimer);
+            autoReturnTimer = null;
+            if (!event.target.open && !debugMode && errorContainer.style.display === 'none') autoReturnTimer = setTimeout(resetCamera, 60000);
+        });
+
         function showError(message) {
+            if (autoReturnTimer) clearTimeout(autoReturnTimer);
+            autoReturnTimer = null;
+            resultPage.className = 'page result-page theme-red layout-info';
+            itemName.textContent = 'Unable to identify item';
+            whyText.textContent = 'No usable prediction was returned. Try another photo; do not guess a bin.';
+            actionText.textContent = 'TRY AGAIN';
+            binNameLarge.textContent = 'NOT CONFIRMED';
+            largeIconContainer.innerHTML = SVGS.exclamation;
+            document.getElementById('result-checks').textContent = '';
+            document.getElementById('instruction-list').replaceChildren();
+            document.getElementById('instructions-title').textContent = 'No source instructions';
+            document.getElementById('api-details').open = false;
+            document.getElementById('api-summary').textContent = message;
+            document.getElementById('api-response').textContent = '';
             errorContainer.textContent = 'Error: ' + message;
             errorContainer.style.display = 'block';
             showPage(resultPage);

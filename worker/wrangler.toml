@@ -1,0 +1,29 @@
+name = "waste-wizard-clef"
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[vars]
+DECISION_PROVIDER = "jev"
+DECISION_TIMEOUT_MS = "1700"
+BUILD_ID = "jev-image10mb-20261107-r1"
+WASTEWIZARD_ALLOW_PUBLIC = "true"
+REQUIRE_RATE_LIMITER = "true"
+CORS_ALLOWED_ORIGINS = "*"
+
+# Shared across both existing Worker names. Approximate per Cloudflare location,
+# NOT a strict worldwide quota or billing cap. No paid fallback or retries.
+[[ratelimits]]
+name = "AI_IP_LIMITER"
+namespace_id = "3920210826"
+simple = { limit = 60, period = 60 }
+
+[[ratelimits]]
+name = "AI_GLOBAL_LIMITER"
+namespace_id = "3920210827"
+simple = { limit = 120, period = 60 }
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true

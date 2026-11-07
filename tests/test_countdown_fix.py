@@ -156,6 +156,27 @@ class CountdownFixTests(unittest.TestCase):
                 self.assertEqual(response.json['results'], [{'item': 'Metal bowl', 'category': 'Recycling',
                                                             'confidence': 0.9, 'instruction': 'Empty first'}])
 
+    def test_exact_info_script_is_served_at_the_shipped_relative_url(self):
+        response = self.client.get('/result-info.js')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'predictionInfo', response.data)
+        index = self.client.get('/')
+        self.assertEqual(index.status_code, 200)
+        self.assertIn(b'src="result-info.js"', index.data)
+
+    def test_remote_proxy_preserves_all_exact_fields_when_adding_legacy_row(self):
+        body = {'selected_item': 'beverage can', 'category': None, 'status': 'catalog_match',
+                'policy_category': 'Blue Bin', 'policy_conditions_pending': True,
+                'observed': {'condition': {'choice': 'unknown'}},
+                'rule_evaluation': [{'text': 'Empty and rinse', 'state': 'check'}],
+                'build_id': 'offline-exact'}
+        response = self.proxy(body)
+        self.assertEqual(response.status_code, 200)
+        for key, value in body.items():
+            self.assertEqual(response.json[key], value)
+        self.assertEqual(response.json['results'][0]['item'], 'beverage can')
+        self.assertIsNone(response.json['results'][0]['category'])
+
     def test_remote_upstream_http_error_is_preserved(self):
         response = self.proxy({'error': 'Rate limited'}, status=429)
         self.assertEqual(response.status_code, 429)

@@ -147,7 +147,7 @@ def delayed_capture():
             stream.seek(0)
             latest_capture = stream.getvalue()
             latest_capture_time = time.time()
-            print("Image captured successfully")
+            print(f"Image captured successfully ({len(latest_capture)} bytes)")
             
             # Notify frontend to process the captured image
             event_queue.append({'event': 'image_captured', 'data': {}})
@@ -178,6 +178,7 @@ def status():
         'motion_detected': motion_detected_flag,
         'capture_in_progress': capture_in_progress,
         'has_capture': latest_capture is not None,
+        'latest_capture_bytes': len(latest_capture) if latest_capture is not None else None,
         'capture_delay': CAPTURE_DELAY,
         'api_endpoint': API_ENDPOINT
     })
@@ -225,10 +226,12 @@ def manual_capture():
         latest_capture = stream.getvalue()
         latest_capture_time = time.time()
         
+        print(f"Image captured successfully ({len(latest_capture)} bytes)")
         return jsonify({
             'success': True,
             'message': 'Image captured',
-            'timestamp': latest_capture_time
+            'timestamp': latest_capture_time,
+            'image_bytes': len(latest_capture)
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -240,7 +243,9 @@ def get_latest_image():
     if latest_capture is None:
         return jsonify({'error': 'No image captured yet'}), 404
     
-    return Response(latest_capture, mimetype='image/jpeg')
+    response = Response(latest_capture, mimetype='image/jpeg')
+    response.headers['X-Image-Bytes'] = str(len(latest_capture))
+    return response
 
 
 @app.route('/api/latest-image-base64')
@@ -351,14 +356,14 @@ def predict_proxy():
                 data.get('selected_item') or data.get('item_name')
             ):
                 selected_item = data.get('selected_item') or data.get('item_name')
-                data = {
-                    'results': [{
-                        'item': selected_item,
-                        'category': data.get('category'),
-                        'confidence': data.get('match_probability'),
-                        'instruction': data.get('instruction', '')
-                    }]
-                }
+                # Preserve the complete response for policy guidance and diagnostics.
+                # The legacy row is additive, never a replacement for exact fields.
+                data['results'] = [{
+                    'item': selected_item,
+                    'category': data.get('category'),
+                    'confidence': data.get('match_probability'),
+                    'instruction': data.get('instruction', '')
+                }]
             response_body = json.dumps(data).encode('utf-8')
 
         return Response(

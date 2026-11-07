@@ -1,0 +1,12 @@
+{
+  "name": "waste-wizard-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "build": "npx --yes wrangler@4.155.0 deploy --dry-run",
+    "deploy": "npx --yes wrangler@4.155.0 deploy --keep-vars"
+  }
+}
