@@ -24,3 +24,15 @@ Release `jev-exact-upload-20261107-r2` is deployed to the existing
 `worker/deployment/2026-11-07-exact-upload/result.json` confirms the 10 MB cap and
 multipart validation without model calls. The device must pull the frontend update
 to receive the new original-photo preview; the Worker fix takes effect immediately.
+
+Fresh live prediction: the original 1392 × 3013 phone photo passed our byte limit
+but JEV returned HTTP 400. The provider requires each dimension to be 280–1568
+pixels and never resizes inputs (https://docs.typesafe.ai/images.md). An EXIF-aware,
+proportional full-frame resize to 724 × 1568 (342,743 bytes, no crop) succeeded on
+the same `/predict` endpoint: HTTP 200, `beverage can`, match probability 0.99,
+Blue Bin source instructions, condition unknown. It used two model calls in one
+exact request. The Pi's configured 800 × 480 capture fits these dimensions;
+arbitrary phone uploads still need preprocessing. Evidence is saved alongside
+the release as `live-prediction.json`, `live-response.json`, and
+`original-dimensions-attempt.json`. The screenshot renders that recorded real
+response against the matching resized photo; rendering makes no further model calls.

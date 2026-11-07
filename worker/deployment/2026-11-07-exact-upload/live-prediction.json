@@ -1,0 +1,17 @@
+{
+  "endpoint": "https://waste-wizard-clef.yousifaldakoki.workers.dev/predict",
+  "mode": "exact",
+  "image_bytes": 342743,
+  "image_sha256": "f3d0b25500984f25151ee2b5a9c18f2bc25a79345295f1f7c489ad712b69a9ff",
+  "dimensions": [
+    724,
+    1568
+  ],
+  "preprocessing": "EXIF orientation applied, full frame resized proportionally; no crop",
+  "started_at": "2026-11-07T23:08:19.195Z",
+  "requests": 1,
+  "http_status": 200,
+  "finished_at": "2026-11-07T23:08:20.004Z",
+  "status": "catalog_match",
+  "build": "jev-exact-upload-20261107-r2"
+}
