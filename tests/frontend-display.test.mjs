@@ -75,7 +75,8 @@ test('exact policy bin stays visible with unresolved checks and source instructi
   assert.match(h.get('result-checks').textContent, /unresolved instructions/);
   assert.match(h.get('result-checks').textContent, /manual review/);
   assert.equal(h.get('instructions-title').textContent, 'Source instructions — Containers');
-  assert.deepEqual(h.get('instruction-list').children.map(x => x.textContent), ['[Check first] Empty first', '[Does not apply] Broken glass only']);
+  assert.deepEqual(h.get('instruction-list').children.map(x => x.textContent), ['[Check first] Empty first']);
+  assert.deepEqual(h.get('other-instruction-list').children.map(x => x.textContent), ['[Does not apply] Broken glass only']);
   assert.match(h.get('api-summary').textContent, /fixture-build/);
   assert.deepEqual(JSON.parse(h.get('api-response').textContent), h.ctx.data);
 });
@@ -108,4 +109,34 @@ test('opening API details cancels auto-return until details close', async () => 
   const toggle = h.get('api-details').listeners.toggle;
   toggle({ target: { open: true } }); assert.equal(h.ctx.autoReturnTimer, null);
   toggle({ target: { open: false } }); assert.equal(h.ctx.autoReturnTimer, 55);
+});
+
+test('all applicable rules remain visible, partial assessments retain every source line, and provider metadata stays out of display', async () => {
+  const h = harness();
+  h.ctx.data = { selected_item: 'Can', policy_category: 'Blue Bin', provider: 'jev', model: 'jev-1.14.0', build_id: 'jev-release-123',
+    instructions: ['Rinse', 'Remove lid', 'Optional return'],
+    rule_evaluation: [{ text: 'Rinse', state: 'applies' }, { text: 'Remove lid', state: 'applies' }],
+    observed: { condition: { choice: 'unknown' } } };
+  await h.run('displayResult(data, null, 1)');
+  assert.deepEqual(h.get('instruction-list').children.map(x => x.textContent), ['[Applies] Rinse', '[Applies] Remove lid']);
+  assert.deepEqual(h.get('other-instruction-list').children.map(x => x.textContent), ['[Reference] Optional return']);
+  assert.match(h.get('instruction-summary').textContent, /2 applicable instructions/);
+  assert.match(h.get('photo-observations').children[0].textContent, /Cannot verify/);
+  assert.doesNotMatch(h.get('api-response').textContent + h.get('api-summary').textContent, /jev/i);
+  assert.equal(h.ctx.data.provider, 'jev', 'actual response remains intact');
+  h.run('showError("Provider unavailable")');
+  assert.equal(h.get('other-instruction-list').children.length, 0);
+  assert.equal(h.get('photo-details').hidden, true);
+});
+
+test('auto-return stays paused while any optional detail remains open', async () => {
+  const h = harness(); h.ctx.data = { selected_item: 'Can', policy_category: 'Blue Bin' };
+  await h.run('displayResult(data, null, 1)');
+  h.get('photo-details').open = true;
+  h.get('photo-details').listeners.toggle({ target: h.get('photo-details') });
+  h.get('api-details').listeners.toggle({ target: { open: false } });
+  assert.equal(h.ctx.autoReturnTimer, null);
+  h.get('photo-details').open = false;
+  h.get('photo-details').listeners.toggle({ target: h.get('photo-details') });
+  assert.equal(h.ctx.autoReturnTimer, 55);
 });

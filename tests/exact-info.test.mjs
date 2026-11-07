@@ -42,7 +42,9 @@ test('tentative identity remains tentative while all source instruction states r
     assert.equal(h.ctx.itemName.textContent, 'beverage can');
     assert.equal(h.ctx.whyText.textContent, 'Match score: 99%');
     assert.match(h.nodes['result-checks'].textContent, /verify the item/);
-    assert.equal(h.nodes['instruction-list'].children.length, 4);
+    assert.equal(h.nodes['instruction-list'].children.length, 2);
+    assert.equal(h.nodes['other-instruction-list'].children.length, 2);
+    assert.equal(h.nodes['other-instructions'].hidden, false);
 });
 test('legacy responses retain item/instructions; unknown categories never imply litter', async () => {
     for (const category of ['Not accepted', 'nonsense', undefined]) {

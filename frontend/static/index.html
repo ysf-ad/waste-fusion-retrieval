@@ -93,6 +93,10 @@
                 <section class="policy-instructions" aria-label="Source instructions">
                     <h4 id="instructions-title">Source instructions</h4>
                     <ul id="instruction-list"></ul>
+                    <details id="other-instructions" class="extra-details" hidden>
+                        <summary id="other-instructions-label">Other source guidance</summary>
+                        <ul id="other-instruction-list"></ul>
+                    </details>
                 </section>
             </div>
         </div>
@@ -102,8 +106,15 @@
             <h1 class="bin-text" id="bin-name-large">RECYCLING BIN</h1>
             <div class="icon-wrapper" id="large-icon-container"></div>
             <p class="prediction-note">Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.</p>
+            <p id="instruction-summary" class="instruction-summary" role="status"></p>
+            <details id="photo-details" class="extra-details" hidden>
+                <summary>Photo observations</summary>
+                <ul id="photo-observations"></ul>
+                <p class="detail-note">Photo estimates cannot verify hidden contents. Match scores are not calibrated accuracy.</p>
+            </details>
             <details id="api-details" class="api-details">
                 <summary>API details / full response</summary>
+                <p class="detail-note">Provider identifiers are hidden in this display.</p>
                 <p id="api-summary"></p>
                 <pre id="api-response"></pre>
             </details>
@@ -535,11 +546,26 @@
             document.getElementById('instructions-title').textContent = `Source instructions — ${info.sourceBin}`;
             const list = document.getElementById('instruction-list');
             list.replaceChildren();
+            const otherList = document.getElementById('other-instruction-list');
+            otherList.replaceChildren();
+            const assessed = info.rules.some(rule => rule.state === 'applies' || rule.state === 'check' || rule.state === 'does_not_apply');
             const labels = { applies: 'Applies', check: 'Check first', does_not_apply: 'Does not apply', reference: 'Reference' };
             for (const rule of info.rules) {
                 const row = document.createElement('li');
                 row.className = `rule-${rule.state}`;
                 row.textContent = `[${labels[rule.state]}] ${rule.text}`;
+                (assessed && ['reference', 'does_not_apply'].includes(rule.state) ? otherList : list).appendChild(row);
+            }
+            const otherDetails = document.getElementById('other-instructions');
+            otherDetails.open = false;
+            otherDetails.hidden = !otherList.children.length;
+            document.getElementById('other-instructions-label').textContent = `Other source guidance (${otherList.children.length})`;
+            const pending = info.rules.filter(rule => rule.state === 'check').length;
+            const applies = info.rules.filter(rule => rule.state === 'applies').length;
+            document.getElementById('instruction-summary').textContent = pending ? `${pending} instruction${pending === 1 ? '' : 's'} to check before disposal` : applies ? `${applies} applicable instruction${applies === 1 ? '' : 's'} · follow all below` : 'Review the source guidance before disposal';
+            if (assessed && !list.children.length) {
+                const row = document.createElement('li');
+                row.textContent = 'No instruction is confirmed to apply. Review the other source guidance before disposal.';
                 list.appendChild(row);
             }
             if (!info.rules.length) {
@@ -548,8 +574,22 @@
                 list.appendChild(row);
             }
             document.getElementById('api-details').open = false;
-            document.getElementById('api-summary').textContent = `Status: ${info.status}\nObserved condition: ${info.condition}\nLegacy display category: ${info.legacyCategory}\nIdentity model score: ${info.score} (not calibrated accuracy)\nBuild: ${data.build_id || 'Not returned'}\nAPI category: ${data.category ?? 'null / not returned'}\nPolicy bin: ${data.policy_category || 'Not returned'}`;
-            document.getElementById('api-response').textContent = JSON.stringify(data, null, 2);
+            const observations = document.getElementById('photo-observations');
+            observations.replaceChildren();
+            const factLabels = { kind: 'Item type', hazard: 'Special handling signs', condition: 'Contents / cleanliness', plastic_color: 'Plastic colour', compostable_mark: 'Compostable marking', paper_finish: 'Paper coating', paper_soiling: 'Paper soiling' };
+            for (const [key, label] of Object.entries(factLabels)) {
+                const value = data.observed?.[key]?.choice;
+                if (typeof value !== 'string') continue;
+                const row = document.createElement('li');
+                row.textContent = `${label}: ${value === 'unknown' ? 'Cannot verify from photo' : value.replaceAll('_', ' ')}`;
+                observations.appendChild(row);
+            }
+            document.getElementById('photo-details').open = false;
+            document.getElementById('photo-details').hidden = !observations.children.length;
+            // Hide provider branding only in the presentation; retain the actual API response unchanged.
+            const displayResponse = (key, value) => ['provider', 'model'].includes(key) ? undefined : typeof value === 'string' ? value.replace(/\bjev-/gi, '').replace(/\bjev\b/gi, 'classifier') : value;
+            document.getElementById('api-summary').textContent = `Status: ${info.status}\nObserved condition: ${info.condition}\nLegacy display category: ${info.legacyCategory}\nIdentity model score: ${info.score} (not calibrated accuracy)\nBuild: ${displayResponse('build_id', data.build_id || 'Not returned')}\nAPI category: ${data.category ?? 'null / not returned'}\nPolicy bin: ${data.policy_category || 'Not returned'}`;
+            document.getElementById('api-response').textContent = JSON.stringify(data, displayResponse, 2);
 
             showPage(resultPage);
 
@@ -561,10 +601,10 @@
             if (!debugMode) autoReturnTimer = setTimeout(() => { resetCamera(); }, 60000);
         }
 
-        document.getElementById('api-details').addEventListener('toggle', (event) => {
+        for (const id of ['api-details', 'photo-details', 'other-instructions']) document.getElementById(id).addEventListener('toggle', (event) => {
             if (autoReturnTimer) clearTimeout(autoReturnTimer);
             autoReturnTimer = null;
-            if (!event.target.open && !debugMode && errorContainer.style.display === 'none') autoReturnTimer = setTimeout(resetCamera, 60000);
+            if (!event.target.open && !['api-details', 'photo-details', 'other-instructions'].some(id => document.getElementById(id).open) && !debugMode && errorContainer.style.display === 'none') autoReturnTimer = setTimeout(resetCamera, 60000);
         });
 
         function showError(message) {
@@ -578,6 +618,10 @@
             largeIconContainer.innerHTML = SVGS.exclamation;
             document.getElementById('result-checks').textContent = '';
             document.getElementById('instruction-list').replaceChildren();
+            document.getElementById('other-instruction-list').replaceChildren();
+            document.getElementById('photo-observations').replaceChildren();
+            document.getElementById('instruction-summary').textContent = '';
+            for (const id of ['other-instructions', 'photo-details']) { document.getElementById(id).hidden = true; document.getElementById(id).open = false; }
             document.getElementById('instructions-title').textContent = 'No source instructions';
             document.getElementById('api-details').open = false;
             document.getElementById('api-summary').textContent = message;
