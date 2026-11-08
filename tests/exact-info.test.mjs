@@ -12,7 +12,7 @@ function harness() {
         replaceChildren() { this.children = []; }, appendChild(value) { this.children.push(value); }, addEventListener(name, fn) { this[name] = fn; } });
     const ctx = { document: { getElementById: id => nodes[id] ||= element(), createElement: element },
         localStorage: { getItem: () => 'en' }, usingPiCamera: false, debugMode: false,
-        autoReturnTimer: null, inferenceTimeDisplay: element(), errorContainer: element(), resultPage: element(),
+        autoReturnTimer: null, inferenceTimeDisplay: element(), errorContainer: element(), resultPage: element(), countdownOverlay: element(),
         itemName: element(), whyText: element(), actionText: element(), binNameLarge: element(), largeIconContainer: element(),
         applyLayout() {}, showPage() {}, clearTimeout() {}, setTimeout: () => 1, resetCamera() {} };
     vm.createContext(ctx); vm.runInContext(info + themes + display, ctx);
@@ -79,7 +79,7 @@ test('remote text remains literal, and an error clears all previous result detai
     assert.equal(h.ctx.binNameLarge.textContent, 'NOT CONFIRMED');
     assert.equal(h.nodes['api-response'].textContent, '');
     assert.equal(h.nodes['instruction-list'].children.length, 0);
-    assert.equal(h.ctx.autoReturnTimer, null);
+    assert.equal(h.ctx.autoReturnTimer, 1);
 });
 test('invalid envelopes are rejected rather than displayed as previous success', () => {
     const h = harness();
@@ -98,12 +98,7 @@ test('match scores handle legacy responses and missing or invalid values without
     await h.run('displayResult(data, null, 1)');
     assert.equal(h.ctx.whyText.textContent, 'Match score: 87%');
 });
-test('opening API details pauses auto-return; closing resumes it', () => {
+test('API details have no handler that disables the return timer', () => {
     const h = harness();
-    h.ctx.event = { target: { open: true } }; h.ctx.autoReturnTimer = 12;
-    h.run('document.getElementById("api-details").toggle(event)');
-    assert.equal(h.ctx.autoReturnTimer, null);
-    h.ctx.errorContainer.style.display = 'none'; h.ctx.event.target.open = false;
-    h.run('document.getElementById("api-details").toggle(event)');
-    assert.equal(h.ctx.autoReturnTimer, 1);
+    assert.equal(h.run('document.getElementById("api-details").toggle'), undefined);
 });

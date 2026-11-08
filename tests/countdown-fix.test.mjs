@@ -11,7 +11,8 @@ function fixture({ captureFails = false, predictionFails = false } = {}) {
   const jpeg = new Blob(['fresh captured JPEG'], { type: 'image/jpeg' });
   const result = { results: [{ item: 'API item', category: 'Blue Bin', instruction: 'API instructions' }] };
   const ctx = {
-    usingPiCamera: true, captureBtn: { disabled: false }, autoReturnTimer: 10, uploadMode: true,
+    usingPiCamera: true, captureBtn: { disabled: false }, autoReturnTimer: null, uploadMode: true, AbortController,
+    setTimeout() { return 100; },
     countdownOverlay: { style: {} }, countdownNumber: { set textContent(n) { numbers.push(n); } },
     PI_SERVICE: { capture: '/api/capture', latestImage: '/api/latest-image' }, API_ENDPOINT: '/api/predict',
     video: {}, loadingPage: {}, performance: { now: () => 1 }, Blob, FormData, Date,
@@ -74,7 +75,7 @@ test('camera restarts reuse one SSE connection; zero and capture errors clear ov
   assert.match(f.errors[0], /Camera unavailable/); assert.deepEqual(f.urls(), []);
 });
 test('motion completion fetches and classifies existing server capture without capturing twice', async () => {
-  const f = fixture(); f.run('connectToEventStream()'); await f.streams[0].handlers.image_captured({ data: '{}' });
+  const f = fixture(); f.run('connectToEventStream()'); f.streams[0].handlers.countdown({ data: '{"number":3}' }); await f.streams[0].handlers.image_captured({ data: '{}' });
   assert.deepEqual(f.urls(), ['/api/latest-image', '/api/predict']);
   assert.equal(f.ctx.countdownOverlay.style.display, 'none');
 });

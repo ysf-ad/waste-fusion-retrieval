@@ -23,7 +23,7 @@ function harness() {
   const ctx = {
     document: { getElementById: get, createElement: element },
     localStorage: { getItem: () => 'en' }, usingPiCamera: true, debugMode: false, autoReturnTimer: 44,
-    inferenceTimeDisplay: element(), errorContainer: element(), resultPage: element(), itemName: element(),
+    inferenceTimeDisplay: element(), errorContainer: element(), resultPage: element(), itemName: element(), countdownOverlay: element(), captureBtn: element(),
     whyText: element(), actionText: element(), binNameLarge: element(), largeIconContainer: element(),
     applyLayout(value) { ctx.layout = value; }, showPage(value) { ctx.page = value; },
     clearTimeout(id) { cleared.push(id); }, setTimeout(fn, ms) { timers.push({ fn, ms }); return 55; }, resetCamera() {},
@@ -49,7 +49,7 @@ for (const [category, theme] of [
     assert.equal(h.ctx.inferenceTimeDisplay.textContent, '1.23s');
     assert.equal(h.ctx.page, h.ctx.resultPage);
     assert.equal(h.requests[0].url, '/api/motion/disable');
-    assert.equal(h.timers[0].ms, 60000);
+    assert.equal(h.timers[0].ms, 5000);
   });
 }
 for (const category of ['Not accepted', 'unrecognized category', null, undefined]) {
@@ -96,18 +96,19 @@ test('error clears stale identity, bin, instructions, diagnostics and auto-retur
   assert.equal(h.ctx.actionText.textContent, 'TRY AGAIN');
   assert.match(h.ctx.resultPage.className, /theme-red/);
   assert.match(h.ctx.whyText.textContent, /do not guess a bin/);
-  assert.equal(h.ctx.autoReturnTimer, null);
+  assert.equal(h.ctx.autoReturnTimer, 55);
   assert.equal(h.get('instruction-list').children.length, 0);
   assert.equal(h.get('result-checks').textContent, '');
   assert.equal(h.get('api-response').textContent, '');
   assert.equal(h.ctx.errorContainer.textContent, 'Error: Server error: 502');
 });
-test('opening API details cancels auto-return until details close', async () => {
+test('opening API details cannot cancel the five-second return', async () => {
   const h = harness(); h.ctx.data = { selected_item: 'Bottle', policy_category: 'Blue Bin' };
   await h.run('displayResult(data, null, 1)');
-  const toggle = h.get('api-details').listeners.toggle;
-  toggle({ target: { open: true } }); assert.equal(h.ctx.autoReturnTimer, null);
-  toggle({ target: { open: false } }); assert.equal(h.ctx.autoReturnTimer, 55);
+  h.get('api-details').open = true;
+  assert.equal(h.get('api-details').listeners.toggle, undefined);
+  assert.equal(h.ctx.autoReturnTimer, 55);
+  assert.equal(h.timers[0].ms, 5000);
 });
 
 test('applicable instructions lead, checks remain, excluded rules stay in API details, and branding is hidden', async () => {

@@ -7,7 +7,7 @@ const css = readFileSync(new URL('../frontend/static/styles.css', import.meta.ur
 function harness() {
   const elements = new Map();
   const get = id => {
-    if (!elements.has(id)) elements.set(id, { hidden: true, style: {}, removeAttribute(name) { delete this[name]; } });
+    if (!elements.has(id)) elements.set(id, { hidden: true, open: false, style: {}, showModal() { this.open = true; }, close() { this.open = false; }, removeAttribute(name) { delete this[name]; } });
     return elements.get(id);
   };
   const blobs = [], revoked = [];
@@ -19,14 +19,13 @@ function harness() {
   vm.runInContext('let scanImageUrl = null;\n' + html.slice(start, end), context);
   return { context, get, blobs, revoked, run: expression => vm.runInContext(expression, context) };
 }
-test('loading, result and full-photo link share the original submitted Blob without re-encoding', () => {
+test('loading and result share the original Blob without navigating to a photo page', () => {
   const h = harness(); h.context.photo = new Blob(['original JPEG bytes'], { type: 'image/jpeg' });
   h.run('setScanImage(photo)');
   assert.equal(h.blobs[0], h.context.photo);
   assert.equal(h.get('scan-image').src, h.get('result-image').src);
-  assert.equal(h.get('image-preview-link').href, h.get('result-image').src);
   assert.equal(h.get('result-image').hidden, false);
-  assert.equal(h.get('image-preview-link').hidden, false);
+  assert.doesNotMatch(html, /id="image-preview-link"|Open original photo|target="_blank"/);
   assert.match(h.get('image-preview-label').textContent, /19 bytes/);
   assert.equal(h.get('result-image').style.transform, undefined, 'exact result preview is never mirrored');
 });
@@ -36,6 +35,19 @@ test('new photo replaces previous preview and releases its object URL', () => {
   assert.deepEqual(h.revoked, ['blob:preview-1']);
   assert.equal(h.get('result-image').src, 'blob:preview-2');
   assert.match(h.get('image-preview-label').textContent, /6 bytes/);
+});
+
+test('zoom stays inside the kiosk and reset closes it before releasing the photo', () => {
+  const h = harness(); h.context.photo = new Blob(['photo']);
+  h.run('setScanImage(photo); openPhotoZoom(); openPhotoZoom()');
+  assert.equal(h.get('photo-zoom').open, true);
+  assert.equal(h.get('zoom-image').src, h.get('result-image').src);
+  h.run('closePhotoZoom()');
+  assert.equal(h.get('photo-zoom').open, false);
+  h.run('openPhotoZoom(); clearImagePreview()');
+  assert.equal(h.get('photo-zoom').open, false);
+  assert.equal(h.get('zoom-image').src, undefined);
+  assert.deepEqual(h.revoked, ['blob:preview-1']);
 });
 test('reset clears previews and link so a capture failure cannot show a previous photo', () => {
   const h = harness(); h.context.photo = new Blob(['first']); h.run('setScanImage(photo); clearImagePreview(); clearImagePreview()');

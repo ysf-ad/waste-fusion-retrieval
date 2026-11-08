@@ -1,7 +1,7 @@
 # Photo preview verification
 
 The result screen displays the exact submitted image without cropping or mirroring,
-its byte count, and an original-photo link. Reset clears the previous image before
+its byte count, and an in-app photo zoom. Reset clears the previous image before
 another capture. The Worker preserves multipart `mode=exact` and rejects duplicate
 mode fields.
 
@@ -53,3 +53,22 @@ per entry. A separate mock with six instructions also fit, with every line
 visible. The longest current source text was checked visually. These checks
 exercise the real renderer with mocked applicability states, not model accuracy;
 they do not guarantee unlimited future text or smaller displays will fit.
+
+## Embedded kiosk recovery
+
+Successful results and errors return to the camera after five seconds. Opening
+Full response or photo zoom does not suspend that timer. Photo zoom uses an
+in-app dialog with a large Close button, Escape and background-tap dismissal;
+there is no raw-photo link or new browser tab. Reset also closes the dialog.
+The zoom preserves the device's 180-degree orientation.
+
+A 25-second deadline covers countdown, capture, image loading, upload and response
+body processing. Expired requests are aborted; late responses and motion events
+cannot replace the home screen or cancel a result's return timer. Reset clears
+the countdown, releases the photo URL, re-enables capture and resumes motion.
+The production Debug entry is hidden to prevent persistent sample screens.
+
+Regression tests cover repeated scans, five-second result/error recovery, reset
+during countdown, stalled capture/image/prediction bodies and stale completions.
+Browser checks use the unchanged Flask proxy, simulated hardware and a recorded
+real API response; they make no new prediction calls or physical-device claims.
