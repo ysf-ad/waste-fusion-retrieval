@@ -128,6 +128,11 @@ body { font-family: var(--body); background: #6d93d0; min-height: 100vh; color: 
 #canvas-display.flipped { transform: scaleX(-1); }
 .image-wrapper > [hidden] { display: none; }
 #result-image { object-fit: contain; }
+#result-image[role="button"] { cursor: zoom-in; }
+.photo-zoom { position: fixed; inset: 0; width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 12px; border: 0; background: #111827; color: #fff; transform: rotate(180deg); }
+.photo-zoom[open] { display: flex; flex-direction: column; gap: 12px; }
+.photo-zoom button { align-self: flex-end; flex: none; min-height: 44px; padding: 8px 20px; border: 0; border-radius: 8px; background: #fff; color: #111827; font: 600 16px var(--body); cursor: pointer; }
+.photo-zoom img { flex: 1; min-height: 0; width: 100%; object-fit: contain; pointer-events: none; }
 .image-preview-label, .image-preview-actions { text-align: center; font-size: 1em; margin: 0; }
 .image-preview-actions a { color: var(--ink); text-decoration: underline; font-weight: 600; }
 

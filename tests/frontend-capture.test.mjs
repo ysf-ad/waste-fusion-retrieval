@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 
-// Execute shipped functions. The current page has no replay IDs, watchdog or SSE deduplication.
+// Execute shipped capture functions with network and hardware replaced by fixtures.
 const html = readFileSync(new URL('../frontend/static/index.html', import.meta.url), 'utf8');
 const start = html.indexOf('        async function showCountdown()');
 const end = html.indexOf('        let autoReturnTimer = null;', start);
@@ -15,7 +15,8 @@ function harness(overrides = {}) {
     const number = {};
     Object.defineProperty(number, 'textContent', { get: () => countdown.at(-1), set: value => countdown.push(value) });
     const ctx = {
-        console: { info() {} }, Blob, FormData, Date, Promise,
+        console: { info() {} }, Blob, FormData, Date, Promise, AbortController,
+        setTimeout() { return 100; },
         setInterval(fn) { const id = ++serial; intervals.set(id, fn); return id; },
         clearInterval(id) { intervals.delete(id); }, clearTimeout() {},
         EventSource: class { constructor(url) { this.url = url; } addEventListener(name, fn) { events.set(name, fn); } },
@@ -68,6 +69,7 @@ test('motion events show countdown and process already captured JPEG without rec
     const h = harness(); h.run('connectToEventStream()');
     for (const number of [3, 2, 1, 0]) h.events.get('countdown')({ data: JSON.stringify({ number }) });
     assert.equal(h.ctx.countdownOverlay.style.display, 'none');
+    h.events.get('countdown')({ data: '{"number":3}' });
     await h.events.get('image_captured')({ data: '{}' });
     assert.deepEqual(h.requests.map(x => x.url), ['/api/latest-image', '/api/predict']);
     assert.equal(h.results.length, 1);

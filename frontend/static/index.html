@@ -76,13 +76,10 @@
     <div id="result-page" class="page result-page theme-grey layout-bin">
         <div id="left-panel" class="panel left-panel">
             <div class="image-wrapper">
-                <img id="result-image" alt="Original photo submitted for this prediction" hidden />
+                <img id="result-image" alt="Original photo submitted for this prediction" role="button" tabindex="0" aria-label="Zoom photo" hidden />
                 <canvas id="canvas-display" hidden aria-hidden="true"></canvas>
             </div>
             <p id="image-preview-label" class="image-preview-label" hidden></p>
-            <div class="image-preview-actions">
-                <a id="image-preview-link" target="_blank" rel="noopener" hidden>Open original photo</a>
-            </div>
             <div id="info-wrapper" class="info-wrapper">
                 <h3 class="info-title">
                     <span class="info-icon">i</span>
@@ -120,6 +117,11 @@
 
         <div id="error-container" class="error-message" style="display: none;"></div>
     </div>
+
+    <dialog id="photo-zoom" class="photo-zoom" aria-label="Enlarged submitted photo">
+        <button id="close-photo-zoom" type="button" data-i18n="closePhoto">Close photo ×</button>
+        <img id="zoom-image" alt="Enlarged original submitted photo" />
+    </dialog>
 
     <!-- Debug panel -->
     <button id="debug-fab" hidden>Debug</button>
@@ -218,19 +220,28 @@
             const label = document.getElementById('image-preview-label');
             label.textContent = `Submitted photo · ${blob.size.toLocaleString('en-US')} bytes`;
             label.hidden = false;
-            const link = document.getElementById('image-preview-link');
-            link.href = scanImageUrl;
-            link.hidden = false;
         }
         function clearImagePreview() {
+            closePhotoZoom();
             if (scanImageUrl) URL.revokeObjectURL(scanImageUrl);
             scanImageUrl = null;
-            for (const id of ['scan-image', 'result-image', 'image-preview-link']) {
+            for (const id of ['scan-image', 'result-image']) {
                 const element = document.getElementById(id);
-                element.removeAttribute(id === 'image-preview-link' ? 'href' : 'src');
+                element.removeAttribute('src');
             }
-            for (const id of ['result-image', 'image-preview-label', 'image-preview-link']) document.getElementById(id).hidden = true;
+            for (const id of ['result-image', 'image-preview-label']) document.getElementById(id).hidden = true;
             document.getElementById('image-preview-label').textContent = '';
+        }
+        function openPhotoZoom() {
+            if (!scanImageUrl) return;
+            const dialog = document.getElementById('photo-zoom');
+            document.getElementById('zoom-image').src = scanImageUrl;
+            if (!dialog.open) dialog.showModal();
+        }
+        function closePhotoZoom() {
+            const dialog = document.getElementById('photo-zoom');
+            if (dialog.open) dialog.close();
+            document.getElementById('zoom-image').removeAttribute('src');
         }
         function startScanTimer() {
             const el = document.getElementById('scan-time');
@@ -333,11 +344,51 @@
                     countdownNumber.textContent = count;
                     if (count === 0) {
                         clearInterval(interval);
+                        cancelCountdown = null;
                         countdownOverlay.style.display = 'none';
-                        resolve();
+                        resolve(true);
                     }
                 }, 1000);
+                cancelCountdown = () => {
+                    clearInterval(interval);
+                    countdownOverlay.style.display = 'none';
+                    cancelCountdown = null;
+                    resolve(false);
+                };
             });
+        }
+
+        let cancelCountdown = null;
+        let scanGeneration = 0;
+        let activeScan = null;
+        let scanDeadline = null;
+        function cancelScan() {
+            scanGeneration++;
+            activeScan?.controller.abort();
+            activeScan = null;
+            clearTimeout(scanDeadline);
+            scanDeadline = null;
+            if (cancelCountdown) cancelCountdown();
+        }
+        function beginScan() {
+            cancelScan();
+            const scan = { id: scanGeneration, controller: new AbortController() };
+            activeScan = scan;
+            scanDeadline = setTimeout(() => {
+                if (!isCurrentScan(scan)) return;
+                cancelScan();
+                showError('The scan timed out. Please try again.');
+            }, 25000);
+            return scan;
+        }
+        function isCurrentScan(scan) {
+            return scan.id === scanGeneration && !scan.controller.signal.aborted;
+        }
+        function finishScan(scan) {
+            if (!isCurrentScan(scan)) return;
+            clearTimeout(scanDeadline);
+            scanDeadline = null;
+            activeScan = null;
         }
 
         let eventSource = null;
@@ -345,16 +396,23 @@
             if (eventSource) return; // Reuse native reconnection; do not create competing queues.
             eventSource = new EventSource('/api/events');
             eventSource.addEventListener('countdown', (e) => {
+                if (autoReturnTimer) return;
                 const data = JSON.parse(e.data);
+                if (data.number > 0 && !activeScan) beginScan();
                 countdownOverlay.style.display = data.number > 0 ? 'flex' : 'none';
                 countdownNumber.textContent = data.number;
             });
             eventSource.addEventListener('image_captured', async (e) => {
+                if (autoReturnTimer) return;
                 countdownOverlay.style.display = 'none';
-                await captureFromPiAndProcess();
+                // A completion without a current countdown can be a delayed event
+                // from a scan that already timed out or was reset.
+                if (activeScan) await captureFromPiAndProcess(activeScan);
             });
             eventSource.addEventListener('capture_error', (e) => {
+                if (autoReturnTimer) return;
                 countdownOverlay.style.display = 'none';
+                cancelScan();
                 showError('Capture failed: ' + JSON.parse(e.data).message);
             });
         }
@@ -410,37 +468,48 @@
             captureBtn.style.opacity = '0.5';
         }
 
-        async function processImage(blob) {
+        async function processImage(blob, scan = beginScan()) {
             const formData = new FormData();
             formData.append('file', blob, 'capture.jpg');
             inferenceStartTime = performance.now();
             startScanTimer();
             try {
-                const response = await fetch(API_ENDPOINT, { method: 'POST', body: formData });
+                const response = await fetch(API_ENDPOINT, { method: 'POST', body: formData, signal: scan.controller.signal });
                 if (!response.ok) throw new Error(`Server error: ${response.status}`);
                 const data = await response.json();
+                if (!isCurrentScan(scan)) return;
+                finishScan(scan);
                 const inferenceTime = performance.now() - inferenceStartTime;
                 await displayResult(data, blob, inferenceTime);
             } catch (error) {
-                showError(error.message);
+                if (isCurrentScan(scan)) {
+                    finishScan(scan);
+                    showError(error.message);
+                }
             }
         }
 
         async function captureAndProcess() {
             if (usingPiCamera && captureBtn.disabled) return;
+            const scan = beginScan();
             if (usingPiCamera) captureBtn.disabled = true;
             clearTimeout(autoReturnTimer);
-            await showCountdown();
+            autoReturnTimer = null;
+            if (await showCountdown() === false || !isCurrentScan(scan)) return;
             uploadMode = false;
             if (usingPiCamera) {
                 try {
-                    const response = await fetch(PI_SERVICE.capture);
+                    const response = await fetch(PI_SERVICE.capture, { signal: scan.controller.signal });
+                    if (!isCurrentScan(scan)) return;
                     if (!response.ok) throw new Error(`Capture failed: ${response.status}`);
-                    await captureFromPiAndProcess();
+                    await captureFromPiAndProcess(scan);
                 } catch (error) {
-                    showError(error.message);
+                    if (isCurrentScan(scan)) {
+                        finishScan(scan);
+                        showError(error.message);
+                    }
                 } finally {
-                    captureBtn.disabled = false;
+                    if (isCurrentScan(scan)) captureBtn.disabled = false;
                 }
             } else {
                 canvas.width = video.videoWidth;
@@ -448,25 +517,37 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0);
                 canvas.toBlob(async (blob) => {
+                    if (!isCurrentScan(scan)) return;
+                    if (!blob) {
+                        finishScan(scan);
+                        showError('The camera did not return a photo. Please try again.');
+                        return;
+                    }
                     setScanImage(blob);
                     showPage(loadingPage);
-                    await processImage(blob);
+                    await processImage(blob, scan);
                 }, 'image/jpeg', 0.9);
             }
         }
 
-        async function captureFromPiAndProcess() {
+        async function captureFromPiAndProcess(scan = beginScan()) {
+            if (!isCurrentScan(scan) || scan.processing) return;
+            scan.processing = true;
             try {
-                const imgResponse = await fetch(PI_SERVICE.latestImage);
+                const imgResponse = await fetch(PI_SERVICE.latestImage, { signal: scan.controller.signal });
                 if (!imgResponse.ok) throw new Error('Failed to get captured image');
                 const blob = await imgResponse.blob();
+                if (!isCurrentScan(scan)) return;
                 console.info(`Pi camera JPEG: ${blob.size} bytes`);
                 setScanImage(blob);
                 video.src = PI_SERVICE.latestImage + '?t=' + new Date().getTime();
                 showPage(loadingPage);
-                await processImage(blob);
+                await processImage(blob, scan);
             } catch (error) {
-                showError('Failed to process captured image: ' + error.message);
+                if (isCurrentScan(scan)) {
+                    finishScan(scan);
+                    showError('Failed to process captured image: ' + error.message);
+                }
             }
         }
 
@@ -562,18 +643,16 @@
             showPage(resultPage);
 
             if (usingPiCamera) {
-                if (!debugMode) fetch('/api/motion/disable', { method: 'POST' });
+                if (!debugMode) fetch('/api/motion/disable', { method: 'POST' }).catch(() => {});
             }
 
-            if (autoReturnTimer) clearTimeout(autoReturnTimer);
-            if (!debugMode) autoReturnTimer = setTimeout(() => { resetCamera(); }, 60000);
+            scheduleAutoReturn();
         }
 
-        document.getElementById('api-details').addEventListener('toggle', (event) => {
+        function scheduleAutoReturn() {
             if (autoReturnTimer) clearTimeout(autoReturnTimer);
-            autoReturnTimer = null;
-            if (!event.target.open && !debugMode && errorContainer.style.display === 'none') autoReturnTimer = setTimeout(resetCamera, 60000);
-        });
+            autoReturnTimer = debugMode ? null : setTimeout(resetCamera, 5000);
+        }
 
         function showError(message) {
             if (autoReturnTimer) clearTimeout(autoReturnTimer);
@@ -593,6 +672,9 @@
             errorContainer.textContent = 'Error: ' + message;
             errorContainer.style.display = 'block';
             showPage(resultPage);
+            countdownOverlay.style.display = 'none';
+            if (usingPiCamera) captureBtn.disabled = false;
+            scheduleAutoReturn();
         }
 
         async function savePhotoWithResults(photoDataUrl, results, inferenceTime) {
@@ -610,12 +692,19 @@
 
         function resetCamera() {
             clearImagePreview();
+            uploadMode = false;
+            cancelScan();
+            countdownOverlay.style.display = 'none';
+            document.getElementById('api-details').open = false;
+            errorContainer.style.display = 'none';
             if (autoReturnTimer) {
                 clearTimeout(autoReturnTimer);
                 autoReturnTimer = null;
             }
             if (usingPiCamera) {
-                fetch('/api/motion/enable', { method: 'POST' });
+                captureBtn.disabled = false;
+                captureBtn.style.opacity = '';
+                fetch('/api/motion/enable', { method: 'POST' }).catch(() => {});
                 video.src = PI_SERVICE.stream;
             }
             showPage(cameraPage);
@@ -633,6 +722,17 @@
         });
         captureBtn.addEventListener('click', captureAndProcess);
         backBtn.addEventListener('click', resetCamera);
+        document.getElementById('result-image').addEventListener('click', openPhotoZoom);
+        document.getElementById('result-image').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openPhotoZoom();
+            }
+        });
+        document.getElementById('close-photo-zoom').addEventListener('click', closePhotoZoom);
+        document.getElementById('photo-zoom').addEventListener('click', (event) => {
+            if (event.target === event.currentTarget) closePhotoZoom();
+        });
         startCamera();
 
         window.addEventListener('beforeunload', () => {
@@ -642,14 +742,14 @@
         // Dictionary and Language Control
         const translations = {
             en: {
-                takePhoto: 'Take Photo', uploadPhoto: 'Upload Photo', howToUse: 'How to Use',
+                takePhoto: 'Take Photo', uploadPhoto: 'Upload Photo', howToUse: 'How to Use', closePhoto: 'Close photo ×',
                 instruction1: '1. Position item in camera view', instruction2: '2. Wait for automatic capture', instruction3: '3. View classification results',
                 cameraNotAvailable: 'Camera not available', cameraHttpsHint: 'Camera requires HTTPS. Use file upload instead.',
                 analyzing: 'Analyzing your item...', scanAnother: '← Scan Another Item',
                 'unknown item': 'Unknown Item', 'unknown': 'Unknown', 'please dispose of this item properly.': 'Please dispose of this item properly.'
             },
             fr: {
-                takePhoto: 'Prendre une photo', uploadPhoto: 'Téléverser une photo', howToUse: 'Mode d\'emploi',
+                takePhoto: 'Prendre une photo', uploadPhoto: 'Téléverser une photo', howToUse: 'Mode d\'emploi', closePhoto: 'Fermer la photo ×',
                 instruction1: '1. Positionner l\'objet dans le champ de la caméra', instruction2: '2. Attendre la capture automatique', instruction3: '3. Afficher les résultats de la classification',
                 cameraNotAvailable: 'Caméra non disponible', cameraHttpsHint: 'La caméra nécessite HTTPS. Utilisez le téléchargement de fichier à la place.',
                 analyzing: 'Analyse de votre objet...', scanAnother: '← Analyser un autre objet',
@@ -689,7 +789,7 @@
         }
 
         // ---------- Debug mode: jump to any screen with sample data ----------
-        const DEBUG_ENABLED = true; // set to false to hide the Debug button on the kiosk
+        const DEBUG_ENABLED = false; // Production kiosk must not enter a persistent sample view.
         const debugBtn = document.getElementById('debug-btn');
         const debugPanel = document.getElementById('debug-panel');
         const debugFab = document.getElementById('debug-fab');
