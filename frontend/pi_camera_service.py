@@ -26,7 +26,9 @@ except ImportError:
 # --- Configuration ---
 MOTION_SENSOR_PIN = 17  # GPIO pin for motion sensor
 CAPTURE_DELAY = 3     # Seconds to wait after motion before capturing
-API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://api.biswa.ca/predict')
+API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://waste-wizard-clef.yousifaldakoki.workers.dev/predict')
+if not API_ENDPOINT.rstrip('/').endswith('/predict'):
+    API_ENDPOINT = API_ENDPOINT.rstrip('/') + '/predict'
 FLIP_IMAGE = os.getenv('FLIP_IMAGE', 'false').lower() == 'true'
 
 # Use environment variable or default to local directory
@@ -50,6 +52,7 @@ motion_detected_flag = False
 capture_in_progress = False
 event_queue = []  # Queue for SSE events
 motion_enabled = True  # Flag to enable/disable motion detection
+camera_lock = threading.Lock()  # Serialize preview and the existing JPEG capture calls
 
 
 def init_hardware():
@@ -130,6 +133,7 @@ def delayed_capture():
     event_queue.append({'event': 'countdown', 'data': {'number': 1}})
     time.sleep(1)
     print("Capturing now!")
+    event_queue.append({'event': 'countdown', 'data': {'number': 0}})
     
     # Pause motion sensor to prevent double-triggering
     motion_enabled = False
@@ -138,16 +142,20 @@ def delayed_capture():
         if camera:
             # Capture to bytes
             stream = io.BytesIO()
-            camera.capture_file(stream, format='jpeg')
+            with camera_lock:
+                camera.capture_file(stream, format='jpeg')
             stream.seek(0)
             latest_capture = stream.getvalue()
             latest_capture_time = time.time()
-            print("Image captured successfully")
+            print(f"Image captured successfully ({len(latest_capture)} bytes)")
             
             # Notify frontend to process the captured image
             event_queue.append({'event': 'image_captured', 'data': {}})
+        else:
+            raise RuntimeError('Camera not available')
     except Exception as e:
         print(f"Capture failed: {e}")
+        event_queue.append({'event': 'capture_error', 'data': {'message': str(e)}})
         # Re-enable motion if capture failed, as frontend won't get the event
         motion_enabled = True
     finally:
@@ -170,6 +178,7 @@ def status():
         'motion_detected': motion_detected_flag,
         'capture_in_progress': capture_in_progress,
         'has_capture': latest_capture is not None,
+        'latest_capture_bytes': len(latest_capture) if latest_capture is not None else None,
         'capture_delay': CAPTURE_DELAY,
         'api_endpoint': API_ENDPOINT
     })
@@ -211,15 +220,18 @@ def manual_capture():
     
     try:
         stream = io.BytesIO()
-        camera.capture_file(stream, format='jpeg')
+        with camera_lock:
+            camera.capture_file(stream, format='jpeg')
         stream.seek(0)
         latest_capture = stream.getvalue()
         latest_capture_time = time.time()
         
+        print(f"Image captured successfully ({len(latest_capture)} bytes)")
         return jsonify({
             'success': True,
             'message': 'Image captured',
-            'timestamp': latest_capture_time
+            'timestamp': latest_capture_time,
+            'image_bytes': len(latest_capture)
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -231,7 +243,9 @@ def get_latest_image():
     if latest_capture is None:
         return jsonify({'error': 'No image captured yet'}), 404
     
-    return Response(latest_capture, mimetype='image/jpeg')
+    response = Response(latest_capture, mimetype='image/jpeg')
+    response.headers['X-Image-Bytes'] = str(len(latest_capture))
+    return response
 
 
 @app.route('/api/latest-image-base64')
@@ -256,20 +270,26 @@ def video_stream():
     def generate():
         while True:
             try:
-                # Capture frame directly from camera
-                request_obj = camera.capture_request()
-                img = request_obj.make_image('main')
-                
-                # Encode to JPEG
-                jpeg_buffer = io.BytesIO()
-                img.save(jpeg_buffer, format='JPEG', quality=85)
-                frame = jpeg_buffer.getvalue()
+                # Release the camera request BEFORE yielding to a slow preview client.
+                with camera_lock:
+                    request_obj = camera.capture_request()
+                    img = None
+                    try:
+                        img = request_obj.make_image('main')
+                        jpeg_buffer = io.BytesIO()
+                        img.save(jpeg_buffer, format='JPEG', quality=85)
+                        frame = jpeg_buffer.getvalue()
+                    finally:
+                        try:
+                            if img is not None:
+                                img.close()
+                        finally:
+                            request_obj.release()
                 
                 yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n'
-                       b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
+                        b'Content-Type: image/jpeg\r\n'
+                        b'Content-Length: ' + str(len(frame)).encode() + b'\r\n\r\n' + frame + b'\r\n')
                 
-                request_obj.release()
                 time.sleep(0.05)  # ~20 FPS
             except Exception as e:
                 print(f"Stream error: {e}")
@@ -308,23 +328,48 @@ def disable_motion():
 @app.route('/api/predict', methods=['POST'])
 def predict_proxy():
     """Proxy prediction requests to avoid CORS issues"""
-    import requests
-    
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
     
     file = request.files['file']
     
     try:
-        # Forward the file to the actual API
-        files = {'file': (file.filename, file.stream, file.content_type)}
-        response = requests.post(API_ENDPOINT, files=files, timeout=30)
-        
-        # Return the API response
+        files = {
+            'file': (
+                file.filename or 'capture.jpg',
+                file.read(),
+                file.content_type or 'image/jpeg'
+            )
+        }
+        response = requests.post(
+            API_ENDPOINT,
+            files=files,
+            data={'mode': 'exact'},
+            timeout=30
+        )
+
+        response_body = response.content
+        content_type = response.headers.get('Content-Type', 'application/json')
+        if response.ok and content_type.startswith('application/json'):
+            data = response.json()
+            if 'results' not in data and (
+                data.get('selected_item') or data.get('item_name')
+            ):
+                selected_item = data.get('selected_item') or data.get('item_name')
+                # Preserve the complete response for policy guidance and diagnostics.
+                # The legacy row is additive, never a replacement for exact fields.
+                data['results'] = [{
+                    'item': selected_item,
+                    'category': data.get('category'),
+                    'confidence': data.get('match_probability'),
+                    'instruction': data.get('instruction', '')
+                }]
+            response_body = json.dumps(data).encode('utf-8')
+
         return Response(
-            response.content,
+            response_body,
             status=response.status_code,
-            content_type=response.headers.get('Content-Type', 'application/json')
+            content_type=content_type
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -1,0 +1,1734 @@
+TAP version 13
+# Subtest: exact mode makes exactly two calls with one shared deadline, schema and image
+ok 1 - exact mode makes exactly two calls with one shared deadline, schema and image
+  ---
+  duration_ms: 16.4462
+  type: 'test'
+  ...
+# Subtest: every chunk contributes a finalist even when its local none score is high
+ok 2 - every chunk contributes a finalist even when its local none score is high
+  ---
+  duration_ms: 5.6738
+  type: 'test'
+  ...
+# Subtest: second-stage top item at 0.79 retains its actual row without a minimum probability gate
+ok 3 - second-stage top item at 0.79 retains its actual row without a minimum probability gate
+  ---
+  duration_ms: 3.5421
+  type: 'test'
+  ...
+# Subtest: second-stage top item at 0.3 retains its actual row without a minimum probability gate
+ok 4 - second-stage top item at 0.3 retains its actual row without a minimum probability gate
+  ---
+  duration_ms: 3.941
+  type: 'test'
+  ...
+# Subtest: second-stage top item at 0.12 retains its actual row without a minimum probability gate
+ok 5 - second-stage top item at 0.12 retains its actual row without a minimum probability gate
+  ---
+  duration_ms: 3.4753
+  type: 'test'
+  ...
+# Subtest: second-stage none winner displays highest non-none candidate with original probability
+ok 6 - second-stage none winner displays highest non-none candidate with original probability
+  ---
+  duration_ms: 3.9863
+  type: 'test'
+  ...
+# Subtest: second-stage small winning margin displays highest non-none candidate with original probability
+ok 7 - second-stage small winning margin displays highest non-none candidate with original probability
+  ---
+  duration_ms: 3.2051
+  type: 'test'
+  ...
+# Subtest: exact selected row keeps instructions while unknown container conditions remain unconfirmed
+ok 8 - exact selected row keeps instructions while unknown container conditions remain unconfirmed
+  ---
+  duration_ms: 0.6174
+  type: 'test'
+  ...
+# Subtest: exact hazard warning does not erase the selected catalog instructions
+ok 9 - exact hazard warning does not erase the selected catalog instructions
+  ---
+  duration_ms: 3.4235
+  type: 'test'
+  ...
+# Subtest: candidate stage exhausting the common budget prevents a second inference
+ok 10 - candidate stage exhausting the common budget prevents a second inference
+  ---
+  duration_ms: 5.4673
+  type: 'test'
+  ...
+# Subtest: unsupported exact provider clef is rejected before any inference
+ok 11 - unsupported exact provider clef is rejected before any inference
+  ---
+  duration_ms: 0.4313
+  type: 'test'
+  ...
+# Subtest: unsupported exact provider clef-flash is rejected before any inference
+ok 12 - unsupported exact provider clef-flash is rejected before any inference
+  ---
+  duration_ms: 0.1535
+  type: 'test'
+  ...
+# Subtest: unsupported exact provider unrecognized is rejected before any inference
+ok 13 - unsupported exact provider unrecognized is rejected before any inference
+  ---
+  duration_ms: 0.1099
+  type: 'test'
+  ...
+# Subtest: unsupported exact provider __proto__ is rejected before any inference
+ok 14 - unsupported exact provider __proto__ is rejected before any inference
+  ---
+  duration_ms: 0.1077
+  type: 'test'
+  ...
+# Subtest: stage 1 rejects missing result without retry/fallback
+ok 15 - stage 1 rejects missing result without retry/fallback
+  ---
+  duration_ms: 2.307
+  type: 'test'
+  ...
+# Subtest: stage 1 rejects missing answers without retry/fallback
+ok 16 - stage 1 rejects missing answers without retry/fallback
+  ---
+  duration_ms: 2.476
+  type: 'test'
+  ...
+# Subtest: stage 1 rejects missing head without retry/fallback
+ok 17 - stage 1 rejects missing head without retry/fallback
+  ---
+  duration_ms: 2.9265
+  type: 'test'
+  ...
+# Subtest: stage 1 rejects invalid probability without retry/fallback
+ok 18 - stage 1 rejects invalid probability without retry/fallback
+  ---
+  duration_ms: 3.4236
+  type: 'test'
+  ...
+# Subtest: stage 1 rejects invalid choice without retry/fallback
+ok 19 - stage 1 rejects invalid choice without retry/fallback
+  ---
+  duration_ms: 3.399
+  type: 'test'
+  ...
+# Subtest: stage 1 rejects inconsistent winner without retry/fallback
+ok 20 - stage 1 rejects inconsistent winner without retry/fallback
+  ---
+  duration_ms: 2.98
+  type: 'test'
+  ...
+# Subtest: stage 1 provider timeout propagates without extra paid calls
+ok 21 - stage 1 provider timeout propagates without extra paid calls
+  ---
+  duration_ms: 1.8906
+  type: 'test'
+  ...
+# Subtest: stage 2 rejects missing result without retry/fallback
+ok 22 - stage 2 rejects missing result without retry/fallback
+  ---
+  duration_ms: 3.6189
+  type: 'test'
+  ...
+# Subtest: stage 2 rejects missing answers without retry/fallback
+ok 23 - stage 2 rejects missing answers without retry/fallback
+  ---
+  duration_ms: 4.48
+  type: 'test'
+  ...
+# Subtest: stage 2 rejects missing head without retry/fallback
+ok 24 - stage 2 rejects missing head without retry/fallback
+  ---
+  duration_ms: 4.8254
+  type: 'test'
+  ...
+# Subtest: stage 2 rejects invalid probability without retry/fallback
+ok 25 - stage 2 rejects invalid probability without retry/fallback
+  ---
+  duration_ms: 4.3637
+  type: 'test'
+  ...
+# Subtest: stage 2 rejects invalid choice without retry/fallback
+ok 26 - stage 2 rejects invalid choice without retry/fallback
+  ---
+  duration_ms: 2.9422
+  type: 'test'
+  ...
+# Subtest: stage 2 rejects inconsistent winner without retry/fallback
+ok 27 - stage 2 rejects inconsistent winner without retry/fallback
+  ---
+  duration_ms: 3.62
+  type: 'test'
+  ...
+# Subtest: stage 2 provider timeout propagates without extra paid calls
+ok 28 - stage 2 provider timeout propagates without extra paid calls
+  ---
+  duration_ms: 3.8169
+  type: 'test'
+  ...
+# Subtest: service exact mode returns the full selected row as conditional catalog guidance only
+ok 29 - service exact mode returns the full selected row as conditional catalog guidance only
+  ---
+  duration_ms: 26.8103
+  type: 'test'
+  ...
+# Subtest: service rejects invalid modes and unsupported exact providers before inference
+ok 30 - service rejects invalid modes and unsupported exact providers before inference
+  ---
+  duration_ms: 2.6713
+  type: 'test'
+  ...
+# Subtest: service exact mode sanitizes malformed model output and raw errors without routing
+ok 31 - service exact mode sanitizes malformed model output and raw errors without routing
+  ---
+  duration_ms: 6.3666
+  type: 'test'
+  ...
+# Subtest: atomic question schema is complete, bounded, and has explicit uncertainty choices
+ok 32 - atomic question schema is complete, bounded, and has explicit uncertainty choices
+  ---
+  duration_ms: 2.2646
+  type: 'test'
+  ...
+# Subtest: catalog baseline chunks preserve every item and stay below per-head choice limits
+ok 33 - catalog baseline chunks preserve every item and stay below per-head choice limits
+  ---
+  duration_ms: 12.0719
+  type: 'test'
+  ...
+# Subtest: missing answer or probabilities fails closed: kind
+ok 34 - missing answer or probabilities fails closed: kind
+  ---
+  duration_ms: 0.9877
+  type: 'test'
+  ...
+# Subtest: missing answer or probabilities fails closed: hazard
+ok 35 - missing answer or probabilities fails closed: hazard
+  ---
+  duration_ms: 0.2135
+  type: 'test'
+  ...
+# Subtest: missing answer or probabilities fails closed: condition
+ok 36 - missing answer or probabilities fails closed: condition
+  ---
+  duration_ms: 0.2428
+  type: 'test'
+  ...
+# Subtest: missing answer or probabilities fails closed: plastic_color
+ok 37 - missing answer or probabilities fails closed: plastic_color
+  ---
+  duration_ms: 0.1534
+  type: 'test'
+  ...
+# Subtest: missing answer or probabilities fails closed: compostable_mark
+ok 38 - missing answer or probabilities fails closed: compostable_mark
+  ---
+  duration_ms: 0.1454
+  type: 'test'
+  ...
+# Subtest: missing answer or probabilities fails closed: paper_finish
+ok 39 - missing answer or probabilities fails closed: paper_finish
+  ---
+  duration_ms: 0.1723
+  type: 'test'
+  ...
+# Subtest: missing answer or probabilities fails closed: paper_soiling
+ok 40 - missing answer or probabilities fails closed: paper_soiling
+  ---
+  duration_ms: 0.4443
+  type: 'test'
+  ...
+# Subtest: reject malformed output: invalid choice
+ok 41 - reject malformed output: invalid choice
+  ---
+  duration_ms: 0.7228
+  type: 'test'
+  ...
+# Subtest: reject malformed output: extra probability
+ok 42 - reject malformed output: extra probability
+  ---
+  duration_ms: 0.3354
+  type: 'test'
+  ...
+# Subtest: reject malformed output: negative probability
+ok 43 - reject malformed output: negative probability
+  ---
+  duration_ms: 0.228
+  type: 'test'
+  ...
+# Subtest: reject malformed output: probability above one
+ok 44 - reject malformed output: probability above one
+  ---
+  duration_ms: 0.1824
+  type: 'test'
+  ...
+# Subtest: reject malformed output: string probability
+ok 45 - reject malformed output: string probability
+  ---
+  duration_ms: 0.1673
+  type: 'test'
+  ...
+# Subtest: reject malformed output: null probability
+ok 46 - reject malformed output: null probability
+  ---
+  duration_ms: 0.1534
+  type: 'test'
+  ...
+# Subtest: reject malformed output: NaN probability
+ok 47 - reject malformed output: NaN probability
+  ---
+  duration_ms: 0.1829
+  type: 'test'
+  ...
+# Subtest: reject malformed output: infinite probability
+ok 48 - reject malformed output: infinite probability
+  ---
+  duration_ms: 0.157
+  type: 'test'
+  ...
+# Subtest: reject malformed output: unnormalized distribution
+ok 49 - reject malformed output: unnormalized distribution
+  ---
+  duration_ms: 0.1791
+  type: 'test'
+  ...
+# Subtest: reject malformed output: winner disagrees with probabilities
+ok 50 - reject malformed output: winner disagrees with probabilities
+  ---
+  duration_ms: 0.1737
+  type: 'test'
+  ...
+# Subtest: reject absent, scalar, and array model answers
+ok 51 - reject absent, scalar, and array model answers
+  ---
+  duration_ms: 0.1943
+  type: 'test'
+  ...
+# Subtest: every named compact kind retains actual catalog guidance instead of a blank abstention
+ok 52 - every named compact kind retains actual catalog guidance instead of a blank abstention
+  ---
+  duration_ms: 4.0124
+  type: 'test'
+  ...
+# Subtest: top-ranked paper_cup at 0.79 retains its selected row and source guidance
+ok 53 - top-ranked paper_cup at 0.79 retains its selected row and source guidance
+  ---
+  duration_ms: 0.6612
+  type: 'test'
+  ...
+# Subtest: top-ranked foam_food_container at 0.78 retains its selected row and source guidance
+ok 54 - top-ranked foam_food_container at 0.78 retains its selected row and source guidance
+  ---
+  duration_ms: 0.4734
+  type: 'test'
+  ...
+# Subtest: top-ranked plastic_drink_bottle at 0.3 retains its selected row and source guidance
+ok 55 - top-ranked plastic_drink_bottle at 0.3 retains its selected row and source guidance
+  ---
+  duration_ms: 0.2118
+  type: 'test'
+  ...
+# Subtest: unknown winner shows the best named kind without rewriting the raw observation or confidence
+ok 56 - unknown winner shows the best named kind without rewriting the raw observation or confidence
+  ---
+  duration_ms: 0.2499
+  type: 'test'
+  ...
+# Subtest: uncertain hazard retains selected item and all instructions
+ok 57 - uncertain hazard retains selected item and all instructions
+  ---
+  duration_ms: 0.2663
+  type: 'test'
+  ...
+# Subtest: special-handling identities override even low confidence
+ok 58 - special-handling identities override even low confidence
+  ---
+  duration_ms: 0.9658
+  type: 'test'
+  ...
+# Subtest: evident hazard overrides a plausible recyclable, even at low confidence
+ok 59 - evident hazard overrides a plausible recyclable, even at low confidence
+  ---
+  duration_ms: 0.1704
+  type: 'test'
+  ...
+# Subtest: unknown ancillary facts do not hide the paper-cup catalog guidance
+ok 60 - unknown ancillary facts do not hide the paper-cup catalog guidance
+  ---
+  duration_ms: 0.47
+  type: 'test'
+  ...
+# Subtest: supported plain paper/cardboard require both uncoated and clean facts only
+ok 61 - supported plain paper/cardboard require both uncoated and clean facts only
+  ---
+  duration_ms: 1.4376
+  type: 'test'
+  ...
+# Subtest: supported bottles need verified empty interior, nonblack material and no compostable marking
+ok 62 - supported bottles need verified empty interior, nonblack material and no compostable marking
+  ---
+  duration_ms: 1.0621
+  type: 'test'
+  ...
+# Subtest: black and compostable bottle exclusions override nominal recycling and other unknown facts
+ok 63 - black and compostable bottle exclusions override nominal recycling and other unknown facts
+  ---
+  duration_ms: 0.762
+  type: 'test'
+  ...
+# Subtest: opaque or closed containers request interior clarification rather than infer emptiness
+ok 64 - opaque or closed containers request interior clarification rather than infer emptiness
+  ---
+  duration_ms: 0.4559
+  type: 'test'
+  ...
+# Subtest: a model applicability vote cannot confirm a hidden unknown container interior
+ok 65 - a model applicability vote cannot confirm a hidden unknown container interior
+  ---
+  duration_ms: 1.0693
+  type: 'test'
+  ...
+# Subtest: known black bottle highlights its garbage exception while retaining nominal source category
+ok 66 - known black bottle highlights its garbage exception while retaining nominal source category
+  ---
+  duration_ms: 0.3268
+  type: 'test'
+  ...
+# Subtest: foam physical-size instruction remains a check without a scale even if model votes applies
+ok 67 - foam physical-size instruction remains a check without a scale even if model votes applies
+  ---
+  duration_ms: 0.6452
+  type: 'test'
+  ...
+# Subtest: unconditional snack-wrapper disposal applies even when a valid model rule vote requests a check
+ok 68 - unconditional snack-wrapper disposal applies even when a valid model rule vote requests a check
+  ---
+  duration_ms: 0.2432
+  type: 'test'
+  ...
+# Subtest: malformed provided applicability head is rejected rather than silently highlighted
+ok 69 - malformed provided applicability head is rejected rather than silently highlighted
+  ---
+  duration_ms: 0.1606
+  type: 'test'
+  ...
+# Subtest: hazards take precedence over black/compostable garbage exceptions
+ok 70 - hazards take precedence over black/compostable garbage exceptions
+  ---
+  duration_ms: 0.1649
+  type: 'test'
+  ...
+# Subtest: food and wrapper rule sources exist in the real catalog and retain their instructions
+ok 71 - food and wrapper rule sources exist in the real catalog and retain their instructions
+  ---
+  duration_ms: 0.2975
+  type: 'test'
+  ...
+# Subtest: ordinary clean cans and jars can use their supported rule without plastic/paper facts
+ok 72 - ordinary clean cans and jars can use their supported rule without plastic/paper facts
+  ---
+  duration_ms: 0.1643
+  type: 'test'
+  ...
+# Subtest: service fixes provider/schema/call count server-side and ignores client prompt/model/retry injection
+ok 73 - service fixes provider/schema/call count server-side and ignores client prompt/model/retry injection
+  ---
+  duration_ms: 28.436
+  type: 'test'
+  ...
+# Subtest: service uses configured provider and clamps invalid/minimum deadlines
+ok 74 - service uses configured provider and clamps invalid/minimum deadlines
+  ---
+  duration_ms: 3.3696
+  type: 'test'
+  ...
+# Subtest: service rejects malformed JSON without inference
+ok 75 - service rejects malformed JSON without inference
+  ---
+  duration_ms: 1.1446
+  type: 'test'
+  ...
+# Subtest: service rejects missing image without inference
+ok 76 - service rejects missing image without inference
+  ---
+  duration_ms: 0.7378
+  type: 'test'
+  ...
+# Subtest: service rejects null JSON without inference
+ok 77 - service rejects null JSON without inference
+  ---
+  duration_ms: 0.6606
+  type: 'test'
+  ...
+# Subtest: service rejects wrong image type without inference
+ok 78 - service rejects wrong image type without inference
+  ---
+  duration_ms: 0.5727
+  type: 'test'
+  ...
+# Subtest: service rejects wrong MIME without inference
+ok 79 - service rejects wrong MIME without inference
+  ---
+  duration_ms: 1.2124
+  type: 'test'
+  ...
+# Subtest: service rejects bad base64 padding without inference
+ok 80 - service rejects bad base64 padding without inference
+  ---
+  duration_ms: 0.7042
+  type: 'test'
+  ...
+# Subtest: service rejects mismatched signature without inference
+ok 81 - service rejects mismatched signature without inference
+  ---
+  duration_ms: 0.5841
+  type: 'test'
+  ...
+# Subtest: service rejects overlong image without inference
+ok 82 - service rejects overlong image without inference
+  ---
+  duration_ms: 55.5859
+  type: 'test'
+  ...
+# Subtest: service rejects oversized declared body without inference
+ok 83 - service rejects oversized declared body without inference
+  ---
+  duration_ms: 1.0868
+  type: 'test'
+  ...
+# Subtest: service rejects oversized actual body without inference
+ok 84 - service rejects oversized actual body without inference
+  ---
+  duration_ms: 11.782
+  type: 'test'
+  ...
+# Subtest: streamed body limits cancel before inference even without a Content-Length header
+ok 85 - streamed body limits cancel before inference even without a Content-Length header
+  ---
+  duration_ms: 1.3036
+  type: 'test'
+  ...
+# Subtest: missing bodies and raw body-read failures do not reach inference or leak exceptions
+ok 86 - missing bodies and raw body-read failures do not reach inference or leak exceptions
+  ---
+  duration_ms: 0.9754
+  type: 'test'
+  ...
+# Subtest: service accepts JPEG and PNG signatures with one injected model call
+ok 87 - service accepts JPEG and PNG signatures with one injected model call
+  ---
+  duration_ms: 1.0032
+  type: 'test'
+  ...
+# Subtest: method and authentication failures never invoke paid inference
+ok 88 - method and authentication failures never invoke paid inference
+  ---
+  duration_ms: 0.7058
+  type: 'test'
+  ...
+# Subtest: explicit token/public configuration permits only the intended external request
+ok 89 - explicit token/public configuration permits only the intended external request
+  ---
+  duration_ms: 1.0103
+  type: 'test'
+  ...
+# Subtest: malformed and incomplete model output is sanitized and fails closed
+ok 90 - malformed and incomplete model output is sanitized and fails closed
+  ---
+  duration_ms: 2.2795
+  type: 'test'
+  ...
+# Subtest: raw exceptions and provider errors fail closed without leaking messages or retrying
+ok 91 - raw exceptions and provider errors fail closed without leaking messages or retrying
+  ---
+  duration_ms: 0.8899
+  type: 'test'
+  ...
+# Subtest: Jev uses state asset references and base64 assets, not Clef images
+ok 92 - Jev uses state asset references and base64 assets, not Clef images
+  ---
+  duration_ms: 1.0706
+  type: 'test'
+  ...
+# Subtest: Jev HTTP request uses its endpoint, explicit danger-zone header and one call
+ok 93 - Jev HTTP request uses its endpoint, explicit danger-zone header and one call
+  ---
+  duration_ms: 1.0885
+  type: 'test'
+  ...
+# Subtest: clef-flash binding uses the exact Cloudflare model and images, not Jev assets or CLIP
+ok 94 - clef-flash binding uses the exact Cloudflare model and images, not Jev assets or CLIP
+  ---
+  duration_ms: 0.2717
+  type: 'test'
+  ...
+# Subtest: clef-flash REST uses account endpoint and unwraps Cloudflare result with one call
+ok 95 - clef-flash REST uses account endpoint and unwraps Cloudflare result with one call
+  ---
+  duration_ms: 0.4725
+  type: 'test'
+  ...
+# Subtest: clef binding uses the exact Cloudflare model and images, not Jev assets or CLIP
+ok 96 - clef binding uses the exact Cloudflare model and images, not Jev assets or CLIP
+  ---
+  duration_ms: 0.1448
+  type: 'test'
+  ...
+# Subtest: clef REST uses account endpoint and unwraps Cloudflare result with one call
+ok 97 - clef REST uses account endpoint and unwraps Cloudflare result with one call
+  ---
+  duration_ms: 0.6995
+  type: 'test'
+  ...
+# Subtest: missing configuration, unknown provider, and excessive schema do not make HTTP calls
+ok 98 - missing configuration, unknown provider, and excessive schema do not make HTTP calls
+  ---
+  duration_ms: 0.9382
+  type: 'test'
+  ...
+# Subtest: provider HTTP 400 cancels body and never retries
+ok 99 - provider HTTP 400 cancels body and never retries
+  ---
+  duration_ms: 0.3596
+  type: 'test'
+  ...
+# Subtest: provider HTTP 401 cancels body and never retries
+ok 100 - provider HTTP 401 cancels body and never retries
+  ---
+  duration_ms: 0.1516
+  type: 'test'
+  ...
+# Subtest: provider HTTP 429 cancels body and never retries
+ok 101 - provider HTTP 429 cancels body and never retries
+  ---
+  duration_ms: 0.137
+  type: 'test'
+  ...
+# Subtest: provider HTTP 500 cancels body and never retries
+ok 102 - provider HTTP 500 cancels body and never retries
+  ---
+  duration_ms: 0.2513
+  type: 'test'
+  ...
+# Subtest: provider HTTP 503 cancels body and never retries
+ok 103 - provider HTTP 503 cancels body and never retries
+  ---
+  duration_ms: 0.2722
+  type: 'test'
+  ...
+# Subtest: provider raw network, JSON, and declared failures are sanitized without retries
+ok 104 - provider raw network, JSON, and declared failures are sanitized without retries
+  ---
+  duration_ms: 0.9178
+  type: 'test'
+  ...
+# Subtest: HTTP deadline aborts a pending fetch and performs no retry
+ok 105 - HTTP deadline aborts a pending fetch and performs no retry
+  ---
+  duration_ms: 28.2661
+  type: 'test'
+  ...
+# Subtest: HTTP deadline includes response-body JSON consumption, not just response headers
+ok 106 - HTTP deadline includes response-body JSON consumption, not just response headers
+  ---
+  duration_ms: 31.481
+  type: 'test'
+  ...
+# Subtest: Workers binding deadline stops routing without making a second inference call
+ok 107 - Workers binding deadline stops routing without making a second inference call
+  ---
+  duration_ms: 31.3997
+  type: 'test'
+  ...
+# Subtest: root POST accepts legacy JSON imageDataUrl
+ok 108 - root POST accepts legacy JSON imageDataUrl
+  ---
+  duration_ms: 35.7679
+  type: 'test'
+  ...
+# Subtest: root POST accepts legacy JSON imageBase64
+ok 109 - root POST accepts legacy JSON imageBase64
+  ---
+  duration_ms: 3.5419
+  type: 'test'
+  ...
+# Subtest: root POST accepts legacy JSON imageData with default JPEG type
+ok 110 - root POST accepts legacy JSON imageData with default JPEG type
+  ---
+  duration_ms: 3.3044
+  type: 'test'
+  ...
+# Subtest: root POST accepts legacy JSON imageData with explicit PNG type
+ok 111 - root POST accepts legacy JSON imageData with explicit PNG type
+  ---
+  duration_ms: 1.5948
+  type: 'test'
+  ...
+# Subtest: /predict compact JSON exposes legacy item and instruction without changing modern fields
+ok 112 - /predict compact JSON exposes legacy item and instruction without changing modern fields
+  ---
+  duration_ms: 2.1575
+  type: 'test'
+  ...
+# Subtest: /predict clarification becomes a non-bin alert with readable questions
+ok 113 - /predict clarification becomes a non-bin alert with readable questions
+  ---
+  duration_ms: 1.657
+  type: 'test'
+  ...
+# Subtest: modern /api/classify accepts canonical image JSON and fixes model policy
+ok 114 - modern /api/classify accepts canonical image JSON and fixes model policy
+  ---
+  duration_ms: 2.2489
+  type: 'test'
+  ...
+# Subtest: / POST accepts raw JPEG
+ok 115 - / POST accepts raw JPEG
+  ---
+  duration_ms: 1.7899
+  type: 'test'
+  ...
+# Subtest: / POST accepts a single multipart image
+ok 116 - / POST accepts a single multipart image
+  ---
+  duration_ms: 7.8895
+  type: 'test'
+  ...
+# Subtest: / OPTIONS preflight has safe CORS headers and no work
+ok 117 - / OPTIONS preflight has safe CORS headers and no work
+  ---
+  duration_ms: 0.867
+  type: 'test'
+  ...
+# Subtest: /api/classify POST accepts raw JPEG
+ok 118 - /api/classify POST accepts raw JPEG
+  ---
+  duration_ms: 1.5268
+  type: 'test'
+  ...
+# Subtest: /api/classify POST accepts a single multipart image
+ok 119 - /api/classify POST accepts a single multipart image
+  ---
+  duration_ms: 2.0964
+  type: 'test'
+  ...
+# Subtest: /api/classify OPTIONS preflight has safe CORS headers and no work
+ok 120 - /api/classify OPTIONS preflight has safe CORS headers and no work
+  ---
+  duration_ms: 0.4563
+  type: 'test'
+  ...
+# Subtest: /predict POST accepts raw JPEG
+ok 121 - /predict POST accepts raw JPEG
+  ---
+  duration_ms: 1.8439
+  type: 'test'
+  ...
+# Subtest: /predict POST accepts a single multipart image
+ok 122 - /predict POST accepts a single multipart image
+  ---
+  duration_ms: 3.3774
+  type: 'test'
+  ...
+# Subtest: /predict OPTIONS preflight has safe CORS headers and no work
+ok 123 - /predict OPTIONS preflight has safe CORS headers and no work
+  ---
+  duration_ms: 0.798
+  type: 'test'
+  ...
+# Subtest: disallowed origins cannot classify or preflight and are not reflected
+ok 124 - disallowed origins cannot classify or preflight and are not reflected
+  ---
+  duration_ms: 1.8341
+  type: 'test'
+  ...
+# Subtest: wildcard, same-origin and absent Origin requests remain supported
+ok 125 - wildcard, same-origin and absent Origin requests remain supported
+  ---
+  duration_ms: 4.7679
+  type: 'test'
+  ...
+# Subtest: production limiter configuration matches advertised device throughput
+ok 126 - production limiter configuration matches advertised device throughput
+  ---
+  duration_ms: 13.2518
+  type: 'test'
+  ...
+# Subtest: health reports safe configuration, never secrets or inference
+ok 127 - health reports safe configuration, never secrets or inference
+  ---
+  duration_ms: 3.0017
+  type: 'test'
+  ...
+# Subtest: required limiter fails closed when AI_IP_LIMITER is missing
+ok 128 - required limiter fails closed when AI_IP_LIMITER is missing
+  ---
+  duration_ms: 1.018
+  type: 'test'
+  ...
+# Subtest: required limiter fails closed when AI_GLOBAL_LIMITER is missing
+ok 129 - required limiter fails closed when AI_GLOBAL_LIMITER is missing
+  ---
+  duration_ms: 0.7609
+  type: 'test'
+  ...
+# Subtest: required limiter fails closed when both is missing
+ok 130 - required limiter fails closed when both is missing
+  ---
+  duration_ms: 0.7585
+  type: 'test'
+  ...
+# Subtest: ip limiter denial returns 429 with Retry-After and zero inference
+ok 131 - ip limiter denial returns 429 with Retry-After and zero inference
+  ---
+  duration_ms: 0.7212
+  type: 'test'
+  ...
+# Subtest: global limiter denial returns 429 with Retry-After and zero inference
+ok 132 - global limiter denial returns 429 with Retry-After and zero inference
+  ---
+  duration_ms: 0.7813
+  type: 'test'
+  ...
+# Subtest: ip limiter exception is sanitized and fails closed
+ok 133 - ip limiter exception is sanitized and fails closed
+  ---
+  duration_ms: 0.9659
+  type: 'test'
+  ...
+# Subtest: global limiter exception is sanitized and fails closed
+ok 134 - global limiter exception is sanitized and fails closed
+  ---
+  duration_ms: 0.5165
+  type: 'test'
+  ...
+# Subtest: declared oversized body is rejected before limiters or inference with CORS error headers
+ok 135 - declared oversized body is rejected before limiters or inference with CORS error headers
+  ---
+  duration_ms: 0.7565
+  type: 'test'
+  ...
+# Subtest: actual oversized body is rejected before limiters or inference with CORS error headers
+ok 136 - actual oversized body is rejected before limiters or inference with CORS error headers
+  ---
+  duration_ms: 10.1436
+  type: 'test'
+  ...
+# Subtest: malformed JSON is rejected before limiters or inference with CORS error headers
+ok 137 - malformed JSON is rejected before limiters or inference with CORS error headers
+  ---
+  duration_ms: 0.6607
+  type: 'test'
+  ...
+# Subtest: JSON array is rejected before limiters or inference with CORS error headers
+ok 138 - JSON array is rejected before limiters or inference with CORS error headers
+  ---
+  duration_ms: 0.4786
+  type: 'test'
+  ...
+# Subtest: JSON null is rejected before limiters or inference with CORS error headers
+ok 139 - JSON null is rejected before limiters or inference with CORS error headers
+  ---
+  duration_ms: 0.4316
+  type: 'test'
+  ...
+# Subtest: unsupported body MIME is rejected before limiters or inference with CORS error headers
+ok 140 - unsupported body MIME is rejected before limiters or inference with CORS error headers
+  ---
+  duration_ms: 0.4076
+  type: 'test'
+  ...
+# Subtest: custom JSON prompt is rejected before limiters or inference with CORS error headers
+ok 141 - custom JSON prompt is rejected before limiters or inference with CORS error headers
+  ---
+  duration_ms: 0.3858
+  type: 'test'
+  ...
+# Subtest: streaming body overflow cancels reading and never reaches limiters or inference
+ok 142 - streaming body overflow cancels reading and never reaches limiters or inference
+  ---
+  duration_ms: 1.1624
+  type: 'test'
+  ...
+# Subtest: maximum request envelope is allowed but larger body is not
+ok 143 - maximum request envelope is allowed but larger body is not
+  ---
+  duration_ms: 28.775
+  type: 'test'
+  ...
+# Subtest: oversized image inside a bounded envelope is rejected without inference
+ok 144 - oversized image inside a bounded envelope is rejected without inference
+  ---
+  duration_ms: 66.442
+  type: 'test'
+  ...
+# Subtest: missing body fails closed and hides internal errors
+ok 145 - missing body fails closed and hides internal errors
+  ---
+  duration_ms: 0.582
+  type: 'test'
+  ...
+# Subtest: body stream failure fails closed and hides internal errors
+ok 146 - body stream failure fails closed and hides internal errors
+  ---
+  duration_ms: 0.7987
+  type: 'test'
+  ...
+# Subtest: multipart no file is rejected without inference
+ok 147 - multipart no file is rejected without inference
+  ---
+  duration_ms: 0.8502
+  type: 'test'
+  ...
+# Subtest: multipart two files is rejected without inference
+ok 148 - multipart two files is rejected without inference
+  ---
+  duration_ms: 1.6344
+  type: 'test'
+  ...
+# Subtest: multipart wrong MIME is rejected without inference
+ok 149 - multipart wrong MIME is rejected without inference
+  ---
+  duration_ms: 0.8734
+  type: 'test'
+  ...
+# Subtest: multipart custom prompt is rejected without inference
+ok 150 - multipart custom prompt is rejected without inference
+  ---
+  duration_ms: 0.865
+  type: 'test'
+  ...
+# Subtest: root GET delegates to mocked assets without classifying or rate limiting
+ok 151 - root GET delegates to mocked assets without classifying or rate limiting
+  ---
+  duration_ms: 0.5292
+  type: 'test'
+  ...
+# Subtest: core authorization and method errors preserve deployment CORS headers
+ok 152 - core authorization and method errors preserve deployment CORS headers
+  ---
+  duration_ms: 0.6047
+  type: 'test'
+  ...
+# (node:28872) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: shared limits use decimal 10 MB decoded images and a base64-safe request envelope
+ok 153 - shared limits use decimal 10 MB decoded images and a base64-safe request envelope
+  ---
+  duration_ms: 2.2149
+  type: 'test'
+  ...
+# Subtest: / json jpeg: decoded 385107 bytes
+ok 154 - / json jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 35.9123
+  type: 'test'
+  ...
+# Subtest: / json jpeg: decoded 948703 bytes
+ok 155 - / json jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 13.7154
+  type: 'test'
+  ...
+# Subtest: / json jpeg: decoded 10000000 bytes
+ok 156 - / json jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 87.5944
+  type: 'test'
+  ...
+# Subtest: / json jpeg: decoded 10000001 bytes
+ok 157 - / json jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 66.2921
+  type: 'test'
+  ...
+# Subtest: / json png: decoded 385107 bytes
+ok 158 - / json png: decoded 385107 bytes
+  ---
+  duration_ms: 6.5429
+  type: 'test'
+  ...
+# Subtest: / json png: decoded 948703 bytes
+ok 159 - / json png: decoded 948703 bytes
+  ---
+  duration_ms: 20.7533
+  type: 'test'
+  ...
+# Subtest: / json png: decoded 10000000 bytes
+ok 160 - / json png: decoded 10000000 bytes
+  ---
+  duration_ms: 71.8231
+  type: 'test'
+  ...
+# Subtest: / json png: decoded 10000001 bytes
+ok 161 - / json png: decoded 10000001 bytes
+  ---
+  duration_ms: 56.8208
+  type: 'test'
+  ...
+# Subtest: / raw jpeg: decoded 385107 bytes
+ok 162 - / raw jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 18.0829
+  type: 'test'
+  ...
+# Subtest: / raw jpeg: decoded 948703 bytes
+ok 163 - / raw jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 27.4998
+  type: 'test'
+  ...
+# Subtest: / raw jpeg: decoded 10000000 bytes
+ok 164 - / raw jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 270.3861
+  type: 'test'
+  ...
+# Subtest: / raw jpeg: decoded 10000001 bytes
+ok 165 - / raw jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 6.2137
+  type: 'test'
+  ...
+# Subtest: / raw png: decoded 385107 bytes
+ok 166 - / raw png: decoded 385107 bytes
+  ---
+  duration_ms: 15.2038
+  type: 'test'
+  ...
+# Subtest: / raw png: decoded 948703 bytes
+ok 167 - / raw png: decoded 948703 bytes
+  ---
+  duration_ms: 26.8239
+  type: 'test'
+  ...
+# Subtest: / raw png: decoded 10000000 bytes
+ok 168 - / raw png: decoded 10000000 bytes
+  ---
+  duration_ms: 263.8824
+  type: 'test'
+  ...
+# Subtest: / raw png: decoded 10000001 bytes
+ok 169 - / raw png: decoded 10000001 bytes
+  ---
+  duration_ms: 5.8138
+  type: 'test'
+  ...
+# Subtest: / multipart jpeg: decoded 385107 bytes
+ok 170 - / multipart jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 25.2567
+  type: 'test'
+  ...
+# Subtest: / multipart jpeg: decoded 948703 bytes
+ok 171 - / multipart jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 32.6052
+  type: 'test'
+  ...
+# Subtest: / multipart jpeg: decoded 10000000 bytes
+ok 172 - / multipart jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 299.2173
+  type: 'test'
+  ...
+# Subtest: / multipart jpeg: decoded 10000001 bytes
+ok 173 - / multipart jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 22.654
+  type: 'test'
+  ...
+# Subtest: / multipart png: decoded 385107 bytes
+ok 174 - / multipart png: decoded 385107 bytes
+  ---
+  duration_ms: 13.6557
+  type: 'test'
+  ...
+# Subtest: / multipart png: decoded 948703 bytes
+ok 175 - / multipart png: decoded 948703 bytes
+  ---
+  duration_ms: 29.3077
+  type: 'test'
+  ...
+# Subtest: / multipart png: decoded 10000000 bytes
+ok 176 - / multipart png: decoded 10000000 bytes
+  ---
+  duration_ms: 282.6685
+  type: 'test'
+  ...
+# Subtest: / multipart png: decoded 10000001 bytes
+ok 177 - / multipart png: decoded 10000001 bytes
+  ---
+  duration_ms: 24.0328
+  type: 'test'
+  ...
+# Subtest: /predict json jpeg: decoded 385107 bytes
+ok 178 - /predict json jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 4.6036
+  type: 'test'
+  ...
+# Subtest: /predict json jpeg: decoded 948703 bytes
+ok 179 - /predict json jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 9.2487
+  type: 'test'
+  ...
+# Subtest: /predict json jpeg: decoded 10000000 bytes
+ok 180 - /predict json jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 64.7884
+  type: 'test'
+  ...
+# Subtest: /predict json jpeg: decoded 10000001 bytes
+ok 181 - /predict json jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 53.1647
+  type: 'test'
+  ...
+# Subtest: /predict json png: decoded 385107 bytes
+ok 182 - /predict json png: decoded 385107 bytes
+  ---
+  duration_ms: 5.6826
+  type: 'test'
+  ...
+# Subtest: /predict json png: decoded 948703 bytes
+ok 183 - /predict json png: decoded 948703 bytes
+  ---
+  duration_ms: 6.9195
+  type: 'test'
+  ...
+# Subtest: /predict json png: decoded 10000000 bytes
+ok 184 - /predict json png: decoded 10000000 bytes
+  ---
+  duration_ms: 70.1989
+  type: 'test'
+  ...
+# Subtest: /predict json png: decoded 10000001 bytes
+ok 185 - /predict json png: decoded 10000001 bytes
+  ---
+  duration_ms: 58.5718
+  type: 'test'
+  ...
+# Subtest: /predict raw jpeg: decoded 385107 bytes
+ok 186 - /predict raw jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 23.1825
+  type: 'test'
+  ...
+# Subtest: /predict raw jpeg: decoded 948703 bytes
+ok 187 - /predict raw jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 26.1295
+  type: 'test'
+  ...
+# Subtest: /predict raw jpeg: decoded 10000000 bytes
+ok 188 - /predict raw jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 256.6467
+  type: 'test'
+  ...
+# Subtest: /predict raw jpeg: decoded 10000001 bytes
+ok 189 - /predict raw jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 5.271
+  type: 'test'
+  ...
+# Subtest: /predict raw png: decoded 385107 bytes
+ok 190 - /predict raw png: decoded 385107 bytes
+  ---
+  duration_ms: 18.4961
+  type: 'test'
+  ...
+# Subtest: /predict raw png: decoded 948703 bytes
+ok 191 - /predict raw png: decoded 948703 bytes
+  ---
+  duration_ms: 28.4539
+  type: 'test'
+  ...
+# Subtest: /predict raw png: decoded 10000000 bytes
+ok 192 - /predict raw png: decoded 10000000 bytes
+  ---
+  duration_ms: 262.0168
+  type: 'test'
+  ...
+# Subtest: /predict raw png: decoded 10000001 bytes
+ok 193 - /predict raw png: decoded 10000001 bytes
+  ---
+  duration_ms: 6.1713
+  type: 'test'
+  ...
+# Subtest: /predict multipart jpeg: decoded 385107 bytes
+ok 194 - /predict multipart jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 13.2096
+  type: 'test'
+  ...
+# Subtest: /predict multipart jpeg: decoded 948703 bytes
+ok 195 - /predict multipart jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 29.0624
+  type: 'test'
+  ...
+# Subtest: /predict multipart jpeg: decoded 10000000 bytes
+ok 196 - /predict multipart jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 288.8263
+  type: 'test'
+  ...
+# Subtest: /predict multipart jpeg: decoded 10000001 bytes
+ok 197 - /predict multipart jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 28.6756
+  type: 'test'
+  ...
+# Subtest: /predict multipart png: decoded 385107 bytes
+ok 198 - /predict multipart png: decoded 385107 bytes
+  ---
+  duration_ms: 19.4399
+  type: 'test'
+  ...
+# Subtest: /predict multipart png: decoded 948703 bytes
+ok 199 - /predict multipart png: decoded 948703 bytes
+  ---
+  duration_ms: 45.6663
+  type: 'test'
+  ...
+# Subtest: /predict multipart png: decoded 10000000 bytes
+ok 200 - /predict multipart png: decoded 10000000 bytes
+  ---
+  duration_ms: 444.8431
+  type: 'test'
+  ...
+# Subtest: /predict multipart png: decoded 10000001 bytes
+ok 201 - /predict multipart png: decoded 10000001 bytes
+  ---
+  duration_ms: 30.5127
+  type: 'test'
+  ...
+# Subtest: /api/classify json jpeg: decoded 385107 bytes
+ok 202 - /api/classify json jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 5.4534
+  type: 'test'
+  ...
+# Subtest: /api/classify json jpeg: decoded 948703 bytes
+ok 203 - /api/classify json jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 11.4315
+  type: 'test'
+  ...
+# Subtest: /api/classify json jpeg: decoded 10000000 bytes
+ok 204 - /api/classify json jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 95.9775
+  type: 'test'
+  ...
+# Subtest: /api/classify json jpeg: decoded 10000001 bytes
+ok 205 - /api/classify json jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 83.851
+  type: 'test'
+  ...
+# Subtest: /api/classify json png: decoded 385107 bytes
+ok 206 - /api/classify json png: decoded 385107 bytes
+  ---
+  duration_ms: 6.5967
+  type: 'test'
+  ...
+# Subtest: /api/classify json png: decoded 948703 bytes
+ok 207 - /api/classify json png: decoded 948703 bytes
+  ---
+  duration_ms: 10.2511
+  type: 'test'
+  ...
+# Subtest: /api/classify json png: decoded 10000000 bytes
+ok 208 - /api/classify json png: decoded 10000000 bytes
+  ---
+  duration_ms: 109.1107
+  type: 'test'
+  ...
+# Subtest: /api/classify json png: decoded 10000001 bytes
+ok 209 - /api/classify json png: decoded 10000001 bytes
+  ---
+  duration_ms: 89.3366
+  type: 'test'
+  ...
+# Subtest: /api/classify raw jpeg: decoded 385107 bytes
+ok 210 - /api/classify raw jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 28.9902
+  type: 'test'
+  ...
+# Subtest: /api/classify raw jpeg: decoded 948703 bytes
+ok 211 - /api/classify raw jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 43.8162
+  type: 'test'
+  ...
+# Subtest: /api/classify raw jpeg: decoded 10000000 bytes
+ok 212 - /api/classify raw jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 425.0606
+  type: 'test'
+  ...
+# Subtest: /api/classify raw jpeg: decoded 10000001 bytes
+ok 213 - /api/classify raw jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 8.6221
+  type: 'test'
+  ...
+# Subtest: /api/classify raw png: decoded 385107 bytes
+ok 214 - /api/classify raw png: decoded 385107 bytes
+  ---
+  duration_ms: 25.5866
+  type: 'test'
+  ...
+# Subtest: /api/classify raw png: decoded 948703 bytes
+ok 215 - /api/classify raw png: decoded 948703 bytes
+  ---
+  duration_ms: 43.6694
+  type: 'test'
+  ...
+# Subtest: /api/classify raw png: decoded 10000000 bytes
+ok 216 - /api/classify raw png: decoded 10000000 bytes
+  ---
+  duration_ms: 440.6013
+  type: 'test'
+  ...
+# Subtest: /api/classify raw png: decoded 10000001 bytes
+ok 217 - /api/classify raw png: decoded 10000001 bytes
+  ---
+  duration_ms: 8.7211
+  type: 'test'
+  ...
+# Subtest: /api/classify multipart jpeg: decoded 385107 bytes
+ok 218 - /api/classify multipart jpeg: decoded 385107 bytes
+  ---
+  duration_ms: 20.3831
+  type: 'test'
+  ...
+# Subtest: /api/classify multipart jpeg: decoded 948703 bytes
+ok 219 - /api/classify multipart jpeg: decoded 948703 bytes
+  ---
+  duration_ms: 47.0501
+  type: 'test'
+  ...
+# Subtest: /api/classify multipart jpeg: decoded 10000000 bytes
+ok 220 - /api/classify multipart jpeg: decoded 10000000 bytes
+  ---
+  duration_ms: 450.9406
+  type: 'test'
+  ...
+# Subtest: /api/classify multipart jpeg: decoded 10000001 bytes
+ok 221 - /api/classify multipart jpeg: decoded 10000001 bytes
+  ---
+  duration_ms: 31.6073
+  type: 'test'
+  ...
+# Subtest: /api/classify multipart png: decoded 385107 bytes
+ok 222 - /api/classify multipart png: decoded 385107 bytes
+  ---
+  duration_ms: 20.3771
+  type: 'test'
+  ...
+# Subtest: /api/classify multipart png: decoded 948703 bytes
+ok 223 - /api/classify multipart png: decoded 948703 bytes
+  ---
+  duration_ms: 45.6815
+  type: 'test'
+  ...
+# Subtest: /api/classify multipart png: decoded 10000000 bytes
+ok 224 - /api/classify multipart png: decoded 10000000 bytes
+  ---
+  duration_ms: 451.8737
+  type: 'test'
+  ...
+# Subtest: /api/classify multipart png: decoded 10000001 bytes
+ok 225 - /api/classify multipart png: decoded 10000001 bytes
+  ---
+  duration_ms: 23.7564
+  type: 'test'
+  ...
+# Subtest: deployed JSON jpeg padding boundary max-2
+ok 226 - deployed JSON jpeg padding boundary max-2
+  ---
+  duration_ms: 108.7952
+  type: 'test'
+  ...
+# Subtest: deployed JSON jpeg padding boundary max-1
+ok 227 - deployed JSON jpeg padding boundary max-1
+  ---
+  duration_ms: 111.5795
+  type: 'test'
+  ...
+# Subtest: deployed JSON jpeg padding boundary max+0
+ok 228 - deployed JSON jpeg padding boundary max+0
+  ---
+  duration_ms: 115.8467
+  type: 'test'
+  ...
+# Subtest: deployed JSON jpeg padding boundary max+1
+ok 229 - deployed JSON jpeg padding boundary max+1
+  ---
+  duration_ms: 108.086
+  type: 'test'
+  ...
+# Subtest: deployed JSON jpeg padding boundary max+2
+ok 230 - deployed JSON jpeg padding boundary max+2
+  ---
+  duration_ms: 103.647
+  type: 'test'
+  ...
+# Subtest: deployed JSON png padding boundary max-2
+ok 231 - deployed JSON png padding boundary max-2
+  ---
+  duration_ms: 114.7825
+  type: 'test'
+  ...
+# Subtest: deployed JSON png padding boundary max-1
+ok 232 - deployed JSON png padding boundary max-1
+  ---
+  duration_ms: 112.9524
+  type: 'test'
+  ...
+# Subtest: deployed JSON png padding boundary max+0
+ok 233 - deployed JSON png padding boundary max+0
+  ---
+  duration_ms: 111.913
+  type: 'test'
+  ...
+# Subtest: deployed JSON png padding boundary max+1
+ok 234 - deployed JSON png padding boundary max+1
+  ---
+  duration_ms: 102.5866
+  type: 'test'
+  ...
+# Subtest: deployed JSON png padding boundary max+2
+ok 235 - deployed JSON png padding boundary max+2
+  ---
+  duration_ms: 92.3
+  type: 'test'
+  ...
+# Subtest: direct core JSON jpeg padding boundary max-2
+ok 236 - direct core JSON jpeg padding boundary max-2
+  ---
+  duration_ms: 110.5345
+  type: 'test'
+  ...
+# Subtest: direct core JSON jpeg padding boundary max-1
+ok 237 - direct core JSON jpeg padding boundary max-1
+  ---
+  duration_ms: 113.0454
+  type: 'test'
+  ...
+# Subtest: direct core JSON jpeg padding boundary max+0
+ok 238 - direct core JSON jpeg padding boundary max+0
+  ---
+  duration_ms: 111.8738
+  type: 'test'
+  ...
+# Subtest: direct core JSON jpeg padding boundary max+1
+ok 239 - direct core JSON jpeg padding boundary max+1
+  ---
+  duration_ms: 100.5685
+  type: 'test'
+  ...
+# Subtest: direct core JSON jpeg padding boundary max+2
+ok 240 - direct core JSON jpeg padding boundary max+2
+  ---
+  duration_ms: 91.6594
+  type: 'test'
+  ...
+# Subtest: direct core JSON png padding boundary max-2
+ok 241 - direct core JSON png padding boundary max-2
+  ---
+  duration_ms: 118.7427
+  type: 'test'
+  ...
+# Subtest: direct core JSON png padding boundary max-1
+ok 242 - direct core JSON png padding boundary max-1
+  ---
+  duration_ms: 114.7156
+  type: 'test'
+  ...
+# Subtest: direct core JSON png padding boundary max+0
+ok 243 - direct core JSON png padding boundary max+0
+  ---
+  duration_ms: 112.1594
+  type: 'test'
+  ...
+# Subtest: direct core JSON png padding boundary max+1
+ok 244 - direct core JSON png padding boundary max+1
+  ---
+  duration_ms: 98.7689
+  type: 'test'
+  ...
+# Subtest: direct core JSON png padding boundary max+2
+ok 245 - direct core JSON png padding boundary max+2
+  ---
+  duration_ms: 90.1033
+  type: 'test'
+  ...
+# Subtest: deployed accepts exact request cap, rejects cap+1 (0) without Content-Length
+ok 246 - deployed accepts exact request cap, rejects cap+1 (0) without Content-Length
+  ---
+  duration_ms: 36.2103
+  type: 'test'
+  ...
+# Subtest: deployed accepts exact request cap, rejects cap+1 (1) without Content-Length
+ok 247 - deployed accepts exact request cap, rejects cap+1 (1) without Content-Length
+  ---
+  duration_ms: 11.468
+  type: 'test'
+  ...
+# Subtest: deployed cancels over-cap streaming body with missing Content-Length
+ok 248 - deployed cancels over-cap streaming body with missing Content-Length
+  ---
+  duration_ms: 11.4603
+  type: 'test'
+  ...
+# Subtest: deployed cancels over-cap streaming body with understated Content-Length
+ok 249 - deployed cancels over-cap streaming body with understated Content-Length
+  ---
+  duration_ms: 13.7109
+  type: 'test'
+  ...
+# Subtest: deployed rejects oversized declared length before consuming the body
+ok 250 - deployed rejects oversized declared length before consuming the body
+  ---
+  duration_ms: 1.001
+  type: 'test'
+  ...
+# Subtest: direct core accepts exact request cap, rejects cap+1 (0) without Content-Length
+ok 251 - direct core accepts exact request cap, rejects cap+1 (0) without Content-Length
+  ---
+  duration_ms: 31.9734
+  type: 'test'
+  ...
+# Subtest: direct core accepts exact request cap, rejects cap+1 (1) without Content-Length
+ok 252 - direct core accepts exact request cap, rejects cap+1 (1) without Content-Length
+  ---
+  duration_ms: 12.7146
+  type: 'test'
+  ...
+# Subtest: direct core cancels over-cap streaming body with missing Content-Length
+ok 253 - direct core cancels over-cap streaming body with missing Content-Length
+  ---
+  duration_ms: 8.9255
+  type: 'test'
+  ...
+# Subtest: direct core cancels over-cap streaming body with understated Content-Length
+ok 254 - direct core cancels over-cap streaming body with understated Content-Length
+  ---
+  duration_ms: 11.6334
+  type: 'test'
+  ...
+# Subtest: direct core rejects oversized declared length before consuming the body
+ok 255 - direct core rejects oversized declared length before consuming the body
+  ---
+  duration_ms: 0.7999
+  type: 'test'
+  ...
+# Subtest: deployed pipeline rejects concurrent bodies unread and releases after success
+ok 256 - deployed pipeline rejects concurrent bodies unread and releases after success
+  ---
+  duration_ms: 4.1233
+  type: 'test'
+  ...
+# Subtest: deployed pipeline rejects concurrent bodies unread and releases after model error
+ok 257 - deployed pipeline rejects concurrent bodies unread and releases after model error
+  ---
+  duration_ms: 2.0912
+  type: 'test'
+  ...
+# Subtest: deployed pipeline releases after malformed ingress error
+ok 258 - deployed pipeline releases after malformed ingress error
+  ---
+  duration_ms: 1.3028
+  type: 'test'
+  ...
+# Subtest: deployed pipeline releases after oversized ingress error
+ok 259 - deployed pipeline releases after oversized ingress error
+  ---
+  duration_ms: 11.5337
+  type: 'test'
+  ...
+# Subtest: deployed pipeline releases after broken stream ingress error
+ok 260 - deployed pipeline releases after broken stream ingress error
+  ---
+  duration_ms: 1.7144
+  type: 'test'
+  ...
+# Subtest: deployed upload deadline cancels nonblocking, returns 408 and releases the gate
+ok 261 - deployed upload deadline cancels nonblocking, returns 408 and releases the gate
+  ---
+  duration_ms: 2.6456
+  type: 'test'
+  ...
+# Subtest: deployed authorization rejects before touching an upload body
+ok 262 - deployed authorization rejects before touching an upload body
+  ---
+  duration_ms: 0.432
+  type: 'test'
+  ...
+# Subtest: health advertises the shared decoded, base64 and request byte limits
+ok 263 - health advertises the shared decoded, base64 and request byte limits
+  ---
+  duration_ms: 0.4162
+  type: 'test'
+  ...
+# Subtest: /predict exact legacy fields preserve review safety (uncertain=false)
+ok 264 - /predict exact legacy fields preserve review safety (uncertain=false)
+  ---
+  duration_ms: 35.1147
+  type: 'test'
+  ...
+# Subtest: /predict exact legacy fields preserve review safety (uncertain=true)
+ok 265 - /predict exact legacy fields preserve review safety (uncertain=true)
+  ---
+  duration_ms: 2.4454
+  type: 'test'
+  ...
+# Subtest: modern exact endpoint does not acquire legacy results
+ok 266 - modern exact endpoint does not acquire legacy results
+  ---
+  duration_ms: 2.1558
+  type: 'test'
+  ...
+# Subtest: /predict rate denial is an error, not a legacy identification
+ok 267 - /predict rate denial is an error, not a legacy identification
+  ---
+  duration_ms: 1.2503
+  type: 'test'
+  ...
+# Subtest: /predict missing limiter is an error, not a legacy identification
+ok 268 - /predict missing limiter is an error, not a legacy identification
+  ---
+  duration_ms: 1.206
+  type: 'test'
+  ...
+# Subtest: /predict private access is an error, not a legacy identification
+ok 269 - /predict private access is an error, not a legacy identification
+  ---
+  duration_ms: 0.6862
+  type: 'test'
+  ...
+# Subtest: /predict missing image is an error, not a legacy identification
+ok 270 - /predict missing image is an error, not a legacy identification
+  ---
+  duration_ms: 1.3346
+  type: 'test'
+  ...
+# Subtest: /predict malformed JSON is an error, not a legacy identification
+ok 271 - /predict malformed JSON is an error, not a legacy identification
+  ---
+  duration_ms: 1.1181
+  type: 'test'
+  ...
+# Subtest: /predict custom prompt is an error, not a legacy identification
+ok 272 - /predict custom prompt is an error, not a legacy identification
+  ---
+  duration_ms: 1.2045
+  type: 'test'
+  ...
+# Subtest: /predict rejects foreign origins and GET without model calls
+ok 273 - /predict rejects foreign origins and GET without model calls
+  ---
+  duration_ms: 1.1524
+  type: 'test'
+  ...
+# Subtest: official 60-category taxonomy preserves exact original IDs, case, spelling and immutable choice keys
+ok 274 - official 60-category taxonomy preserves exact original IDs, case, spelling and immutable choice keys
+  ---
+  duration_ms: 2.3606
+  type: 'test'
+  ...
+# Subtest: instructions preserve object identity, specific categories, catchall limits and untrusted image text
+ok 275 - instructions preserve object identity, specific categories, catchall limits and untrusted image text
+  ---
+  duration_ms: 0.3679
+  type: 'test'
+  ...
+# Subtest: each of all60 original choices returns object_match in exactly one fixed-schema model call
+ok 276 - each of all60 original choices returns object_match in exactly one fixed-schema model call
+  ---
+  duration_ms: 44.2398
+  type: 'test'
+  ...
+# Subtest: invalid classes and unrelated answer locations fail closed without retry or taxonomy mapping
+ok 277 - invalid classes and unrelated answer locations fail closed without retry or taxonomy mapping
+  ---
+  duration_ms: 3.672
+  type: 'test'
+  ...
+# Subtest: TACO retains image, auth, provider and timeout guards without making inference calls for rejected input
+ok 278 - TACO retains image, auth, provider and timeout guards without making inference calls for rejected input
+  ---
+  duration_ms: 2.7849
+  type: 'test'
+  ...
+# Subtest: health adds TACO on Jev only, deployed JSON preserves fixed mode/schema and build security metadata
+ok 279 - health adds TACO on Jev only, deployed JSON preserves fixed mode/schema and build security metadata
+  ---
+  duration_ms: 5.91
+  type: 'test'
+  ...
+# Subtest: deployed TACO retains limiter fail-closed, denial, custom-prompt rejection and CORS before inference
+ok 280 - deployed TACO retains limiter fail-closed, denial, custom-prompt rejection and CORS before inference
+  ---
+  duration_ms: 2.0965
+  type: 'test'
+  ...
+# Subtest: TrashNet direct mode remains separate and unchanged
+ok 281 - TrashNet direct mode remains separate and unchanged
+  ---
+  duration_ms: 0.5794
+  type: 'test'
+  ...
+# Subtest: direct schema contains exactly one choice question with original six lowercase classes
+ok 282 - direct schema contains exactly one choice question with original six lowercase classes
+  ---
+  duration_ms: 1.2771
+  type: 'test'
+  ...
+# Subtest: each material uses exactly one call, forwards the actual image/schema and returns bounded direct shape
+ok 283 - each material uses exactly one call, forwards the actual image/schema and returns bounded direct shape
+  ---
+  duration_ms: 26.1564
+  type: 'test'
+  ...
+# Subtest: invalid material or answer location fails closed without retry or fallback
+ok 284 - invalid material or answer location fails closed without retry or fallback
+  ---
+  duration_ms: 5.0787
+  type: 'test'
+  ...
+# Subtest: mode preserves image/access/provider guards and reports provider failures
+ok 285 - mode preserves image/access/provider guards and reports provider failures
+  ---
+  duration_ms: 1.5829
+  type: 'test'
+  ...
+# Subtest: health advertises direct mode only on Jev; deployed JSON ingress preserves mode
+ok 286 - health advertises direct mode only on Jev; deployed JSON ingress preserves mode
+  ---
+  duration_ms: 4.6197
+  type: 'test'
+  ...
+# Subtest: deployed direct mode retains limiter fail-closed and deny checks before inference
+ok 287 - deployed direct mode retains limiter fail-closed and deny checks before inference
+  ---
+  duration_ms: 2.1762
+  type: 'test'
+  ...
+1..287
+# tests 287
+# suites 0
+# pass 287
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8548.3619

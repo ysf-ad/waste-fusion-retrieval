@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BINIT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Lexend:wght@300;400;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -20,12 +21,17 @@
                 Take Photo
             </button>
 
+            <button id="upload-btn" class="header-btn" data-i18n="uploadPhoto" style="display: none;">Upload Photo</button>
+            <input type="file" id="file-input" accept="image/*" hidden />
+
             <button id="language-btn" class="header-btn language-btn">FR</button>
 
             <div class="contrast-button-group">
                 <button id="contrast-btn" class="header-btn contrast-btn">High Contrast</button>
                 <span class="toggle-indicator"></span>
             </div>
+
+            <button id="debug-btn" class="header-btn" style="display: none;">Debug</button>
 
             <div class="instructions-section">
                 <h3 data-i18n="howToUse">How to Use</h3>
@@ -38,11 +44,9 @@
         <div class="camera-container" id="camera-wrapper">
             <img id="video" src="/api/stream" style="width: 100%; height: 100%; object-fit: cover; display: block;"
                 onerror="console.error('Stream image failed to load')" onload="console.log('Stream loaded')" />
-            <!-- Countdown overlay -->
             <div id="countdown-overlay" class="countdown-overlay" style="display: none;">
                 <span id="countdown-number">3</span>
             </div>
-            <!-- Fallback message when camera not available -->
             <div id="camera-fallback" class="camera-fallback" style="display: none;">
                 <p>📷 <span data-i18n="cameraNotAvailable">Camera not available</span></p>
                 <p class="fallback-hint" data-i18n="cameraHttpsHint">Camera requires HTTPS. Use file upload instead.</p>
@@ -50,73 +54,109 @@
         </div>
     </div>
 
-    <!-- Loading Page -->
-    <div id="loading-page" class="page">
-        <div class="loading">
+    <!-- Scanning Page -->
+    <div id="loading-page" class="page scan-page">
+        <div class="panel left-panel">
+            <div class="image-wrapper scan-frame">
+                <img id="scan-image" alt="" />
+                <div class="scan-beam"></div>
+                <i></i><i></i><i></i><i></i>
+            </div>
+        </div>
+        <div class="panel right-panel">
+            <h2 class="action-text" data-i18n="analyzing">Analyzing your item...</h2>
             <div class="spinner"></div>
-            <p class="loading-text" data-i18n="analyzing">Analyzing your item...</p>
+        </div>
+        <div class="bottom-bar">
+            <span>How Long It Took Benny To Process Your Query: <span id="scan-time">0.0s</span></span>
         </div>
     </div>
 
     <!-- Result Page -->
-    <div id="result-page" class="page result-page">
-        <button id="back-btn" class="back-btn" data-i18n="scanAnother">
-            ← Scan Another Item
-        </button>
-
-        <div class="result-card">
-            <div class="result-content">
-                <!-- Left: Captured Image -->
-                <div class="image-section">
-                    <canvas id="canvas-display"></canvas>
-                </div>
-
-                <!-- Right: Classification Info -->
-                <div class="info-section">
-                    <h2 id="item-name" class="item-name">Item Name</h2>
-                    <p id="item-category" class="item-category">Category</p>
-
-                    <div class="instruction-box">
-                        <span class="icon">☑️</span>
-                        <p class="text" id="instruction-text"><span data-i18n="placeInBin">Place this item in the</span>
-                            <span class="bin-highlight" id="bin-name-inline">Bin</span>.
-                        </p>
-                    </div>
-
-                    <div id="bin-indicator" class="bin-indicator bin-blue">
-                        <span class="recycle-icon">♻️</span>
-                        <span id="bin-name">BLUE BIN</span>
-                    </div>
-
-                    <div class="why-section">
-                        <div class="why-header">
-                            <span class="icon">ℹ️</span>
-                            <span data-i18n="why">INSTRUCTIONS</span>
-                        </div>
-                        <div class="why-content">
-                            <span class="info-icon">ℹ️</span>
-                            <p id="why-text">Explanation about the classification.</p>
-                        </div>
-                    </div>
-
-                    <div class="timing-info" id="timing-info"
-                        style="margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 8px; font-size: 0.9em; color: #666;">
-                        ⏱️ <span data-i18n="inferenceTime">Inference time:</span> <span id="inference-time"
-                            style="font-weight: bold; color: #333;">-</span>
-                    </div>
-                </div>
+    <div id="result-page" class="page result-page theme-grey layout-bin">
+        <div id="left-panel" class="panel left-panel">
+            <div class="image-wrapper">
+                <img id="result-image" alt="Original photo submitted for this prediction" hidden />
+                <canvas id="canvas-display" hidden aria-hidden="true"></canvas>
             </div>
+            <p id="image-preview-label" class="image-preview-label" hidden></p>
+            <div class="image-preview-actions">
+                <a id="image-preview-link" target="_blank" rel="noopener" hidden>Open original photo</a>
+            </div>
+            <div id="info-wrapper" class="info-wrapper">
+                <h3 class="info-title">
+                    <span class="info-icon">i</span>
+                    <span id="item-name">Item Name</span>
+                </h3>
+                <p class="info-desc" id="why-text">Explanation about the classification.</p>
+                <p id="result-checks" class="result-checks" role="status"></p>
+                <p class="prediction-note">Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.</p>
+            </div>
+        </div>
+
+        <div id="right-panel" class="panel right-panel">
+            <div class="destination-heading">
+                <div id="destination-text">
+                    <h2 class="action-text" id="action-text">PLACE IN</h2>
+                    <h1 class="bin-text" id="bin-name-large">RECYCLING BIN</h1>
+                </div>
+                <div class="icon-wrapper" id="large-icon-container"></div>
+            </div>
+            <section class="policy-instructions" aria-label="Source instructions">
+                <h4 id="instructions-title">Source instructions</h4>
+                <ul id="instruction-list"></ul>
+            </section>
+            <details id="api-details" class="api-details">
+                <summary>Full response</summary>
+                <p id="api-summary"></p>
+                <pre id="api-response"></pre>
+            </details>
+        </div>
+
+        <div class="bottom-bar">
+            <span>How Long It Took Benny To Process Your Query: <span id="inference-time">-</span></span>
+            <button id="back-btn" class="back-btn" data-i18n="scanAnother">← Scan Another Item</button>
         </div>
 
         <div id="error-container" class="error-message" style="display: none;"></div>
     </div>
 
-    <script>
-        // API Endpoint - Points to the backend API via Cloudflare Tunnel
-        // Use local proxy to avoid CORS issues
-        const API_ENDPOINT = '/api/predict';
+    <!-- Debug panel -->
+    <button id="debug-fab" hidden>Debug</button>
+    <div id="debug-panel" hidden>
+        <div class="debug-head">
+            <span>Debug mode</span>
+            <div><button id="debug-hide">Hide</button><button id="debug-exit">Exit</button></div>
+        </div>
+        <div class="debug-group">Screens</div>
+        <div class="debug-grid">
+            <button data-debug="camera">Camera</button>
+            <button data-debug="countdown">Countdown</button>
+            <button data-debug="fallback">No camera</button>
+            <button data-debug="scan">Scanning</button>
+            <button data-debug="error">Error</button>
+        </div>
+        <div class="debug-group">Results</div>
+        <div class="debug-grid">
+            <button data-debug="recycle">Recycling</button>
+            <button data-debug="litter">Litter</button>
+            <button data-debug="compost">Compost</button>
+            <button data-debug="hhw">Hazardous</button>
+            <button data-debug="alert">Not accepted</button>
+            <button data-debug="ewaste">E-waste</button>
+        </div>
+        <div class="debug-group">Options</div>
+        <div class="debug-grid">
+            <button data-debug="lang">EN / FR</button>
+            <button data-debug="contrast">Contrast</button>
+            <label><input type="checkbox" id="debug-long" /> Long text</label>
+        </div>
+    </div>
 
-        // Pi Camera Service endpoints (local)
+    <script src="result-info.js"></script>
+    <script>
+        // API Endpoints
+        const API_ENDPOINT = '/api/predict';
         const PI_SERVICE = {
             status: '/api/status',
             capture: '/api/capture',
@@ -125,8 +165,10 @@
             config: '/api/config'
         };
 
-        // Check for Pi camera service
         let usingPiCamera = false;
+        let stream = null;
+        let inferenceStartTime = null;
+        let flipImage = false; 
 
         // Elements
         const cameraPage = document.getElementById('camera-page');
@@ -135,90 +177,161 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas-display');
         const captureBtn = document.getElementById('capture-btn');
+        const uploadBtn = document.getElementById('upload-btn');
+        const fileInput = document.getElementById('file-input');
+        let uploadMode = false; // uploaded photos are never mirrored
+        let debugMode = false;
         const backBtn = document.getElementById('back-btn');
 
-        // Result elements
+        // Result Elements
         const itemName = document.getElementById('item-name');
-        const itemCategory = document.getElementById('item-category');
-        const instructionText = document.getElementById('instruction-text');
-        const binNameInline = document.getElementById('bin-name-inline');
-        const binIndicator = document.getElementById('bin-indicator');
-        const binName = document.getElementById('bin-name');
         const whyText = document.getElementById('why-text');
-        const errorContainer = document.getElementById('error-container');
+        const actionText = document.getElementById('action-text');
+        const binNameLarge = document.getElementById('bin-name-large');
+        const largeIconContainer = document.getElementById('large-icon-container');
         const inferenceTimeDisplay = document.getElementById('inference-time');
-
-        let stream = null;
-        let inferenceStartTime = null;
-        let flipImage = false;  // Will be set from config
+        const errorContainer = document.getElementById('error-container');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        const infoWrapper = document.getElementById('info-wrapper');
+        let scanTimer = null;
+        let scanImageUrl = null;
 
         // Utility functions
         function showPage(page) {
             [cameraPage, loadingPage, resultPage].forEach(p => p.classList.remove('active'));
             page.classList.add('active');
+            if (page !== loadingPage) stopScanTimer();
         }
 
-        function getBinColor(category, lang = 'en') {
+        // Scanning screen helpers
+        function setScanImage(blob) {
+            if (scanImageUrl) URL.revokeObjectURL(scanImageUrl);
+            scanImageUrl = URL.createObjectURL(blob);
+            const img = document.getElementById('scan-image');
+            img.src = scanImageUrl;
+            img.style.transform = flipImage && !uploadMode ? 'scaleX(-1)' : '';
+            // Preview the exact submitted Blob, not a re-encoded or previous canvas.
+            const preview = document.getElementById('result-image');
+            preview.src = scanImageUrl;
+            preview.hidden = false;
+            const label = document.getElementById('image-preview-label');
+            label.textContent = `Submitted photo · ${blob.size.toLocaleString('en-US')} bytes`;
+            label.hidden = false;
+            const link = document.getElementById('image-preview-link');
+            link.href = scanImageUrl;
+            link.hidden = false;
+        }
+        function clearImagePreview() {
+            if (scanImageUrl) URL.revokeObjectURL(scanImageUrl);
+            scanImageUrl = null;
+            for (const id of ['scan-image', 'result-image', 'image-preview-link']) {
+                const element = document.getElementById(id);
+                element.removeAttribute(id === 'image-preview-link' ? 'href' : 'src');
+            }
+            for (const id of ['result-image', 'image-preview-label', 'image-preview-link']) document.getElementById(id).hidden = true;
+            document.getElementById('image-preview-label').textContent = '';
+        }
+        function startScanTimer() {
+            const el = document.getElementById('scan-time');
+            clearInterval(scanTimer);
+            el.textContent = '0.0s';
+            scanTimer = setInterval(() => {
+                el.textContent = ((performance.now() - inferenceStartTime) / 1000).toFixed(1) + 's';
+            }, 100);
+        }
+        function stopScanTimer() { clearInterval(scanTimer); }
+
+        // HHW puts the bin name on the left and the instructions on the right
+        function applyLayout(layout) {
+            if (layout === 'layout-hhw') {
+                leftPanel.appendChild(binNameLarge);
+                rightPanel.insertBefore(whyText, rightPanel.firstChild);
+            } else {
+                infoWrapper.insertBefore(whyText, document.getElementById('result-checks'));
+                document.getElementById('destination-text').appendChild(binNameLarge);
+            }
+        }
+
+        // Icons
+        const arm = (r) => `<g transform="rotate(${r} 50 50)"><path d="M44 16.5A34 34 0 0 1 80.8 35.6" fill="none" stroke="currentColor" stroke-width="11"/><path d="M91.7 30.5L86.7 48.3L69.9 40.7Z"/></g>`;
+        const SVGS = {
+            recycle: `<svg viewBox="0 0 100 100" fill="currentColor">${arm(0)}${arm(120)}${arm(240)}</svg>`,
+            trash: `<svg viewBox="0 0 100 120" fill="currentColor"><path d="M35 30V17a9 9 0 0 1 9-9h12a9 9 0 0 1 9 9v13" fill="none" stroke="currentColor" stroke-width="7"/><rect x="2" y="28" width="96" height="9" rx="4.5"/><path d="M11 40h78l-7 62a11 11 0 0 1-11 10H29a11 11 0 0 1-11-10z"/><path d="M38 55l3 40M62 55l-3 40" style="stroke:var(--pb)" stroke-width="6" stroke-linecap="round"/></svg>`,
+            exclamation: `<svg viewBox="0 0 100 100" fill="currentColor"><circle cx="50" cy="50" r="50"/><rect x="42" y="17" width="16" height="44" rx="8" style="fill:var(--pb)"/><circle cx="50" cy="78" r="9" style="fill:var(--pb)"/></svg>`,
+            biohazard: `<svg viewBox="0 0 100 90" fill="currentColor"><path d="M50 7L93 82H7Z" style="fill:var(--pb)" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><g fill="none" stroke="currentColor" stroke-width="4.5"><circle cx="50" cy="47" r="10"/><circle cx="58.7" cy="62" r="10"/><circle cx="41.3" cy="62" r="10"/></g><circle cx="50" cy="57" r="3.5"/></svg>`
+        };
+
+        function getThemeDetails(category, lang = 'en') {
             const cat = (category || '').toLowerCase();
-            let binKey = 'GARBAGE BIN'; // default
+            
+            let theme = 'theme-grey';
+            let action = 'PLACE IN';
+            let binTitle = 'LITTER BIN';
+            let icon = SVGS.trash;
+            let layout = 'layout-bin';
 
-            // Match exact categories from waste-wizard.csv
-            if (cat === 'blue bin' || cat.includes('recycl')) binKey = 'BLUE BIN';
-            else if (cat === 'green bin' || cat.includes('compost') || cat.includes('organic')) binKey = 'GREEN BIN';
-            else if (cat === 'garbage bin' || cat === 'garbage' || cat.includes('landfill')) binKey = 'GARBAGE BIN';
-            else if (cat === 'hhw' || cat.includes('hazard')) binKey = 'HHW';
-            else if (cat === 'electronic waste' || cat.includes('electronic')) binKey = 'ELECTRONIC WASTE';
-            else if (cat === 'oversized item' || cat.includes('oversized')) binKey = 'OVERSIZED ITEM';
-            else if (cat === 'depot') binKey = 'DEPOT';
-            else if (cat === 'christmas tree') binKey = 'CHRISTMAS TREE';
-            else if (cat === 'yard waste') binKey = 'YARD WASTE';
-            else if (cat === 'metal') binKey = 'BLUE BIN';  // Metal items go to recycling
-            else if (cat === 'not accepted') binKey = 'NOT ACCEPTED';
-            else if (cat.includes('black')) binKey = 'BLACK BIN';
-            else if (cat.includes('yellow')) binKey = 'YELLOW BIN';
+            if (cat === 'blue bin' || cat.includes('recycl') || cat === 'metal') {
+                theme = 'theme-blue';
+                binTitle = 'RECYCLING BIN';
+                icon = SVGS.recycle;
+            } else if (cat === 'green bin' || cat.includes('compost') || cat.includes('organic')) {
+                theme = 'theme-green';
+                binTitle = 'COMPOST BIN';
+                icon = SVGS.recycle;
+            } else if (cat === 'hhw' || cat.includes('hazard')) {
+                theme = 'theme-orange';
+                action = 'FOLLOW INSTRUCTIONS';
+                layout = 'layout-hhw';
+                binTitle = 'HOUSEHOLD HAZARDOUS WASTE';
+                icon = SVGS.biohazard;
+            } else if (cat === 'not accepted' || cat.includes('special')) {
+                theme = 'theme-red';
+                action = 'SEE INSTRUCTIONS';
+                layout = 'layout-alert';
+                binTitle = 'FOR DISPOSAL';
+                icon = SVGS.exclamation;
+            } else if (cat === 'electronic waste' || cat.includes('electronic')) {
+                theme = 'theme-orange';
+                action = 'SPECIAL DISPOSAL';
+                binTitle = 'E-WASTE DEPOT';
+                icon = SVGS.exclamation;
+            }
 
-            const binData = {
-                'BLUE BIN': { class: 'bin-blue', color: 'Blue', icon: '♻️' },
-                'GREEN BIN': { class: 'bin-green', color: 'Green', icon: '🌱' },
-                'GARBAGE BIN': { class: 'bin-grey', color: 'Garbage', icon: '🗑️' },
-                'HHW': { class: 'bin-red', color: 'HHW', icon: '☠️' },
-                'ELECTRONIC WASTE': { class: 'bin-orange', color: 'Electronic', icon: '🔌' },
-                'OVERSIZED ITEM': { class: 'bin-purple', color: 'Oversized', icon: '📦' },
-                'DEPOT': { class: 'bin-brown', color: 'Depot', icon: '🏪' },
-                'CHRISTMAS TREE': { class: 'bin-green', color: 'Tree', icon: '🎄' },
-                'YARD WASTE': { class: 'bin-green', color: 'Yard', icon: '🍂' },
-                'NOT ACCEPTED': { class: 'bin-black', color: 'Not Accepted', icon: '🚫' },
-                'BLACK BIN': { class: 'bin-black', color: 'Black', icon: '🗑️' },
-                'YELLOW BIN': { class: 'bin-yellow', color: 'Yellow', icon: '♻️' }
+            // Translate text if required
+            const translateMap = {
+                'fr': {
+                    'PLACE IN': 'PLACER DANS',
+                    'FOLLOW INSTRUCTIONS': 'SUIVRE LES INSTRUCTIONS',
+                    'SEE INSTRUCTIONS': 'VOIR LES INSTRUCTIONS',
+                    'RECYCLING BIN': 'BAC DE RECYCLAGE',
+                    'LITTER BIN': 'POUBELLE',
+                    'COMPOST BIN': 'BAC DE COMPOST',
+                    'HOUSEHOLD HAZARDOUS WASTE': 'RÉSIDUS DOMESTIQUES DANGEREUX',
+                    'FOR DISPOSAL': 'POUR L\'ÉLIMINATION',
+                    'E-WASTE DEPOT': 'DÉPÔT ÉLECTRONIQUE'
+                }
             };
 
-            const data = binData[binKey];
-            const translatedName = translations[lang][binKey] || binKey;
+            if (lang === 'fr' && translateMap['fr'][action]) action = translateMap['fr'][action];
+            if (lang === 'fr' && translateMap['fr'][binTitle]) binTitle = translateMap['fr'][binTitle];
 
-            return {
-                class: data.class,
-                name: translatedName,
-                color: data.color,
-                icon: data.icon
-            };
+            return { theme, action, binTitle, icon, layout };
         }
 
         const cameraFallback = document.getElementById('camera-fallback');
         const countdownOverlay = document.getElementById('countdown-overlay');
         const countdownNumber = document.getElementById('countdown-number');
 
-        // Countdown function
         async function showCountdown() {
             return new Promise((resolve) => {
                 countdownOverlay.style.display = 'flex';
                 let count = 3;
                 countdownNumber.textContent = count;
-
                 const interval = setInterval(() => {
                     count--;
-                    if (count > 0) {
-                        countdownNumber.textContent = count;
-                    } else {
+                    countdownNumber.textContent = count;
+                    if (count === 0) {
                         clearInterval(interval);
                         countdownOverlay.style.display = 'none';
                         resolve();
@@ -227,98 +340,65 @@
             });
         }
 
-        // Camera functions
+        let eventSource = null;
         function connectToEventStream() {
-            const eventSource = new EventSource('/api/events');
-
-            eventSource.addEventListener('motion_detected', (e) => {
-                // Motion detected on backend
-            });
-
+            if (eventSource) return; // Reuse native reconnection; do not create competing queues.
+            eventSource = new EventSource('/api/events');
             eventSource.addEventListener('countdown', (e) => {
                 const data = JSON.parse(e.data);
-                // Show countdown overlay
-                countdownOverlay.style.display = 'flex';
+                countdownOverlay.style.display = data.number > 0 ? 'flex' : 'none';
                 countdownNumber.textContent = data.number;
             });
-
             eventSource.addEventListener('image_captured', async (e) => {
                 countdownOverlay.style.display = 'none';
-
-                // Fetch the captured image and process it
                 await captureFromPiAndProcess();
             });
-
-            eventSource.addEventListener('heartbeat', (e) => {
-                // Keep connection alive
+            eventSource.addEventListener('capture_error', (e) => {
+                countdownOverlay.style.display = 'none';
+                showError('Capture failed: ' + JSON.parse(e.data).message);
             });
-
-            eventSource.onerror = (error) => {
-                console.error('EventSource error:', error);
-                // Attempt to reconnect after 5 seconds
-                setTimeout(() => {
-                    eventSource.close();
-                    connectToEventStream();
-                }, 5000);
-            };
         }
 
         async function startCamera() {
-            // Load flip configuration from backend
             try {
                 const configResponse = await fetch('/api/config');
                 if (configResponse.ok) {
                     const config = await configResponse.json();
                     flipImage = config.flip_image || false;
-                    console.log('Flip image setting loaded:', flipImage);
                 }
             } catch (e) {
-                console.log('Could not load config, using default flip setting');
                 flipImage = false;
             }
 
-            // First, check if Pi camera service is available
             try {
                 const response = await fetch(PI_SERVICE.status);
                 if (response.ok) {
                     const status = await response.json();
                     if (status.pi_available && status.camera_ready) {
-                        console.log('Pi camera service detected - using MJPEG stream');
                         usingPiCamera = true;
-                        // MJPEG stream is now directly loaded in img tag src
                         video.style.display = 'block';
                         cameraFallback.style.display = 'none';
-
-                        // Connect to SSE for real-time motion detection events
                         connectToEventStream();
                         return;
                     }
                 }
-            } catch (e) {
-                console.log('Pi camera service not available, falling back to browser camera');
-            }
+            } catch (e) {}
 
-            // Fallback to browser camera
-            // Check if mediaDevices is available (requires HTTPS or localhost)
+            uploadBtn.style.display = '';
+
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                console.warn('Camera API not available. Likely due to HTTP access.');
                 showCameraFallback();
                 return;
             }
 
             try {
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
                 });
                 video.srcObject = stream;
                 video.style.display = 'block';
                 cameraFallback.style.display = 'none';
             } catch (error) {
-                console.error('Camera error:', error);
                 showCameraFallback();
             }
         }
@@ -333,58 +413,43 @@
         async function processImage(blob) {
             const formData = new FormData();
             formData.append('file', blob, 'capture.jpg');
-
-            // Start timing
             inferenceStartTime = performance.now();
-            console.log('[Timing] Inference started at:', new Date().toISOString());
-
+            startScanTimer();
             try {
-                const response = await fetch(API_ENDPOINT, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
-                }
-
+                const response = await fetch(API_ENDPOINT, { method: 'POST', body: formData });
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
                 const data = await response.json();
-
-                // Calculate inference time
-                const inferenceEndTime = performance.now();
-                const inferenceTime = inferenceEndTime - inferenceStartTime;
-                console.log('[Timing] Inference completed at:', new Date().toISOString());
-                console.log('[Timing] Total inference time:', inferenceTime.toFixed(2), 'ms');
-                console.log('[Timing] Total inference time:', (inferenceTime / 1000).toFixed(2), 'seconds');
-
+                const inferenceTime = performance.now() - inferenceStartTime;
                 await displayResult(data, blob, inferenceTime);
             } catch (error) {
-                console.error('API error:', error);
-                const inferenceEndTime = performance.now();
-                const inferenceTime = inferenceEndTime - inferenceStartTime;
-                console.log('[Timing] Inference failed after:', inferenceTime.toFixed(2), 'ms');
                 showError(error.message);
             }
         }
 
         async function captureAndProcess() {
-            // Show countdown
+            if (usingPiCamera && captureBtn.disabled) return;
+            if (usingPiCamera) captureBtn.disabled = true;
+            clearTimeout(autoReturnTimer);
             await showCountdown();
-
-            // Show loading
-            showPage(loadingPage);
-
+            uploadMode = false;
             if (usingPiCamera) {
-                await captureFromPiAndProcess();
+                try {
+                    const response = await fetch(PI_SERVICE.capture);
+                    if (!response.ok) throw new Error(`Capture failed: ${response.status}`);
+                    await captureFromPiAndProcess();
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    captureBtn.disabled = false;
+                }
             } else {
-                // Capture image to canvas from browser camera
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0);
-
-                // Convert to blob and send to API
                 canvas.toBlob(async (blob) => {
+                    setScanImage(blob);
+                    showPage(loadingPage);
                     await processImage(blob);
                 }, 'image/jpeg', 0.9);
             }
@@ -392,91 +457,57 @@
 
         async function captureFromPiAndProcess() {
             try {
-                // Get the captured image from Pi
                 const imgResponse = await fetch(PI_SERVICE.latestImage);
-                if (!imgResponse.ok) {
-                    throw new Error('Failed to get captured image');
-                }
-
+                if (!imgResponse.ok) throw new Error('Failed to get captured image');
                 const blob = await imgResponse.blob();
-
-                // FREEZE THE VIDEO: Replace stream with static captured image
-                // Add a timestamp to prevent caching
+                console.info(`Pi camera JPEG: ${blob.size} bytes`);
+                setScanImage(blob);
                 video.src = PI_SERVICE.latestImage + '?t=' + new Date().getTime();
-
-                // Show loading page
                 showPage(loadingPage);
-
-                // Process the image
                 await processImage(blob);
             } catch (error) {
-                console.error('Pi capture processing error:', error);
                 showError('Failed to process captured image: ' + error.message);
             }
         }
 
         let autoReturnTimer = null;
-
-        // Translation cache to avoid repeated API calls
         const translationCache = {};
 
-        // Function to translate text to French using the API
         async function translateToFrench(text) {
-            // Check cache first
-            if (translationCache[text]) {
-                return translationCache[text];
-            }
-
+            if (translationCache[text]) return translationCache[text];
             try {
                 const response = await fetch('/api/translate', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ text: text })
                 });
-
-                if (!response.ok) {
-                    console.error('Translation failed:', response.statusText);
-                    return text; // Return original text if translation fails
-                }
-
+                if (!response.ok) return text;
                 const data = await response.json();
-                const translatedText = data.translated_text || text;
-
-                // Cache the translation
-                translationCache[text] = translatedText;
-
-                return translatedText;
+                translationCache[text] = data.translated_text || text;
+                return translationCache[text];
             } catch (error) {
-                console.error('Translation error:', error);
-                return text; // Return original text on error
+                return text;
             }
         }
 
         async function displayResult(data, blob, inferenceTime) {
+            const info = predictionInfo(data);
             errorContainer.style.display = 'none';
 
-            // Display timing information
             if (inferenceTime) {
                 const seconds = (inferenceTime / 1000).toFixed(2);
-                inferenceTimeDisplay.textContent = `${seconds}s (${inferenceTime.toFixed(0)}ms)`;
-                console.log('[Timing] Displaying inference time:', seconds, 'seconds');
+                inferenceTimeDisplay.textContent = `${seconds}s`;
             }
 
-            // Draw captured image to canvas
             if (blob) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const img = new Image();
                     img.onload = () => {
-                        const canvas = document.getElementById('canvas-display');
                         canvas.width = img.width;
                         canvas.height = img.height;
                         const ctx = canvas.getContext('2d');
-
-                        // Apply flip if enabled
-                        if (flipImage) {
+                        if (flipImage && !uploadMode) {
                             ctx.scale(-1, 1);
                             ctx.drawImage(img, -img.width, 0);
                             canvas.classList.add('flipped');
@@ -484,8 +515,6 @@
                             ctx.drawImage(img, 0, 0);
                             canvas.classList.remove('flipped');
                         }
-
-                        // Save photo with results after displaying
                         savePhotoWithResults(canvas.toDataURL('image/jpeg'), data, inferenceTime);
                     };
                     img.src = e.target.result;
@@ -493,273 +522,264 @@
                 reader.readAsDataURL(blob);
             }
 
-            // Get current language first
             const currentLang = localStorage.getItem('language') || 'en';
+            const themedBin = /^(blue bin|green bin|garbage|recycling|metal|compost|organic|hhw|household hazardous|electronic)/i.test(info.bin) ? info.bin : 'not accepted';
+            const themeDetails = getThemeDetails(themedBin, currentLang);
 
-            // Get top result
-            const result = data.results && data.results[0] ? data.results[0] : data;
-
-            // Translate item name if in French mode
-            let name = result.item || translations[currentLang]['unknown item'];
-            if (currentLang === 'fr' && result.item) {
-                name = await translateToFrench(result.item);
+            // Always keep identity, policy guidance and unresolved conditions distinct.
+            // Source text and diagnostics remain verbatim; no translation API rewrites them.
+            resultPage.className = `page result-page ${themeDetails.theme} layout-info`;
+            applyLayout('layout-bin');
+            itemName.textContent = info.item;
+            whyText.textContent = info.matchScore === null ? 'Match score: not returned' : `Match score: ${Number((info.matchScore * 100).toFixed(1))}%`;
+            actionText.textContent = 'PREDICTED POLICY BIN';
+            binNameLarge.textContent = info.bin || 'NOT CONFIRMED';
+            largeIconContainer.innerHTML = themeDetails.icon;
+            document.getElementById('result-checks').textContent = info.checks.join('\n');
+            document.getElementById('instructions-title').textContent = `Source instructions — ${info.sourceBin}`;
+            const list = document.getElementById('instruction-list');
+            list.replaceChildren();
+            // Multiple instructions may apply together; do not turn this into a single winner.
+            const priority = { applies: 0, check: 1, reference: 2 };
+            const visibleRules = info.rules.filter(rule => rule.state !== 'does_not_apply')
+                .sort((a, b) => priority[a.state] - priority[b.state]);
+            for (const rule of visibleRules) {
+                const row = document.createElement('li');
+                row.className = `rule-${rule.state}`;
+                row.textContent = rule.text;
+                list.appendChild(row);
             }
-
-            const category = result.category || translations[currentLang]['unknown'];
-
-            // Get instruction - translate if in French mode and it's not a fallback
-            let instruction = result.instruction || translations[currentLang]['please dispose of this item properly.'];
-
-            // If we have a real instruction (not fallback) and language is French, translate it
-            if (currentLang === 'fr' && result.instruction) {
-                instruction = await translateToFrench(result.instruction);
+            if (!visibleRules.length) {
+                const row = document.createElement('li');
+                row.textContent = info.rules.length ? 'No instruction is confirmed to apply. Review the API details before disposal.' : 'No source instructions returned by the API.';
+                list.appendChild(row);
             }
-
-            // Get bin info based on category
-            const binInfo = getBinColor(category, currentLang);
-
-            // Translate category to current language
-            const categoryLower = category.toLowerCase();
-            const translatedCategory = translations[currentLang][categoryLower] || category;
-
-            // Update UI
-            itemName.textContent = name;
-            itemCategory.textContent = translatedCategory;
-            binNameInline.textContent = binInfo.name;
-            binIndicator.className = 'bin-indicator ' + binInfo.class;
-            binName.textContent = binInfo.name;
-            document.querySelector('.recycle-icon').textContent = binInfo.icon;
-            whyText.textContent = instruction;
+            document.getElementById('api-details').open = false;
+            const displayResponse = (key, value) => ['provider', 'model'].includes(key) ? undefined : typeof value === 'string' ? value.replace(/\bjev-/gi, '').replace(/\bjev\b/gi, 'classifier') : value;
+            document.getElementById('api-summary').textContent = `Status: ${info.status}\nObserved condition: ${info.condition}\nLegacy display category: ${info.legacyCategory}\nIdentity model score: ${info.score} (not calibrated accuracy)\nBuild: ${displayResponse('build_id', data.build_id || 'Not returned')}\nAPI category: ${data.category ?? 'null / not returned'}\nPolicy bin: ${data.policy_category || 'Not returned'}\nProvider identifiers hidden in this display.`;
+            document.getElementById('api-response').textContent = JSON.stringify(data, displayResponse, 2);
 
             showPage(resultPage);
 
-            // Disable motion detection while showing results
             if (usingPiCamera) {
-                fetch('/api/motion/disable', { method: 'POST' });
+                if (!debugMode) fetch('/api/motion/disable', { method: 'POST' });
             }
 
-            // Auto-return to camera after 15 seconds
             if (autoReturnTimer) clearTimeout(autoReturnTimer);
-            autoReturnTimer = setTimeout(() => {
-                resetCamera();
-            }, 15000);
+            if (!debugMode) autoReturnTimer = setTimeout(() => { resetCamera(); }, 60000);
         }
 
+        document.getElementById('api-details').addEventListener('toggle', (event) => {
+            if (autoReturnTimer) clearTimeout(autoReturnTimer);
+            autoReturnTimer = null;
+            if (!event.target.open && !debugMode && errorContainer.style.display === 'none') autoReturnTimer = setTimeout(resetCamera, 60000);
+        });
+
         function showError(message) {
+            if (autoReturnTimer) clearTimeout(autoReturnTimer);
+            autoReturnTimer = null;
+            resultPage.className = 'page result-page theme-red layout-info';
+            itemName.textContent = 'Unable to identify item';
+            whyText.textContent = 'No usable prediction was returned. Try another photo; do not guess a bin.';
+            actionText.textContent = 'TRY AGAIN';
+            binNameLarge.textContent = 'NOT CONFIRMED';
+            largeIconContainer.innerHTML = SVGS.exclamation;
+            document.getElementById('result-checks').textContent = '';
+            document.getElementById('instruction-list').replaceChildren();
+            document.getElementById('instructions-title').textContent = 'No source instructions';
+            document.getElementById('api-details').open = false;
+            document.getElementById('api-summary').textContent = message;
+            document.getElementById('api-response').textContent = '';
             errorContainer.textContent = 'Error: ' + message;
             errorContainer.style.display = 'block';
             showPage(resultPage);
         }
 
         async function savePhotoWithResults(photoDataUrl, results, inferenceTime) {
+            if (debugMode) return; // never store fake debug photos
             try {
-                console.log('[Storage] Saving photo with results...');
-                const response = await fetch('/api/save-photo', {
+                await fetch('/api/save-photo', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        photo: photoDataUrl,
-                        results: results,
-                        inference_time: inferenceTime
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ photo: photoDataUrl, results: results, inference_time: inferenceTime })
                 });
-
-                if (response.ok) {
-                    const saveResult = await response.json();
-                    console.log('[Storage] Photo saved successfully:', saveResult.photo_id);
-                } else {
-                    console.warn('[Storage] Failed to save photo:', response.status);
-                }
             } catch (error) {
                 console.error('[Storage] Error saving photo:', error);
             }
         }
 
         function resetCamera() {
+            clearImagePreview();
             if (autoReturnTimer) {
                 clearTimeout(autoReturnTimer);
                 autoReturnTimer = null;
             }
-
-            // Re-enable motion detection when returning to camera
             if (usingPiCamera) {
                 fetch('/api/motion/enable', { method: 'POST' });
-                // UNFREEZE: Restore the live stream
                 video.src = PI_SERVICE.stream;
             }
-
             showPage(cameraPage);
         }
 
-        // Event listeners
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
+            fileInput.value = '';
+            if (!file) return;
+            uploadMode = true;
+            setScanImage(file);
+            showPage(loadingPage);
+            await processImage(file);
+        });
         captureBtn.addEventListener('click', captureAndProcess);
         backBtn.addEventListener('click', resetCamera);
-
-        // Start camera on load
         startCamera();
 
-        // Cleanup
         window.addEventListener('beforeunload', () => {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-            }
+            if (stream) stream.getTracks().forEach(track => track.stop());
         });
 
-        // ===== INTERNATIONALIZATION & ACCESSIBILITY =====
-
-        // Translation dictionary
+        // Dictionary and Language Control
         const translations = {
             en: {
-                takePhoto: 'Take Photo',
-                howToUse: 'How to Use',
-                instruction1: '1. Position item in camera view',
-                instruction2: '2. Wait for automatic capture',
-                instruction3: '3. View classification results',
-                cameraNotAvailable: 'Camera not available',
-                cameraHttpsHint: 'Camera requires HTTPS. Use file upload instead.',
-                analyzing: 'Analyzing your item...',
-                scanAnother: '← Scan Another Item',
-                placeInBin: 'Place this item in the',
-                why: 'Why?',
-                inferenceTime: 'Inference time:',
-                // Default messages
-                'unknown item': 'Unknown Item',
-                'unknown': 'Unknown',
-                'please dispose of this item properly.': 'Please dispose of this item properly.',
-                'confidence': 'confidence',
-                // Categories
-                'blue bin': 'Blue Bin',
-                'green bin': 'Green Bin',
-                'garbage bin': 'Garbage Bin',
-                'special disposal': 'Special Disposal',
-                'black bin': 'Black Bin',
-                'yellow bin': 'Yellow Bin',
-                'recycling': 'Recycling',
-                'compost': 'Compost',
-                'organic': 'Organic',
-                'landfill': 'Landfill',
-                'hazardous': 'Hazardous',
-                'electronic': 'Electronic',
-                'hhw': 'HHW',
-                'oversized item': 'Oversized Item',
-                'depot': 'Depot',
-                'yard waste': 'Yard Waste',
-                'christmas tree': 'Christmas Tree',
-                'not accepted': 'Not Accepted',
-                // Bin Display Names
-                'BLUE BIN': 'BLUE BIN',
-                'GREEN BIN': 'GREEN BIN',
-                'GARBAGE BIN': 'GARBAGE BIN',
-                'HHW': 'HHW',
-                'ELECTRONIC WASTE': 'ELECTRONIC WASTE',
-                'OVERSIZED ITEM': 'OVERSIZED ITEM',
-                'DEPOT': 'DEPOT',
-                'CHRISTMAS TREE': 'CHRISTMAS TREE',
-                'YARD WASTE': 'YARD WASTE',
-                'NOT ACCEPTED': 'NOT ACCEPTED',
-                'BLACK BIN': 'BLACK BIN',
-                'YELLOW BIN': 'YELLOW BIN'
+                takePhoto: 'Take Photo', uploadPhoto: 'Upload Photo', howToUse: 'How to Use',
+                instruction1: '1. Position item in camera view', instruction2: '2. Wait for automatic capture', instruction3: '3. View classification results',
+                cameraNotAvailable: 'Camera not available', cameraHttpsHint: 'Camera requires HTTPS. Use file upload instead.',
+                analyzing: 'Analyzing your item...', scanAnother: '← Scan Another Item',
+                'unknown item': 'Unknown Item', 'unknown': 'Unknown', 'please dispose of this item properly.': 'Please dispose of this item properly.'
             },
             fr: {
-                takePhoto: 'Prendre une photo',
-                howToUse: 'Mode d\'emploi',
-                instruction1: '1. Positionner l\'objet dans le champ de la caméra',
-                instruction2: '2. Attendre la capture automatique',
-                instruction3: '3. Afficher les résultats de la classification',
-                cameraNotAvailable: 'Caméra non disponible',
-                cameraHttpsHint: 'La caméra nécessite HTTPS. Utilisez le téléchargement de fichier à la place.',
-                analyzing: 'Analyse de votre objet...',
-                scanAnother: '← Analyser un autre objet',
-                placeInBin: 'Placez cet objet dans la',
-                why: 'Pourquoi ?',
-                inferenceTime: 'Temps d\'inférence:',
-                // Default messages
-                'unknown item': 'Objet Inconnu',
-                'unknown': 'Inconnu',
-                'please dispose of this item properly.': 'Veuillez éliminer cet objet correctement.',
-                'confidence': 'confiance',
-                // Categories
-                'blue bin': 'Bac Bleu',
-                'green bin': 'Bac Vert',
-                'garbage bin': 'Poubelle',
-                'special disposal': 'Élimination Spéciale',
-                'black bin': 'Bac Noir',
-                'yellow bin': 'Bac Jaune',
-                'recycling': 'Recyclage',
-                'compost': 'Compost',
-                'organic': 'Organique',
-                'landfill': 'Décharge',
-                'hazardous': 'Dangereux',
-                'electronic': 'Électronique',
-                'hhw': 'DDD',  // Déchets Domestiques Dangereux
-                'oversized item': 'Objet Volumineux',
-                'depot': 'Dépôt',
-                'yard waste': 'Déchets de Jardin',
-                'christmas tree': 'Sapin de Noël',
-                'not accepted': 'Non Accepté',
-                // Bin Display Names
-                'BLUE BIN': 'BAC BLEU',
-                'GREEN BIN': 'BAC VERT',
-                'GARBAGE BIN': 'POUBELLE',
-                'HHW': 'DDD',  // Déchets Domestiques Dangereux
-                'ELECTRONIC WASTE': 'DÉCHETS ÉLECTRONIQUES',
-                'OVERSIZED ITEM': 'OBJET VOLUMINEUX',
-                'DEPOT': 'DÉPÔT',
-                'CHRISTMAS TREE': 'SAPIN DE NOËL',
-                'YARD WASTE': 'DÉCHETS DE JARDIN',
-                'NOT ACCEPTED': 'NON ACCEPTÉ',
-                'BLACK BIN': 'BAC NOIR',
-                'YELLOW BIN': 'BAC JAUNE'
+                takePhoto: 'Prendre une photo', uploadPhoto: 'Téléverser une photo', howToUse: 'Mode d\'emploi',
+                instruction1: '1. Positionner l\'objet dans le champ de la caméra', instruction2: '2. Attendre la capture automatique', instruction3: '3. Afficher les résultats de la classification',
+                cameraNotAvailable: 'Caméra non disponible', cameraHttpsHint: 'La caméra nécessite HTTPS. Utilisez le téléchargement de fichier à la place.',
+                analyzing: 'Analyse de votre objet...', scanAnother: '← Analyser un autre objet',
+                'unknown item': 'Objet Inconnu', 'unknown': 'Inconnu', 'please dispose of this item properly.': 'Veuillez éliminer cet objet correctement.'
             }
         };
 
-        // Language management
         function setLanguage(lang) {
             localStorage.setItem('language', lang);
             document.documentElement.lang = lang;
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {
+                if (translations[lang] && translations[lang][key]) {
                     el.textContent = translations[lang][key];
                 }
             });
-
-            // Update language button text (opposite of current language)
-            const languageBtn = document.getElementById('language-btn');
-            languageBtn.textContent = lang === 'en' ? 'FR' : 'EN';
+            document.getElementById('language-btn').textContent = lang === 'en' ? 'FR' : 'EN';
         }
 
-        const languageBtn = document.getElementById('language-btn');
-        languageBtn.addEventListener('click', () => {
+        document.getElementById('language-btn').addEventListener('click', () => {
             const currentLang = localStorage.getItem('language') || 'en';
-            const newLang = currentLang === 'en' ? 'fr' : 'en';
-            setLanguage(newLang);
+            setLanguage(currentLang === 'en' ? 'fr' : 'en');
         });
+        setLanguage(localStorage.getItem('language') || 'en');
 
-        // Load saved language preference
-        const savedLanguage = localStorage.getItem('language') || 'en';
-        setLanguage(savedLanguage);
-
-        // High contrast mode management
         function toggleHighContrast() {
             const isActive = document.body.classList.toggle('high-contrast');
             localStorage.setItem('highContrast', isActive);
-            const contrastBtn = document.getElementById('contrast-btn');
-            contrastBtn.classList.toggle('active', isActive);
+            document.getElementById('contrast-btn').classList.toggle('active', isActive);
         }
 
         const contrastToggle = document.getElementById('contrast-btn');
         contrastToggle.addEventListener('click', toggleHighContrast);
-
-        // Load saved contrast preference
-        const savedContrast = localStorage.getItem('highContrast') === 'true';
-        if (savedContrast) {
+        if (localStorage.getItem('highContrast') === 'true') {
             document.body.classList.add('high-contrast');
             contrastToggle.classList.add('active');
         }
+
+        // ---------- Debug mode: jump to any screen with sample data ----------
+        const DEBUG_ENABLED = true; // set to false to hide the Debug button on the kiosk
+        const debugBtn = document.getElementById('debug-btn');
+        const debugPanel = document.getElementById('debug-panel');
+        const debugFab = document.getElementById('debug-fab');
+        let debugBlob = null;
+        let debugFallbackOn = false;
+
+        const DEBUG_SAMPLES = {
+            recycle: ['blue bin', 'Paper Envelopes with Plastic Windows', 'You can place this paper envelope with a plastic window in the Blue Bin for recycling. Make sure to remove any contents and flatten the envelope before disposing of it.'],
+            litter: ['garbage', 'Chip Bag', 'Foil-lined snack bags cannot be recycled. Place this item in the litter bin.'],
+            compost: ['green bin', 'Banana Peel', 'Fruit and vegetable scraps go in the Green Bin for composting.'],
+            hhw: ['hhw', 'Household Batteries', 'Batteries can start fires in collection trucks. Take them to a household hazardous waste depot or a battery drop-off point.'],
+            alert: ['not accepted', 'Broken Ceramic Plate', 'Ceramics are not accepted in curbside bins. Wrap it safely and check your municipal guide for disposal options.'],
+            ewaste: ['electronic waste', 'Phone Charger', 'Drop off electronics at an e-waste depot. Do not place them in the garbage or recycling.']
+        };
+        const DEBUG_LONG = ' This is deliberately long placeholder text used to check wrapping, spacing and overflow on every layout and in both languages.';
+
+        function getDebugBlob() {
+            if (debugBlob) return Promise.resolve(debugBlob);
+            const c = document.createElement('canvas');
+            c.width = 800; c.height = 480;
+            const g = c.getContext('2d');
+            const bg = g.createLinearGradient(0, 0, 800, 480);
+            bg.addColorStop(0, '#dfe6ee'); bg.addColorStop(1, '#9aa7b8');
+            g.fillStyle = bg; g.fillRect(0, 0, 800, 480);
+            g.fillStyle = '#fff'; g.fillRect(130, 100, 540, 280);
+            g.fillStyle = '#c3ccd8'; g.fillRect(170, 230, 190, 100);
+            g.fillStyle = '#6b7788'; g.font = '700 40px sans-serif'; g.textAlign = 'center';
+            g.fillText('DEBUG SAMPLE', 400, 175);
+            return new Promise((res) => c.toBlob((b) => { debugBlob = b; res(b); }, 'image/jpeg', 0.9));
+        }
+
+        function hideCameraFallback() {
+            cameraFallback.style.display = 'none';
+            video.style.display = 'block';
+            captureBtn.disabled = false;
+            captureBtn.style.opacity = '';
+        }
+
+        async function debugResult(key) {
+            const [category, item, instruction] = DEBUG_SAMPLES[key];
+            const long = document.getElementById('debug-long').checked;
+            uploadMode = false;
+            await displayResult(
+                { results: [{ category, item: long ? item + ' with Extra Long Mixed Material Packaging' : item, instruction: long ? instruction + DEBUG_LONG : instruction }] },
+                await getDebugBlob(), 1260
+            );
+        }
+
+        const debugActions = {
+            camera: () => showPage(cameraPage),
+            countdown: () => { showPage(cameraPage); showCountdown(); },
+            fallback: () => {
+                showPage(cameraPage);
+                debugFallbackOn = !debugFallbackOn;
+                if (debugFallbackOn) showCameraFallback(); else hideCameraFallback();
+            },
+            scan: async () => {
+                uploadMode = false;
+                setScanImage(await getDebugBlob());
+                inferenceStartTime = performance.now();
+                startScanTimer();
+                showPage(loadingPage);
+            },
+            error: () => showError('Sample error: could not reach the classifier (Server error: 500)'),
+            lang: () => document.getElementById('language-btn').click(),
+            contrast: () => contrastToggle.click()
+        };
+
+        function setDebug(on) {
+            debugMode = on;
+            debugPanel.hidden = !on;
+            debugFab.hidden = true;
+            if (on) {
+                if (autoReturnTimer) clearTimeout(autoReturnTimer);
+            } else {
+                if (debugFallbackOn) { debugFallbackOn = false; hideCameraFallback(); }
+                showPage(cameraPage);
+            }
+        }
+
+        debugBtn.style.display = DEBUG_ENABLED ? '' : 'none';
+        debugBtn.addEventListener('click', () => setDebug(true));
+        document.getElementById('debug-exit').addEventListener('click', () => setDebug(false));
+        document.getElementById('debug-hide').addEventListener('click', () => { debugPanel.hidden = true; debugFab.hidden = false; });
+        debugFab.addEventListener('click', () => { debugFab.hidden = true; debugPanel.hidden = false; });
+        debugPanel.addEventListener('click', (e) => {
+            const key = e.target.dataset.debug;
+            if (!key) return;
+            if (DEBUG_SAMPLES[key]) debugResult(key); else debugActions[key]();
+        });
     </script>
 </body>
-
 </html>

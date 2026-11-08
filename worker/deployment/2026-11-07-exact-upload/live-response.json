@@ -1,0 +1,123 @@
+{
+  "status": "catalog_match",
+  "category": null,
+  "source_items": [
+    "beverage can"
+  ],
+  "instructions": [
+    "Place this empty, rinsed item in the Blue Bin."
+  ],
+  "clarification": [],
+  "automatic_routing_enabled": false,
+  "calibration": "Highest-ranked named candidate; model probabilities are not calibrated correctness.",
+  "identification": "two-pass exact catalog choice",
+  "policy_version": "toronto-local-catalog-v1",
+  "policy_scope": "Bundled Toronto Waste Wizard snapshot; follow all item-specific conditions.",
+  "observed": {
+    "match": {
+      "choice": "item_214",
+      "p": 0.99,
+      "margin": 0.98
+    },
+    "kind": {
+      "choice": "metal_food_drink_can",
+      "p": 0.97,
+      "margin": 0.96
+    },
+    "hazard": {
+      "choice": "absent",
+      "p": 1,
+      "margin": 1
+    },
+    "condition": {
+      "choice": "unknown",
+      "p": 1,
+      "margin": 1
+    },
+    "plastic_color": {
+      "choice": "not_plastic",
+      "p": 0.97,
+      "margin": 0.95
+    },
+    "compostable_mark": {
+      "choice": "not_plastic",
+      "p": 0.89,
+      "margin": 0.78
+    },
+    "paper_finish": {
+      "choice": "not_paper",
+      "p": 0.99,
+      "margin": 0.98
+    },
+    "paper_soiling": {
+      "choice": "not_paper",
+      "p": 0.97,
+      "margin": 0.94
+    }
+  },
+  "selected_item": "beverage can",
+  "match_probability": 0.99,
+  "none_probability": 0,
+  "identity_uncertain": false,
+  "alternatives": [
+    {
+      "item": "tin cans",
+      "probability": 0.01
+    },
+    {
+      "item": "aluminum bottles",
+      "probability": 0
+    },
+    {
+      "item": "beer caps",
+      "probability": 0
+    }
+  ],
+  "special_handling": false,
+  "model_calls": 2,
+  "question_count": 35,
+  "usage": {
+    "input_tokens": 55867,
+    "output_tokens": 27144
+  },
+  "policy_category": "Blue Bin",
+  "proposed_category": "Blue Bin",
+  "source_category": "Blue Bin",
+  "rule_evaluation": [
+    {
+      "index": 0,
+      "text": "Place this empty, rinsed item in the Blue Bin.",
+      "state": "check",
+      "facts": [
+        {
+          "id": "condition",
+          "choice": "unknown",
+          "p": 1,
+          "margin": 1
+        }
+      ],
+      "model_state": "check",
+      "model_probability": 0.97,
+      "probability": 0.97,
+      "basis": "Model estimate using this exact source instruction"
+    }
+  ],
+  "matched_rule_indexes": [],
+  "policy_conditions_pending": true,
+  "reason": "Highest-ranked catalog item and its WasteWizard policy. Highlighted source instructions reflect estimated rule applicability; check any unresolved conditions.",
+  "provider": "jev",
+  "model": "jev-1.14.0",
+  "inference_time_ms": 571,
+  "server_time_ms": 571,
+  "results": [
+    {
+      "item": "beverage can",
+      "category": "Not accepted",
+      "instruction": "Manual review required. Do not automatically sort this item. The Not accepted alert means no bin is confirmed, not that the item is prohibited.\nHighest-ranked catalog item and its WasteWizard policy. Highlighted source instructions reflect estimated rule applicability; check any unresolved conditions.\n[check] Place this empty, rinsed item in the Blue Bin."
+    }
+  ],
+  "item_name": "beverage can",
+  "api_version": "2026-10-28",
+  "build_id": "jev-exact-upload-20261107-r2",
+  "edge_time_ms": 574
+}

@@ -1,0 +1,7 @@
+.wrangler/
+.build/
+node_modules/
+.dev.vars
+.env
+.env.*
+.private/

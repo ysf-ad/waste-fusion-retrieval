@@ -1,0 +1,25 @@
+
+ ⛅️ wrangler 4.155.0 (update available 4.158.0)
+───────────────────────────────────────────────
+🌀 Building list of assets...
+✨ Read 1 file from the assets directory C:\Users\yousi\Desktop\projects\waste-clef\public
+🌀 Starting asset upload...
+No updated asset files to upload. Proceeding with deployment...
+Total Upload: 581.30 KiB / gzip: 53.11 KiB
+Worker Startup Time: 3 ms
+Your Worker has access to the following bindings:
+Binding                                                         Resource
+env.AI_IP_LIMITER (60 requests/60s)                             Rate Limit
+env.AI_GLOBAL_LIMITER (120 requests/60s)                        Rate Limit
+env.ASSETS                                                      Assets
+env.DECISION_PROVIDER ("jev")                                   Environment Variable
+env.DECISION_TIMEOUT_MS ("1700")                                Environment Variable
+env.BUILD_ID ("jev-image10mb-20261107-r1")                      Environment Variable
+env.WASTEWIZARD_ALLOW_PUBLIC ("true")                           Environment Variable
+env.REQUIRE_RATE_LIMITER ("true")                               Environment Variable
+env.CORS_ALLOWED_ORIGINS ("*")                                  Environment Variable
+
+Uploaded waste-wizard-clef (3.46 sec)
+Deployed waste-wizard-clef triggers (0.67 sec)
+  https://waste-wizard-clef.yousifaldakoki.workers.dev
+Current Version ID: e13f069e-673b-4e64-9f2f-ecb25dfc5eed

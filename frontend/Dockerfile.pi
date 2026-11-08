@@ -3,7 +3,7 @@ FROM python:3.11-bookworm
 
 # Install C libraries for camera (NOT python3-* packages)
 RUN apt-get update && apt-get install -y \
-    libcamera0.1 \
+    libcamera0.0.3 \
     libcamera-dev \
     libcap-dev \
     libatlas-base-dev \
@@ -31,7 +31,7 @@ COPY pi_camera_service.py /app/
 # Configuration via environment variables
 ENV CAPTURE_DELAY=15
 ENV MOTION_SENSOR_PIN=17
-ENV API_ENDPOINT=https://api.biswa.ca/predict
+ENV API_ENDPOINT=https://waste-wizard-clef.yousifaldakoki.workers.dev/
 
 # Expose port
 EXPOSE 80

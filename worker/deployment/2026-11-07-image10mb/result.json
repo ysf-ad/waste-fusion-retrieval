@@ -1,0 +1,240 @@
+{
+  "started_at": "2026-11-07T21:55:54.047Z",
+  "name": "waste-wizard-clef",
+  "url": "https://waste-wizard-clef.yousifaldakoki.workers.dev",
+  "rollback_version": "109c9fa7-74f3-4001-9126-aa6d8502710a",
+  "model_inference_requests": 0,
+  "probes": [
+    {
+      "label": "raw invalid JPEG 385107 bytes",
+      "path": "/predict",
+      "status": 400,
+      "body": {
+        "error": "Image signature does not match its type.",
+        "code": "invalid_image",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false,
+        "server_time_ms": 0,
+        "item_name": "Unidentified item",
+        "api_version": "2026-10-28",
+        "build_id": "jev-image10mb-20261107-r1",
+        "edge_time_ms": 3
+      }
+    },
+    {
+      "label": "raw invalid JPEG 948703 bytes",
+      "path": "/predict",
+      "status": 400,
+      "body": {
+        "error": "Image signature does not match its type.",
+        "code": "invalid_image",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false,
+        "server_time_ms": 0,
+        "item_name": "Unidentified item",
+        "api_version": "2026-10-28",
+        "build_id": "jev-image10mb-20261107-r1",
+        "edge_time_ms": 12
+      }
+    },
+    {
+      "label": "raw invalid JPEG 10000000 bytes",
+      "path": "/predict",
+      "status": 400,
+      "body": {
+        "error": "Image signature does not match its type.",
+        "code": "invalid_image",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false,
+        "server_time_ms": 0,
+        "item_name": "Unidentified item",
+        "api_version": "2026-10-28",
+        "build_id": "jev-image10mb-20261107-r1",
+        "edge_time_ms": 188
+      }
+    },
+    {
+      "label": "raw invalid JPEG 10000001 bytes",
+      "path": "/predict",
+      "status": 413,
+      "body": {
+        "error": "Image exceeds 10 MB. Resize or compress the photo first.",
+        "code": "invalid_request",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false
+      }
+    },
+    {
+      "label": "10 MB JSON image invalid signature",
+      "path": "/predict",
+      "status": 400,
+      "body": {
+        "error": "Image signature does not match its type.",
+        "code": "invalid_image",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false,
+        "server_time_ms": 0,
+        "item_name": "Unidentified item",
+        "api_version": "2026-10-28",
+        "build_id": "jev-image10mb-20261107-r1",
+        "edge_time_ms": 292
+      }
+    },
+    {
+      "label": "10 MB JSON image invalid signature",
+      "path": "/api/classify",
+      "status": 400,
+      "body": {
+        "error": "Image signature does not match its type.",
+        "code": "invalid_image",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false,
+        "server_time_ms": 0,
+        "item_name": "Unidentified item",
+        "api_version": "2026-10-28",
+        "build_id": "jev-image10mb-20261107-r1",
+        "edge_time_ms": 232
+      }
+    },
+    {
+      "label": "10 MB JSON image invalid signature",
+      "path": "/",
+      "status": 400,
+      "body": {
+        "error": "Image signature does not match its type.",
+        "code": "invalid_image",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false,
+        "server_time_ms": 0,
+        "item_name": "Unidentified item",
+        "api_version": "2026-10-28",
+        "build_id": "jev-image10mb-20261107-r1",
+        "edge_time_ms": 237
+      }
+    },
+    {
+      "label": "10 MB multipart invalid signature",
+      "path": "/predict",
+      "status": 400,
+      "body": {
+        "error": "Image signature does not match its type.",
+        "code": "invalid_image",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false,
+        "server_time_ms": 0,
+        "item_name": "Unidentified item",
+        "api_version": "2026-10-28",
+        "build_id": "jev-image10mb-20261107-r1",
+        "edge_time_ms": 230
+      }
+    },
+    {
+      "label": "request envelope over limit",
+      "path": "/api/classify",
+      "status": 413,
+      "body": {
+        "error": "Image request is too large. Maximum image size is 10 MB.",
+        "code": "invalid_request",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false
+      }
+    },
+    {
+      "label": "malformed JSON",
+      "path": "/predict",
+      "status": 400,
+      "body": {
+        "error": "Malformed JSON.",
+        "code": "invalid_request",
+        "status": "manual_review",
+        "category": null,
+        "automatic_routing_enabled": false
+      }
+    },
+    {
+      "label": "CORS preflight",
+      "status": 204
+    }
+  ],
+  "success": true,
+  "baseline_health": {
+    "ready": true,
+    "provider": "jev",
+    "model": "jev-1.14.0",
+    "modes": [
+      "compact",
+      "exact",
+      "trashnet",
+      "taco",
+      "realwaste",
+      "realwaste8"
+    ],
+    "build_id": "jev-realwaste8-fresh-20261105-r1",
+    "public_inference": true,
+    "rate_limits": {
+      "per_ip_per_minute": 60,
+      "per_location_per_minute": 120,
+      "approximate": true
+    },
+    "rate_limit_enforced": true,
+    "automatic_routing_enabled": false,
+    "image": {
+      "format": "JPEG/PNG",
+      "suggested_width": 384,
+      "suggested_height": 384,
+      "minimum_side": 280,
+      "maximum_side": 1568
+    }
+  },
+  "home_sha256_before": "ecfa6cf686ef6b2a8c00dd4d3e4b6ccf803c6d4c0baa5ee441832ac2a959a063",
+  "source_hashes": {
+    "src/deployment.mjs": "80d3e18ee1c01790091ead95ed7624236cf5861a837b2240e315a4219d1ce19a",
+    "src/service.mjs": "ebefa9365a0257369daf692acbbb65f7fed104976aadc4ae256b501ba863797c",
+    "src/image-limits.mjs": "3e7b6b9a82fee677e8866445773e7db9aa5cca5d37b17f8c2cb65276b86ed202",
+    "wrangler.toml": "24aace6c67d71e9be22b4ce03bc5e024ec4101f745f66e53cd2e63e64e219861"
+  },
+  "version": "e13f069e-673b-4e64-9f2f-ecb25dfc5eed",
+  "health": {
+    "ready": true,
+    "provider": "jev",
+    "model": "jev-1.14.0",
+    "modes": [
+      "compact",
+      "exact",
+      "trashnet",
+      "taco",
+      "realwaste",
+      "realwaste8"
+    ],
+    "build_id": "jev-image10mb-20261107-r1",
+    "public_inference": true,
+    "rate_limits": {
+      "per_ip_per_minute": 60,
+      "per_location_per_minute": 120,
+      "approximate": true
+    },
+    "rate_limit_enforced": true,
+    "automatic_routing_enabled": false,
+    "image": {
+      "format": "JPEG/PNG",
+      "suggested_width": 384,
+      "suggested_height": 384,
+      "minimum_side": 280,
+      "maximum_side": 1568,
+      "maximum_bytes": 10000000,
+      "maximum_base64_chars": 13333336,
+      "maximum_request_bytes": 13398872
+    }
+  },
+  "home_sha256_after": "ecfa6cf686ef6b2a8c00dd4d3e4b6ccf803c6d4c0baa5ee441832ac2a959a063",
+  "verified_at": "2026-11-07T21:56:11.065Z"
+}
