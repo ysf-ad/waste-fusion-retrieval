@@ -2,6 +2,16 @@
 
 A semantic retrieval-based waste classification system using **DINOv2** for images and **BGE** for text, fused with a cross-attention head.
 
+## Kiosk update sync check
+
+Sync marker: `kiosk-ui-sync-20261107` (available on `main` and `countdown-fix`).
+
+The updated kiosk UI has a prominent item name, plain disposal instructions,
+a subtle optional Full response box, and the preserved 180-degree display rotation.
+After pulling, restart the kiosk service to load the updated UI. This marker is
+for checking that the latest repository changes reached the device; it does not
+reset local files or resolve pull conflicts.
+
 ## 🚀 Performance
 - **Recall@1**: 64.6%
 - **Recall@50**: 95.5%
