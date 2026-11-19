@@ -1,0 +1,59 @@
+{
+  "can": {
+    "author": "Joe Ross from Lansing, Michigan",
+    "source": "https://commons.wikimedia.org/wiki/File:Faygo_Grape_Soda_Can.jpg",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "title": "Faygo Grape Soda Can.jpg",
+    "filename": "can.jpg",
+    "modifications": "Derived from Wikimedia thumbnail; EXIF orientation honored; resized proportionally to fit 800x800; RGB baseline JPEG; metadata stripped; no crop.",
+    "sha256": "6f890924e0bb4450e58786fd7062f3e0269fa3fbb7fa6d4115df856b31bbfe2c",
+    "bytes": 44376,
+    "width": 800,
+    "height": 533,
+    "download_sha256": "1fd189ccb82a318bfc39804b2628468ea3c5f11290b5df14b221043197ef09e7",
+    "download_size": [
+      960,
+      640
+    ],
+    "download_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e2/Faygo_Grape_Soda_Can.jpg/960px-Faygo_Grape_Soda_Can.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  "hand": {
+    "author": "Eyefive45",
+    "source": "https://commons.wikimedia.org/wiki/File:Right_Hand_Palm.png",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "title": "Right Hand Palm.png",
+    "filename": "hand.jpg",
+    "modifications": "Derived from Wikimedia thumbnail; EXIF orientation honored; resized proportionally to fit 800x800; RGB baseline JPEG; metadata stripped; no crop.",
+    "sha256": "00dd78824828c02c4f76e81bde2906c2b1c164165c30ad080f7def3443181e79",
+    "bytes": 53229,
+    "width": 509,
+    "height": 800,
+    "download_sha256": "ddd0bc53e099c8e7a515e8030b52b9ab91bdd0a144c883341acd9213f5c3f04b",
+    "download_size": [
+      960,
+      1508
+    ],
+    "download_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Right_Hand_Palm.png/960px-Right_Hand_Palm.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  },
+  "wood": {
+    "author": "JohnnyEnglish1234",
+    "source": "https://commons.wikimedia.org/wiki/File:Piece_of_wood_123424321.jpg",
+    "license": "CC0",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "title": "Piece of wood 123424321.jpg",
+    "filename": "wood.jpg",
+    "modifications": "Derived from Wikimedia thumbnail; EXIF orientation honored; resized proportionally to fit 800x800; RGB baseline JPEG; metadata stripped; no crop.",
+    "sha256": "0fc1db74b0f4231ac06981d5ca64e0184e1b9dceb3b00c6736aaece3020d2c00",
+    "bytes": 83760,
+    "width": 600,
+    "height": 800,
+    "download_sha256": "6fed5daf5c8eb8367133b1b871757470b07f434d480be4ae86a59dc4c8b6d11e",
+    "download_size": [
+      960,
+      1280
+    ],
+    "download_url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8c/Piece_of_wood_123424321.jpg/960px-Piece_of_wood_123424321.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail"
+  }
+}

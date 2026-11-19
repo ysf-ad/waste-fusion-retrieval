@@ -104,7 +104,7 @@ export function createDeployedHandler(items, ask) {
         isLiquid(provider) ? env.LIQUID_API_KEY : env.AI || (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID));
       const modes = ['compact', ...(supportsExact(provider) ? ['exact'] : []), ...(provider === 'jev' ? ['trashnet', 'taco', 'realwaste', 'realwaste8'] : [])];
       return finish(asJson({ ready: configured, provider, model: PROVIDERS[provider]?.model || null, modes,
-        build_id: env.BUILD_ID || 'development', public_inference: env.WASTEWIZARD_ALLOW_PUBLIC === 'true',
+        build_id: env.BUILD_ID || 'development', kiosk_open_set: true, public_inference: env.WASTEWIZARD_ALLOW_PUBLIC === 'true',
         rate_limits: LIMITS, rate_limit_enforced: Boolean(env.AI_IP_LIMITER && env.AI_GLOBAL_LIMITER), automatic_routing_enabled: false,
         image: { format: 'JPEG/PNG', suggested_width: 384, suggested_height: 384, minimum_side: 280, maximum_side: 1568,
           maximum_bytes: MAX_IMAGE_BYTES, maximum_base64_chars: MAX_BASE64_CHARS, maximum_request_bytes: MAX_REQUEST_BYTES } }));
@@ -137,8 +137,7 @@ export function createDeployedHandler(items, ask) {
       const response = await core(normalized.request, env, normalized.body);
       const data = await response.json();
       const withheld = ['no_item', 'material_only'].includes(data.status) || data.identity_uncertain === true;
-      const item = withheld ? (data.status === 'no_item' ? 'No waste item detected' :
-        data.status === 'material_only' && data.selected_material ? `Looks like ${data.selected_material}` : 'Item not confirmed') :
+      const item = withheld ? (data.status === 'no_item' ? 'No waste item detected' : 'Item not confirmed') :
         data.selected_item || data.source_items?.[0] || data.observed?.kind?.choice?.replaceAll('_', ' ') || 'Unidentified item';
       // The existing Pi UI consumes results[0].item/category/instruction. Keep the
       // modern envelope intact and adapt only this legacy route, never errors.

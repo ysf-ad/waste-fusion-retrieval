@@ -52,6 +52,7 @@
                 <p class="fallback-hint" data-i18n="cameraHttpsHint">Camera requires HTTPS. Use file upload instead.</p>
             </div>
         </div>
+        <p class="confidence-disclaimer">Model confidence is not calibrated certainty.</p>
     </div>
 
     <!-- Scanning Page -->
@@ -69,6 +70,7 @@
         </div>
         <div class="bottom-bar">
             <span>How Long It Took Benny To Process Your Query: <span id="scan-time">0.0s</span></span>
+            <p class="confidence-disclaimer">Model confidence is not calibrated certainty.</p>
         </div>
     </div>
 
@@ -87,7 +89,7 @@
                 </h3>
                 <p class="info-desc" id="why-text">Explanation about the classification.</p>
                 <p id="result-checks" class="result-checks" role="status"></p>
-                <p class="prediction-note">Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.</p>
+                <p id="prediction-note" class="prediction-note">Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.</p>
             </div>
         </div>
 
@@ -113,6 +115,7 @@
         <div class="bottom-bar">
             <span>How Long It Took Benny To Process Your Query: <span id="inference-time">-</span></span>
             <button id="back-btn" class="back-btn" data-i18n="scanAnother">← Scan Another Item</button>
+            <p class="confidence-disclaimer">Model confidence is not calibrated certainty.</p>
         </div>
 
         <div id="error-container" class="error-message" style="display: none;"></div>
@@ -607,11 +610,13 @@
             resultPage.className = `page result-page ${themeDetails.theme} layout-info`;
             applyLayout('layout-bin');
             itemName.textContent = info.item;
-            const scoreLabel = info.scoreLabel || 'Model match score';
-            const scoreText = info.matchScore === null ? '' : `${scoreLabel}: ${Number((info.matchScore * 100).toFixed(1))}%`;
+            const scoreText = formatModelConfidence(info.matchScore);
             whyText.textContent = [info.tentative ? 'Tentative match' : '', scoreText].filter(Boolean).join(' · ');
             actionText.textContent = info.withheld ? (info.status === 'no_item' ? 'NO WASTE ITEM' : 'NO BIN RECOMMENDATION') : 'PREDICTED POLICY BIN';
             binNameLarge.textContent = info.withheld ? '' : info.bin || 'NOT CONFIRMED';
+            document.getElementById('prediction-note').textContent = info.bin
+                ? 'Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.'
+                : 'No bin recommendation was made.';
             largeIconContainer.innerHTML = themeDetails.icon;
             document.getElementById('result-checks').textContent = info.checks.join('\n');
             document.getElementById('instructions-title').textContent = info.withheld ? 'What to do next' : `Source instructions — ${info.sourceBin}`;
@@ -659,6 +664,7 @@
             whyText.textContent = 'No usable prediction was returned. Try another photo; do not guess a bin.';
             actionText.textContent = 'TRY AGAIN';
             binNameLarge.textContent = 'NOT CONFIRMED';
+            document.getElementById('prediction-note').textContent = 'No bin recommendation was made.';
             largeIconContainer.innerHTML = SVGS.exclamation;
             document.getElementById('result-checks').textContent = '';
             document.getElementById('instruction-list').replaceChildren();

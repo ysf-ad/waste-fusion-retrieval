@@ -13,16 +13,16 @@
             (['manual_review', 'needs_clarification'].includes(data.status) && !text(data.selected_item));
         if (withheld) {
             const human = data.status === 'no_item' && data.no_item_reason === 'human_only';
-            const material = data.status === 'material_only' ? text(data.selected_material).replaceAll('_', ' ') : '';
-            const item = material ? `Looks like ${material}` : data.status === 'no_item' ? 'No waste item detected' : 'Item not confirmed';
-            const message = human ? 'People and body parts do not go in any bin.' : material
-                ? 'Exact item unclear. Do not use a bin based on material alone.' : 'Place one waste item in view and try again.';
-            const score = data.material_probability ?? data.match_probability;
+            const item = data.status === 'no_item' ? 'No waste item detected' : 'Item not confirmed';
+            const message = human ? 'People and body parts do not go in any bin.' : 'Place one waste item in view and try again.';
+            const subject = data.observed?.subject;
+            const match = data.observed?.match;
+            const p = data.status === 'no_item' ? (data.no_item_reason && subject?.choice === data.no_item_reason ? subject.p : null)
+                : match?.choice === 'none' ? match.p : ['unknown','multiple_items'].includes(subject?.choice) ? subject.p : null;
             return { item, bin: '', sourceBin: '', rules: [], checks: [message], tentative: false, withheld: true,
-                matchScore: Number.isFinite(score) && score >= 0 && score <= 1 ? score : null,
-                scoreLabel: material ? 'Model material score' : 'Model match score', reason: message, status: data.status,
+                matchScore: Number.isFinite(p) && p >= 0 && p <= 1 ? p : null, reason: message, status: data.status,
                 condition: text(data.observed?.condition?.choice) || 'Not returned', legacyCategory: 'Not used',
-                score: Number.isFinite(score) ? String(score) : 'Not returned' };
+                score: Number.isFinite(data.match_probability) ? String(data.match_probability) : 'Not returned' };
         }
         const item = text(data.selected_item) || text(legacy.item) || text(data.item_name) || text(data.source_items?.[0]);
         if (!item) throw new Error('Invalid prediction: missing identified item');
@@ -54,5 +54,12 @@
             legacyCategory: text(legacy.category) || 'Not returned',
             score: Number.isFinite(data.match_probability) ? String(data.match_probability) : 'Not returned' };
     }
+    function formatModelConfidence(score) {
+        if (!Number.isFinite(score) || score < 0 || score > 1) return 'Model confidence: unavailable';
+        if (score === 1) return 'Model confidence: 100%';
+        const percent = Number((score * 100).toFixed(1));
+        return `Model confidence: ${percent === 100 ? '>99.9%' : `${percent}%`}`;
+    }
     root.predictionInfo = predictionInfo;
+    root.formatModelConfidence = formatModelConfidence;
 })(typeof window === 'undefined' ? globalThis : window);

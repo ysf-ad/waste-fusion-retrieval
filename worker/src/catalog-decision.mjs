@@ -21,7 +21,7 @@ export async function identifyCatalog({ image, items, ask, env, provider, timeou
   });
   const rejectedSubject = subjectDecision(preliminary, metadata());
   if (rejectedSubject) return rejectedSubject;
-  if (preliminary.material.choice === 'mixed') return abstain(preliminary, 'Mixed materials are not a confirmed single-material identity. Review manually.', metadata(), false);
+  if (preliminary.material.choice === 'mixed') return abstain(preliminary, 'Mixed materials are not a confirmed single-material identity. Review manually.', metadata());
   const finalists = [];
   for (const id of Object.keys(chunks)) {
     const best = Object.entries(first.answers[id].probabilities).filter(([key]) => key !== 'none').sort((a, b) => b[1] - a[1])[0];
@@ -29,7 +29,7 @@ export async function identifyCatalog({ image, items, ask, env, provider, timeou
     const index = Number(best[0].slice(5));
     if (Number.isInteger(index) && items[index]) finalists.push({ key: best[0], row: items[index] });
   }
-  if (!finalists.length) return abstain(preliminary, 'No catalog identity is available. Any material label is informational only.', metadata());
+  if (!finalists.length) return abstain(preliminary, 'No Waste Wizard item is available. Review manually; no bin is confirmed.', metadata());
   const remaining = timeoutMs - (performance.now() - started);
   if (remaining < 100) throw new ProviderError('decision_timeout', 'Catalog candidate stage used the decision budget. Sort manually.', 504);
   const schema = { match: choice('Which ONE exact catalog name best describes photo? Choose none if every finalist is a poor match or the image is unclear. Do not choose an item merely because it has similar material.', {
@@ -48,19 +48,18 @@ export async function identifyCatalog({ image, items, ask, env, provider, timeou
   // Rechecking the same item must not create a contradictory material label.
   const materialChanged = passes(preliminary.material, GATES.material) && passes(validated.material, GATES.material) &&
     preliminary.material.choice !== 'unknown' && validated.material.choice !== 'unknown' && preliminary.material.choice !== validated.material.choice;
-  if (materialChanged || conflictingMaterial(validated)) return abstain(validated, 'Material and item evidence conflict or indicate mixed materials. No disposal policy is confirmed.', meta, false);
+  if (materialChanged || conflictingMaterial(validated)) return abstain(validated, 'Material and item evidence conflict or indicate mixed materials. No disposal policy is confirmed.', meta);
   const ranked = Object.entries(second.answers.match.probabilities).filter(([key]) => key !== 'none').sort((a, b) => b[1] - a[1]);
   const [selectedKey, probability] = ranked[0] || [];
   const matched = finalists.find(item => item.key === selectedKey)?.row;
   const identity = { ...meta, match_probability: probability ?? null, none_probability: second.answers.match.probabilities.none };
   if (validated.match.choice === 'none' || !passes(validated.match, GATES.kind) || !matched) {
-    return abstain(validated, 'No sufficiently supported catalog identity. Any material label is informational only; no bin is confirmed.', identity);
+    return abstain(validated, 'No sufficiently supported Waste Wizard item is identified. Scan again or review manually; no bin is confirmed.', identity);
   }
   const base = { ...identity, status: 'manual_review', category: null, source_items: [], instructions: [], clarification: [],
     automatic_routing_enabled: false, calibration: 'Conservative model-score gates, not calibrated correctness guarantees.',
     policy_version: POLICY_VERSION, policy_scope: 'Bundled Toronto Waste Wizard snapshot; follow all item-specific conditions.', observed: validated,
-    selected_item: matched.item, selected_material: passes(validated.material, GATES.material) && validated.material.choice !== 'unknown' ? validated.material.choice : null,
-    material_probability: validated.material.p, identity_uncertain: false,
+    selected_item: matched.item, identity_uncertain: false,
     alternatives: ranked.slice(1, 4).map(([key, probability]) => ({ item: finalists.find(item => item.key === key)?.row.item, probability })),
     special_handling: ['HHW', 'Electronic Waste'].includes(matched.category) || validated.hazard.choice === 'evident' };
   return { ...attachPolicy(base, matched, validated, second.answers, `rule_${selectedKey}`), status: 'catalog_match',

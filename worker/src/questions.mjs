@@ -9,7 +9,7 @@ export const SUBJECT_QUESTIONS = {
     multiple_items: 'Multiple competing items, no single assessment target',
     unknown: 'Cannot establish a separate single item from the view',
   }),
-  material: choice('What material is visually supported for the separate target item? Use visible construction rather than brand, package contents or an imagined item identity. Choose mixed for inseparable mixed materials and unknown when material is not established. Human bodies are not waste material.', {
+  material: choice('What material is visually supported for the separate target item? Use visible construction rather than brand, package contents or an imagined item identity. Choose mixed for inseparable mixed materials and unknown when material is not established. Human bodies are not waste material. Material is supporting evidence for a visually supported Waste Wizard item, not a substitute identity and never a reason to override none.', {
     unknown: 'Material cannot be reliably established', paper: 'Paper', cardboard: 'Cardboard or paperboard',
     plastic: 'Plastic', metal: 'Metal', glass: 'Glass', wood: 'Wood', textile: 'Textile or fabric',
     organic: 'Food or plant material', ceramic: 'Ceramic or porcelain', foam: 'Foamed plastic',

@@ -41,7 +41,7 @@ for (const [category, theme] of [
     h.ctx.data = { results: [{ item: 'API item', category, instruction: 'API instructions', confidence: 0.875 }] };
     await h.run('displayResult(data, null, 1234)');
     assert.equal(h.ctx.itemName.textContent, 'API item');
-    assert.equal(h.ctx.whyText.textContent, 'Model match score: 87.5%');
+    assert.equal(h.ctx.whyText.textContent, 'Model confidence: 87.5%');
     assert.equal(h.ctx.binNameLarge.textContent, category);
     assert.equal(h.ctx.actionText.textContent, 'PREDICTED POLICY BIN');
     assert.match(h.ctx.resultPage.className, new RegExp(theme));
@@ -81,7 +81,7 @@ test('exact policy bin stays visible with unresolved checks and source instructi
 });
 for (const [status, extra, title, guidance] of [
   ['no_item', { no_item_reason: 'human_only' }, 'No waste item detected', /People and body parts/],
-  ['material_only', { selected_material: 'wood', material_probability: .91 }, 'Looks like wood', /Exact item unclear/],
+  ['material_only', { selected_material: 'wood', material_probability: .91 }, 'Item not confirmed', /try again/],
   ['catalog_match', { selected_item: 'Cigarette', identity_uncertain: true, match_probability: .21 }, 'Item not confirmed', /try again/],
 ]) test(`renderer withholds stale bin and rules for ${status}`, async () => {
   const h = harness(); h.ctx.data = { status, ...extra, policy_category: 'Garbage',
@@ -90,7 +90,7 @@ for (const [status, extra, title, guidance] of [
   assert.equal(h.ctx.itemName.textContent, title);
   assert.equal(h.ctx.binNameLarge.textContent, '');
   assert.match(h.get('instruction-list').children[0].textContent, guidance);
-  if (status === 'material_only') assert.equal(h.ctx.whyText.textContent, 'Model material score: 91%');
+  assert.equal(h.ctx.whyText.textContent, 'Model confidence: unavailable');
 });
 test('malformed prediction envelopes are rejected before display', async () => {
   const h = harness();

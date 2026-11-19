@@ -28,7 +28,7 @@ test('exact null-category sentinel does not hide identity or policy; checks stay
     const h = harness(); h.ctx.data = exact;
     await h.run('displayResult(data, null, 350)');
     assert.equal(h.ctx.itemName.textContent, 'beverage can');
-    assert.equal(h.ctx.whyText.textContent, 'Model match score: 99%');
+    assert.equal(h.ctx.whyText.textContent, 'Model confidence: 99%');
     assert.equal(h.ctx.binNameLarge.textContent, 'Blue Bin');
     assert.equal(h.ctx.actionText.textContent, 'PREDICTED POLICY BIN');
     assert.equal(h.nodes['result-checks'].textContent, '');
@@ -89,14 +89,14 @@ test('invalid envelopes are rejected rather than displayed as previous success',
     }
 });
 test('match scores handle legacy responses and missing or invalid values without inventing confidence', async () => {
-    for (const [value, expected] of [[.784, '78.4%'], [0, '0%'], [1, '100%'], [null, 'not returned'], [-1, 'not returned'], [99, 'not returned'], ['0.9', 'not returned']]) {
+    for (const [value, expected] of [[.784, '78.4%'], [0, '0%'], [.9999, '>99.9%'], [1, '100%'], [null, 'not returned'], [-1, 'not returned'], [99, 'not returned'], ['0.9', 'not returned']]) {
         const h = harness(); h.ctx.data = { selected_item: 'test item', match_probability: value };
         await h.run('displayResult(data, null, 1)');
-        assert.equal(h.ctx.whyText.textContent, expected === 'not returned' ? '' : `Model match score: ${expected}`);
+        assert.equal(h.ctx.whyText.textContent, expected === 'not returned' ? 'Model confidence: unavailable' : `Model confidence: ${expected}`);
     }
     const h = harness(); h.ctx.data = { results: [{ item: 'legacy can', category: 'Blue Bin', confidence: .87 }] };
     await h.run('displayResult(data, null, 1)');
-    assert.equal(h.ctx.whyText.textContent, 'Model match score: 87%');
+    assert.equal(h.ctx.whyText.textContent, 'Model confidence: 87%');
 });
 test('API details have no handler that disables the return timer', () => {
     const h = harness();
