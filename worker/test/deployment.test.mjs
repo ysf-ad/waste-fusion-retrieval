@@ -17,6 +17,7 @@ const jpegBase64 = Buffer.from(jpegBytes).toString('base64');
 const jpeg = `data:image/jpeg;base64,${jpegBase64}`;
 const png = `data:image/png;base64,${Buffer.from(pngBytes).toString('base64')}`;
 const defaults = {
+  subject: 'single_item', material: 'unknown',
   kind: 'plastic_drink_bottle',
   hazard: 'absent',
   condition: 'empty_clean',

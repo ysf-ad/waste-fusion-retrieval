@@ -8,6 +8,22 @@
     function predictionInfo(data) {
         if (!data || typeof data !== 'object' || Array.isArray(data) || data.error) throw new Error('Invalid prediction response');
         const legacy = data.results?.[0] || {};
+        // An older Worker might still include a candidate bin on a rejected match.
+        const withheld = ['no_item', 'material_only'].includes(data.status) || data.identity_uncertain === true ||
+            (['manual_review', 'needs_clarification'].includes(data.status) && !text(data.selected_item));
+        if (withheld) {
+            const human = data.status === 'no_item' && data.no_item_reason === 'human_only';
+            const material = data.status === 'material_only' ? text(data.selected_material).replaceAll('_', ' ') : '';
+            const item = material ? `Looks like ${material}` : data.status === 'no_item' ? 'No waste item detected' : 'Item not confirmed';
+            const message = human ? 'People and body parts do not go in any bin.' : material
+                ? 'Exact item unclear. Do not use a bin based on material alone.' : 'Place one waste item in view and try again.';
+            const score = data.material_probability ?? data.match_probability;
+            return { item, bin: '', sourceBin: '', rules: [], checks: [message], tentative: false, withheld: true,
+                matchScore: Number.isFinite(score) && score >= 0 && score <= 1 ? score : null,
+                scoreLabel: material ? 'Model material score' : 'Model match score', reason: message, status: data.status,
+                condition: text(data.observed?.condition?.choice) || 'Not returned', legacyCategory: 'Not used',
+                score: Number.isFinite(score) ? String(score) : 'Not returned' };
+        }
         const item = text(data.selected_item) || text(legacy.item) || text(data.item_name) || text(data.source_items?.[0]);
         if (!item) throw new Error('Invalid prediction: missing identified item');
         // Modern policy labels are shown verbatim, including depot/special destinations.

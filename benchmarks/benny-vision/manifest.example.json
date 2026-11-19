@@ -1,0 +1,7 @@
+{
+  "cases": [
+    {"id":"bare-hand", "file":"prepared/bare-hand.jpg", "sha256":"REPLACE_WITH_PREPARED_JPEG_SHA256", "expected":{"status":"no_item", "reason":"human_only", "bin":null}},
+    {"id":"wood-fragment", "file":"prepared/wood-fragment.jpg", "sha256":"REPLACE_WITH_PREPARED_JPEG_SHA256", "expected":{"status":"material_only", "material":"wood", "bin":null}},
+    {"id":"can-held-in-hand", "file":"prepared/can-held.jpg", "sha256":"REPLACE_WITH_PREPARED_JPEG_SHA256", "expected":{"status":"catalog_match", "item":"aluminum can", "bin":"Blue Bin"}}
+  ]
+}

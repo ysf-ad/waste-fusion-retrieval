@@ -147,6 +147,27 @@ class CountdownFixTests(unittest.TestCase):
             files={'file': ('pi.jpg', self.jpeg, 'image/jpeg')}, data={'mode': 'exact'}, timeout=30)
         self.assertNotIn('json', self.http.call_args.kwargs)
 
+    def test_optional_inference_copy_is_bounded_without_changing_original(self):
+        from frontend.inference_image import prepare_inference_jpeg
+        from PIL import Image
+        raw = io.BytesIO()
+        with Image.new('RGB', (1400, 3013), 'purple') as image:
+            image.save(raw, 'JPEG')
+        self.jpeg = raw.getvalue()
+        self.s.latest_capture = self.jpeg
+        with patch.object(self.s, 'PREPARE_INFERENCE_IMAGE', True), \
+                patch.object(self.s, 'prepare_inference_jpeg', prepare_inference_jpeg, create=True):
+            response = self.proxy({'status': 'no_item', 'category': None})
+        self.assertEqual(response.status_code, 200)
+        name, prepared, mime = self.http.call_args.kwargs['files']['file']
+        self.assertEqual((name, mime), ('inference.jpg', 'image/jpeg'))
+        self.assertNotEqual(prepared, self.jpeg)
+        with Image.open(io.BytesIO(prepared)) as image:
+            self.assertEqual(image.size, (729, 1568))
+            self.assertFalse(image.info.get('progressive', False))
+        self.assertEqual(self.s.latest_capture, raw.getvalue())
+        self.assertEqual(self.http.call_args.kwargs['data'], {'mode': 'exact'})
+
     def test_remote_proxy_normalizes_existing_modern_item_schema(self):
         for key in ('selected_item', 'item_name'):
             with self.subTest(key=key):

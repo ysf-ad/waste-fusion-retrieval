@@ -10,7 +10,7 @@ import { MAX_IMAGE_BYTES, MAX_BASE64_CHARS, MAX_REQUEST_BYTES } from '../src/ima
 // All inference uses a local stub: no API keys, fetches or paid model calls.
 const items = JSON.parse(await readFile(new URL('../src/items.json', import.meta.url), 'utf8'));
 const signatures = { jpeg: [255, 216, 255, 224], png: [137, 80, 78, 71, 13, 10, 26, 10] };
-const defaults = { kind: 'plastic_drink_bottle', hazard: 'absent', condition: 'empty_clean',
+const defaults = { subject: 'single_item', material: 'unknown', kind: 'plastic_drink_bottle', hazard: 'absent', condition: 'empty_clean',
   plastic_color: 'non_black', compostable_mark: 'not_marked', paper_finish: 'uncoated', paper_soiling: 'clean' };
 const answers = Object.fromEntries(Object.entries(QUESTIONS).map(([id, question]) => {
   const choices = Object.keys(question.criteria);

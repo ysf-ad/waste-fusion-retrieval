@@ -11,9 +11,9 @@ import { MAX_BASE64_CHARS, MAX_REQUEST_BYTES } from '../src/image-limits.mjs';
 const items = JSON.parse(await readFile(new URL('../src/items.json', import.meta.url), 'utf8'));
 const image = `data:image/png;base64,${Buffer.from('\x89PNG\r\n\x1a\n', 'latin1').toString('base64')}`;
 const jpeg = `data:image/jpeg;base64,${Buffer.from([255, 216, 255, 224]).toString('base64')}`;
-const expectedIds = ['kind', 'hazard', 'condition', 'plastic_color', 'compostable_mark', 'paper_finish', 'paper_soiling'];
+const expectedIds = ['subject', 'material', 'kind', 'hazard', 'condition', 'plastic_color', 'compostable_mark', 'paper_finish', 'paper_soiling'];
 const defaults = {
-  kind: 'plastic_drink_bottle', hazard: 'absent', condition: 'empty_clean',
+  subject: 'single_item', material: 'unknown', kind: 'plastic_drink_bottle', hazard: 'absent', condition: 'empty_clean',
   plastic_color: 'non_black', compostable_mark: 'not_marked', paper_finish: 'uncoated', paper_soiling: 'clean',
 };
 function distribution(id, choice, p = 0.98) {
@@ -139,17 +139,16 @@ test('every named compact kind retains actual catalog guidance instead of a blan
 });
 
 for (const [kind, probability] of [['paper_cup', 0.79], ['foam_food_container', 0.78], ['plastic_drink_bottle', 0.3]]) {
-  test(`top-ranked ${kind} at ${probability} retains its selected row and source guidance`, () => {
+  test(`top-ranked ${kind} at ${probability} abstains without source guidance`, () => {
     const decision = decide({ kind: distribution('kind', kind, probability) });
-    assertSelectedGuidance(decision);
-    assert.equal(decision.selected_kind, kind);
-    assert.equal(decision.match_probability, probability);
+    assertClosed(decision); assert.equal(decision.selected_item, null);
+    assert.equal(decision.selected_kind, null); assert.deepEqual(decision.source_items, []);
     assert.equal(decision.observed.kind.p, probability);
-    assert.ok(decision.instructions.length > 0);
+    assert.deepEqual(decision.instructions, []);
   });
 }
 
-test('unknown winner shows the best named kind without rewriting the raw observation or confidence', () => {
+test('unknown winner abstains without rewriting the raw observation or confidence', () => {
   const raw = answers();
   raw.kind = {
     choice: 'unknown',
@@ -158,11 +157,10 @@ test('unknown winner shows the best named kind without rewriting the raw observa
     ])),
   };
   const decision = resolvePolicy(raw, items);
-  assertSelectedGuidance(decision);
+  assertClosed(decision); assert.deepEqual(decision.instructions, []); assert.deepEqual(decision.source_items, []);
   assert.equal(decision.observed.kind.choice, 'unknown');
   assert.equal(decision.observed.kind.p, 0.7);
-  assert.equal(decision.selected_kind, 'foam_food_container');
-  assert.equal(decision.match_probability, 0.2);
+  assert.equal(decision.selected_kind, null);
   assert.equal(decision.identity_uncertain, true);
 });
 
@@ -172,11 +170,10 @@ test('uncertain hazard retains selected item and all instructions', () => {
   }
 });
 
-test('special-handling identities override even low confidence', () => {
+test('weak special-handling identities abstain without attaching a guessed policy', () => {
   for (const kind of ['battery', 'electronics', 'hazardous_product', 'sharp']) {
     const decision = decide({ kind: distribution('kind', kind, 0.3) });
-    assertSelectedGuidance(decision);
-    assert.equal(decision.special_handling, true);
+    assertClosed(decision); assert.deepEqual(decision.instructions, []); assert.equal(decision.selected_item, null);
   }
 });
 test('evident hazard overrides a plausible recyclable, even at low confidence', () => {
@@ -283,7 +280,7 @@ test('known black bottle highlights its garbage exception while retaining nomina
 });
 
 test('foam physical-size instruction remains a check without a scale even if model votes applies', () => {
-  const raw = answers({ kind: distribution('kind', 'foam_food_container', 0.78) });
+  const raw = answers({ kind: distribution('kind', 'foam_food_container', 0.98) });
   for (const [id, question] of Object.entries(compactQuestions(items))) {
     if (!id.startsWith('rule_foam_food_container_')) continue;
     raw[id] = {
@@ -293,7 +290,7 @@ test('foam physical-size instruction remains a check without a scale even if mod
   }
   const decision = resolvePolicy(raw, items);
   assertSelectedGuidance(decision);
-  assert.equal(decision.match_probability, 0.78);
+  assert.equal(decision.match_probability, 0.98);
   const sizes = decision.rule_evaluation.filter(rule => /shorter than|4 inches|4\s*"/i.test(rule.text));
   assert.ok(sizes.length > 0, 'Actual foam catalog row must expose its size condition');
   for (const rule of sizes) {

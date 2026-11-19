@@ -1,6 +1,23 @@
 // One shared image, parallel atomic questions. Branch only in code: no serial RTTs.
 export const choice = (instructions, criteria) => ({ type: 'choice', instructions, criteria });
+// These open-set heads are production-only; benchmark schemas remain closed set.
+export const SUBJECT_QUESTIONS = {
+  subject: choice('Is there one separately identifiable inanimate item or piece of waste to assess? A person or hand may hold an item; assess that item, not the person. Choose human_only only when a person/body part is the subject and no separate item can be identified. Competing items or an unclear view require abstention.', {
+    single_item: 'One separately identifiable item, including an item held by a person',
+    human_only: 'Person or body part only, with no separately identifiable item',
+    no_item: 'No identifiable item: empty scene or background only',
+    multiple_items: 'Multiple competing items, no single assessment target',
+    unknown: 'Cannot establish a separate single item from the view',
+  }),
+  material: choice('What material is visually supported for the separate target item? Use visible construction rather than brand, package contents or an imagined item identity. Choose mixed for inseparable mixed materials and unknown when material is not established. Human bodies are not waste material.', {
+    unknown: 'Material cannot be reliably established', paper: 'Paper', cardboard: 'Cardboard or paperboard',
+    plastic: 'Plastic', metal: 'Metal', glass: 'Glass', wood: 'Wood', textile: 'Textile or fabric',
+    organic: 'Food or plant material', ceramic: 'Ceramic or porcelain', foam: 'Foamed plastic',
+    mixed: 'Mixed materials with no single supported material',
+  }),
+};
 export const QUESTIONS = {
+  ...SUBJECT_QUESTIONS,
   kind: choice('Identify the single dominant item in photo. Choose unknown for competing items or an unclear view; do not guess material or contents.', {
     plastic_drink_bottle: 'Plastic beverage/water bottle', metal_food_drink_can: 'Metal food or beverage can, not pressurized aerosol',
     glass_food_drink_container: 'Intact glass food jar or beverage bottle, not cookware, bulb or chemical container',
