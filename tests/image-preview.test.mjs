@@ -11,9 +11,12 @@ function harness() {
     return elements.get(id);
   };
   const blobs = [], revoked = [];
-  const context = { document: { getElementById: get }, flipImage: true, uploadMode: false,
+  const context = { document: { getElementById: get }, debugMode: false, uploadMode: false,
     URL: { createObjectURL(blob) { blobs.push(blob); return `blob:preview-${blobs.length}`; }, revokeObjectURL(url) { revoked.push(url); } } };
+  context.window = context;
   vm.createContext(context);
+  vm.runInContext(readFileSync(new URL('../frontend/static/camera-orientation.js', import.meta.url), 'utf8'), context);
+  context.CameraOrientation.configure({ orientation: { captured_rotation: 180, captured_mirror: true } });
   const start = html.indexOf('        function setScanImage('), end = html.indexOf('        function startScanTimer(', start);
   assert.ok(start > 0 && end > start);
   vm.runInContext('let scanImageUrl = null;\n' + html.slice(start, end), context);
@@ -27,7 +30,11 @@ test('loading and result share the original Blob without navigating to a photo p
   assert.equal(h.get('result-image').hidden, false);
   assert.doesNotMatch(html, /id="image-preview-link"|Open original photo|target="_blank"/);
   assert.match(h.get('image-preview-label').textContent, /19 bytes/);
-  assert.equal(h.get('result-image').style.transform, undefined, 'exact result preview is never mirrored');
+  assert.equal(h.get('result-image').style.transform, 'rotate(180deg) scaleX(-1)');
+  assert.equal(h.get('scan-image').style.transform, h.get('result-image').style.transform);
+  h.context.uploadMode = true;
+  h.run('setScanImage(photo); openPhotoZoom()');
+  for (const id of ['scan-image', 'result-image', 'zoom-image']) assert.equal(h.get(id).style.transform, 'none');
 });
 test('new photo replaces previous preview and releases its object URL', () => {
   const h = harness(); h.context.photo = new Blob(['first']); h.run('setScanImage(photo)');

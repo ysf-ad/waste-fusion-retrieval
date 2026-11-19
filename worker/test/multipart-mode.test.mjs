@@ -9,7 +9,7 @@ for (const mode of ['exact', 'compact', 'invalid', 'duplicate']) {
       images.push(image);
       return { answers: Object.fromEntries(Object.entries(questions).map(([id, q]) => {
         const keys = Object.keys(q.criteria);
-        const facts = { kind: 'metal_food_drink_can', hazard: 'absent', condition: 'empty_clean', plastic_color: 'not_plastic', compostable_mark: 'not_plastic', paper_finish: 'not_paper', paper_soiling: 'not_paper' };
+        const facts = { subject: 'single_item', material: 'metal', kind: 'metal_food_drink_can', hazard: 'absent', condition: 'empty_clean', plastic_color: 'not_plastic', compostable_mark: 'not_plastic', paper_finish: 'not_paper', paper_soiling: 'not_paper' };
         const choice = facts[id] || keys.find(k => k.startsWith('item_')) || (keys.includes('unknown') ? 'unknown' : keys.includes('check') ? 'check' : keys[0]);
         return [id, { choice, probabilities: Object.fromEntries(keys.map(k => [k, k === choice ? .98 : .02 / (keys.length - 1)])) }];
       })) };

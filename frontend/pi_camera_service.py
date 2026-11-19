@@ -8,6 +8,7 @@ import time
 import io
 import base64
 import json
+import hashlib
 import threading
 import requests
 from flask import Flask, Response, jsonify, send_file, request
@@ -30,6 +31,47 @@ API_ENDPOINT = os.getenv('API_ENDPOINT', 'https://waste-wizard-clef.yousifaldako
 if not API_ENDPOINT.rstrip('/').endswith('/predict'):
     API_ENDPOINT = API_ENDPOINT.rstrip('/') + '/predict'
 FLIP_IMAGE = os.getenv('FLIP_IMAGE', 'false').lower() == 'true'
+UI_BUILD = os.getenv('KIOSK_UI_BUILD', 'benny-kiosk-vision-v1')
+MAX_UPLOAD_BYTES = 10_000_000
+PREPARE_INFERENCE_IMAGE = os.getenv('PREPARE_INFERENCE_IMAGE', 'false').lower() == 'true'
+if PREPARE_INFERENCE_IMAGE:
+    if __package__:
+        from .inference_image import prepare_inference_jpeg
+    else:
+        from inference_image import prepare_inference_jpeg
+
+
+def _rotation_setting(name, default, allowed):
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        raise ValueError(f'{name} must be one of {allowed}') from None
+    if value not in allowed:
+        raise ValueError(f'{name} must be one of {allowed}')
+    return value
+
+
+def _mirror_setting(name, default):
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    if raw.lower() not in ('true', 'false'):
+        raise ValueError(f'{name} must be true or false')
+    return raw.lower() == 'true'
+
+
+# Presentation only. Never pass these into Picamera2, Pillow or upload encoding.
+# Preserve the existing body(180) + preview(180) behavior until Pi calibration.
+ORIENTATION = {
+    'screen_rotation': _rotation_setting('KIOSK_SCREEN_ROTATION', 180, (0, 180)),
+    'live_rotation': _rotation_setting('CAMERA_LIVE_ROTATION', 180, (0, 90, 180, 270)),
+    'captured_rotation': _rotation_setting('CAMERA_CAPTURED_ROTATION', 0, (0, 90, 180, 270)),
+    'live_mirror': _mirror_setting('CAMERA_LIVE_MIRROR', False),
+    'captured_mirror': _mirror_setting('CAMERA_CAPTURED_MIRROR', FLIP_IMAGE),
+}
 
 # Use environment variable or default to local directory
 STATIC_DIR = os.getenv('STATIC_DIR', os.path.join(os.path.dirname(__file__), 'static'))
@@ -301,12 +343,35 @@ def video_stream():
 @app.route('/api/config', methods=['GET'])
 def get_config():
     """Get current configuration"""
-    return jsonify({
+    response = jsonify({
         'capture_delay': CAPTURE_DELAY,
         'motion_sensor_pin': MOTION_SENSOR_PIN,
         'api_endpoint': API_ENDPOINT,
-        'flip_image': FLIP_IMAGE
+        'flip_image': FLIP_IMAGE,  # Legacy clients; new clients use orientation.
+        'orientation': ORIENTATION,
+        'ui_build': UI_BUILD,
+        'expected_brand': 'Benny'
     })
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.route('/api/ui-build', methods=['GET'])
+def ui_build():
+    """Identify running service and current served assets without exposing paths."""
+    assets = {}
+    for name in ('index.html', 'styles.css', 'camera-orientation.js', 'result-info.js'):
+        try:
+            with open(os.path.join(STATIC_DIR, name), 'rb') as asset:
+                assets[name] = hashlib.sha256(asset.read()).hexdigest()
+        except FileNotFoundError:
+            assets[name] = None
+    fingerprint = hashlib.sha256(json.dumps(assets, sort_keys=True).encode('utf-8')).hexdigest()
+    response = jsonify({'ui_build': UI_BUILD, 'expected_brand': 'Benny',
+                        'asset_sha256': assets, 'asset_set_sha256': fingerprint,
+                        'orientation': ORIENTATION})
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.route('/api/motion/enable', methods=['POST'])
@@ -334,13 +399,19 @@ def predict_proxy():
     file = request.files['file']
     
     try:
-        files = {
-            'file': (
-                file.filename or 'capture.jpg',
-                file.read(),
-                file.content_type or 'image/jpeg'
-            )
-        }
+        original = file.read(MAX_UPLOAD_BYTES + 1)
+        if len(original) > MAX_UPLOAD_BYTES:
+            return jsonify({'error': 'Image exceeds the 10 MB upload limit.'}), 413
+        filename = file.filename or 'capture.jpg'
+        content_type = file.content_type or 'image/jpeg'
+        inference_bytes = original
+        if PREPARE_INFERENCE_IMAGE:
+            try:
+                inference_bytes = prepare_inference_jpeg(original)
+            except ValueError:
+                return jsonify({'error': 'Could not prepare this image. Try a valid JPEG or PNG.'}), 400
+            filename, content_type = 'inference.jpg', 'image/jpeg'
+        files = {'file': (filename, inference_bytes, content_type)}
         response = requests.post(
             API_ENDPOINT,
             files=files,

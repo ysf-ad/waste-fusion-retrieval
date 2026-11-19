@@ -156,6 +156,7 @@
     </div>
 
     <script src="result-info.js"></script>
+    <script src="camera-orientation.js"></script>
     <script>
         // API Endpoints
         const API_ENDPOINT = '/api/predict';
@@ -170,7 +171,7 @@
         let usingPiCamera = false;
         let stream = null;
         let inferenceStartTime = null;
-        let flipImage = false; 
+        let photoSource = 'camera';
 
         // Elements
         const cameraPage = document.getElementById('camera-page');
@@ -212,10 +213,12 @@
             scanImageUrl = URL.createObjectURL(blob);
             const img = document.getElementById('scan-image');
             img.src = scanImageUrl;
-            img.style.transform = flipImage && !uploadMode ? 'scaleX(-1)' : '';
+            photoSource = uploadMode || debugMode ? 'upload' : 'camera';
+            window.CameraOrientation?.applyImage(img, { source: photoSource, view: 'captured' });
             // Preview the exact submitted Blob, not a re-encoded or previous canvas.
             const preview = document.getElementById('result-image');
             preview.src = scanImageUrl;
+            window.CameraOrientation?.applyImage(preview, { source: photoSource, view: 'captured' });
             preview.hidden = false;
             const label = document.getElementById('image-preview-label');
             label.textContent = `Submitted photo · ${blob.size.toLocaleString('en-US')} bytes`;
@@ -235,7 +238,9 @@
         function openPhotoZoom() {
             if (!scanImageUrl) return;
             const dialog = document.getElementById('photo-zoom');
-            document.getElementById('zoom-image').src = scanImageUrl;
+            const zoomImage = document.getElementById('zoom-image');
+            zoomImage.src = scanImageUrl;
+            window.CameraOrientation?.applyImage(zoomImage, { source: photoSource, view: 'captured' });
             if (!dialog.open) dialog.showModal();
         }
         function closePhotoZoom() {
@@ -418,15 +423,13 @@
         }
 
         async function startCamera() {
+            let config = {};
             try {
-                const configResponse = await fetch('/api/config');
-                if (configResponse.ok) {
-                    const config = await configResponse.json();
-                    flipImage = config.flip_image || false;
-                }
-            } catch (e) {
-                flipImage = false;
-            }
+                const configResponse = await fetch(PI_SERVICE.config);
+                if (configResponse.ok) config = await configResponse.json();
+            } catch { /* use built-in orientation defaults */ }
+            window.CameraOrientation?.configure(config, document);
+            window.CameraOrientation?.applyImage(video, { source: 'camera', view: 'live' });
 
             try {
                 const response = await fetch(PI_SERVICE.status);
@@ -587,15 +590,7 @@
                     img.onload = () => {
                         canvas.width = img.width;
                         canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        if (flipImage && !uploadMode) {
-                            ctx.scale(-1, 1);
-                            ctx.drawImage(img, -img.width, 0);
-                            canvas.classList.add('flipped');
-                        } else {
-                            ctx.drawImage(img, 0, 0);
-                            canvas.classList.remove('flipped');
-                        }
+                        canvas.getContext('2d').drawImage(img, 0, 0);
                         savePhotoWithResults(canvas.toDataURL('image/jpeg'), data, inferenceTime);
                     };
                     img.src = e.target.result;
@@ -612,12 +607,14 @@
             resultPage.className = `page result-page ${themeDetails.theme} layout-info`;
             applyLayout('layout-bin');
             itemName.textContent = info.item;
-            whyText.textContent = info.matchScore === null ? 'Match score: not returned' : `Match score: ${Number((info.matchScore * 100).toFixed(1))}%`;
-            actionText.textContent = 'PREDICTED POLICY BIN';
-            binNameLarge.textContent = info.bin || 'NOT CONFIRMED';
+            const scoreLabel = info.scoreLabel || 'Model match score';
+            const scoreText = info.matchScore === null ? '' : `${scoreLabel}: ${Number((info.matchScore * 100).toFixed(1))}%`;
+            whyText.textContent = [info.tentative ? 'Tentative match' : '', scoreText].filter(Boolean).join(' · ');
+            actionText.textContent = info.withheld ? (info.status === 'no_item' ? 'NO WASTE ITEM' : 'NO BIN RECOMMENDATION') : 'PREDICTED POLICY BIN';
+            binNameLarge.textContent = info.withheld ? '' : info.bin || 'NOT CONFIRMED';
             largeIconContainer.innerHTML = themeDetails.icon;
             document.getElementById('result-checks').textContent = info.checks.join('\n');
-            document.getElementById('instructions-title').textContent = `Source instructions — ${info.sourceBin}`;
+            document.getElementById('instructions-title').textContent = info.withheld ? 'What to do next' : `Source instructions — ${info.sourceBin}`;
             const list = document.getElementById('instruction-list');
             list.replaceChildren();
             // Multiple instructions may apply together; do not turn this into a single winner.
@@ -632,7 +629,7 @@
             }
             if (!visibleRules.length) {
                 const row = document.createElement('li');
-                row.textContent = info.rules.length ? 'No instruction is confirmed to apply. Review the API details before disposal.' : 'No source instructions returned by the API.';
+                row.textContent = info.withheld ? info.reason : info.rules.length ? 'No instruction is confirmed to apply. Review the API details before disposal.' : 'No source instructions returned by the API.';
                 list.appendChild(row);
             }
             document.getElementById('api-details').open = false;

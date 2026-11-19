@@ -41,7 +41,7 @@ for (const [category, theme] of [
     h.ctx.data = { results: [{ item: 'API item', category, instruction: 'API instructions', confidence: 0.875 }] };
     await h.run('displayResult(data, null, 1234)');
     assert.equal(h.ctx.itemName.textContent, 'API item');
-    assert.equal(h.ctx.whyText.textContent, 'Match score: 87.5%');
+    assert.equal(h.ctx.whyText.textContent, 'Model match score: 87.5%');
     assert.equal(h.ctx.binNameLarge.textContent, category);
     assert.equal(h.ctx.actionText.textContent, 'PREDICTED POLICY BIN');
     assert.match(h.ctx.resultPage.className, new RegExp(theme));
@@ -64,20 +64,33 @@ for (const category of ['Not accepted', 'unrecognized category', null, undefined
 }
 test('exact policy bin stays visible with unresolved checks and source instructions', async () => {
   const h = harness(); h.ctx.data = {
-    selected_item: 'Tentative bottle', category: 'Not accepted', policy_category: 'Blue Bin', source_category: 'Containers',
-    identity_uncertain: true, policy_conditions_pending: true, status: 'manual_review',
+    selected_item: 'Bottle', category: 'Not accepted', policy_category: 'Blue Bin', source_category: 'Containers',
+    policy_conditions_pending: true, status: 'manual_review',
     rule_evaluation: [{ state: 'check', text: 'Empty first' }, { state: 'does_not_apply', text: 'Broken glass only' }],
     observed: { condition: { choice: 'Unknown' } }, build_id: 'fixture-build'
   };
   await h.run('displayResult(data, null, 1)');
   assert.equal(h.ctx.binNameLarge.textContent, 'Blue Bin');
-  assert.match(h.get('result-checks').textContent, /Identity is tentative/);
+  assert.doesNotMatch(h.get('result-checks').textContent, /Identity is tentative/);
   assert.doesNotMatch(h.get('result-checks').textContent, /unresolved instructions|\bbelow\b/);
   assert.match(h.get('result-checks').textContent, /manual review/);
   assert.equal(h.get('instructions-title').textContent, 'Source instructions — Containers');
   assert.deepEqual(h.get('instruction-list').children.map(x => x.textContent), ['Empty first']);
   assert.match(h.get('api-summary').textContent, /fixture-build/);
   assert.deepEqual(JSON.parse(h.get('api-response').textContent), h.ctx.data);
+});
+for (const [status, extra, title, guidance] of [
+  ['no_item', { no_item_reason: 'human_only' }, 'No waste item detected', /People and body parts/],
+  ['material_only', { selected_material: 'wood', material_probability: .91 }, 'Looks like wood', /Exact item unclear/],
+  ['catalog_match', { selected_item: 'Cigarette', identity_uncertain: true, match_probability: .21 }, 'Item not confirmed', /try again/],
+]) test(`renderer withholds stale bin and rules for ${status}`, async () => {
+  const h = harness(); h.ctx.data = { status, ...extra, policy_category: 'Garbage',
+    results: [{ item: 'Cigarette', category: 'Garbage', instruction: 'Throw in garbage' }] };
+  await h.run('displayResult(data, null, 1)');
+  assert.equal(h.ctx.itemName.textContent, title);
+  assert.equal(h.ctx.binNameLarge.textContent, '');
+  assert.match(h.get('instruction-list').children[0].textContent, guidance);
+  if (status === 'material_only') assert.equal(h.ctx.whyText.textContent, 'Model material score: 91%');
 });
 test('malformed prediction envelopes are rejected before display', async () => {
   const h = harness();

@@ -11,7 +11,7 @@ function fixture({ uncertain = false, deny = false, publicAccess = true, require
     calls.model++;
     return { answers: Object.fromEntries(Object.entries(questions).map(([id, question]) => {
       const keys = Object.keys(question.criteria);
-      const choice = id === 'match' ? (uncertain ? 'none' : keys.find(key => key !== 'none'))
+      const choice = id === 'subject' ? 'single_item' : id === 'match' ? (uncertain ? 'none' : keys.find(key => key !== 'none'))
         : id.startsWith('chunk_') ? keys.find(key => key !== 'none')
         : keys.includes('unknown') ? 'unknown' : keys.includes('check') ? 'check' : keys.find(key => key !== 'none');
       return [id, { choice, probabilities: Object.fromEntries(keys.map(key => [key, key === choice ? 0.98 : 0.02 / (keys.length - 1)])) }];
@@ -32,16 +32,18 @@ for (const uncertain of [false, true]) {
     assert.equal(response.status, 200);
     const data = await response.json();
     assert.equal(f.calls.model, 2);
-    assert.equal(data.status, 'catalog_match');
+    assert.equal(data.status, uncertain ? 'manual_review' : 'catalog_match');
     assert.equal(data.category, null);
     assert.equal(data.automatic_routing_enabled, false);
     assert.equal(data.identity_uncertain, uncertain);
-    assert.deepEqual(data.instructions, items[0].instructions);
-    assert.equal(data.results[0].item, `${uncertain ? 'Tentative match: ' : ''}Test bottle`);
+    assert.deepEqual(data.instructions, uncertain ? [] : items[0].instructions);
+    if (uncertain) { assert.equal(data.selected_item, null); assert.equal(data.proposed_category, null); assert.doesNotMatch(data.results[0].item, /Test bottle/); }
+    else assert.equal(data.results[0].item, 'Test bottle');
     assert.equal(data.results[0].category, 'Not accepted');
     assert.match(data.results[0].instruction, /Manual review required/);
     assert.match(data.results[0].instruction, /Do not automatically sort/);
-    assert.match(data.results[0].instruction, /\[applies\] Place in Blue Bin/);
+    if (uncertain) assert.doesNotMatch(data.results[0].instruction, /Blue Bin/);
+    else assert.match(data.results[0].instruction, /\[applies\] Place in Blue Bin/);
     assert.deepEqual(f.calls.keys, ['wastewizard:203.0.113.9', 'wastewizard:all']);
   });
 }

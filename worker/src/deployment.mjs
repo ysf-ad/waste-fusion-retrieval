@@ -1,5 +1,5 @@
 import { createHandler } from './service.mjs';
-import { PROVIDERS } from './providers.mjs';
+import { PROVIDERS, isLiquid, supportsExact } from './providers.mjs';
 import { MAX_IMAGE_BYTES, MAX_BASE64_CHARS, MAX_REQUEST_BYTES, IMAGE_LIMIT_MESSAGE, REQUEST_LIMIT_MESSAGE } from './image-limits.mjs';
 
 const LIMITS = { per_ip_per_minute: 60, per_location_per_minute: 120, approximate: true };
@@ -100,8 +100,10 @@ export function createDeployedHandler(items, ask) {
     if (api && request.method === 'OPTIONS') return finish(new Response(null, { status: 204 }));
     if (url.pathname === '/api/health' && request.method === 'GET') {
       const provider = env.DECISION_PROVIDER || 'jev';
-      const configured = provider === 'jev' ? Boolean(env.TYPESAFE_API_KEY) : Boolean(env.AI || (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID));
-      return finish(asJson({ ready: configured, provider, model: PROVIDERS[provider]?.model || null, modes: provider === 'jev' ? ['compact', 'exact', 'trashnet', 'taco', 'realwaste', 'realwaste8'] : ['compact'],
+      const configured = Object.hasOwn(PROVIDERS, provider) && Boolean(provider === 'jev' ? env.TYPESAFE_API_KEY :
+        isLiquid(provider) ? env.LIQUID_API_KEY : env.AI || (env.CLOUDFLARE_API_TOKEN && env.CLOUDFLARE_ACCOUNT_ID));
+      const modes = ['compact', ...(supportsExact(provider) ? ['exact'] : []), ...(provider === 'jev' ? ['trashnet', 'taco', 'realwaste', 'realwaste8'] : [])];
+      return finish(asJson({ ready: configured, provider, model: PROVIDERS[provider]?.model || null, modes,
         build_id: env.BUILD_ID || 'development', public_inference: env.WASTEWIZARD_ALLOW_PUBLIC === 'true',
         rate_limits: LIMITS, rate_limit_enforced: Boolean(env.AI_IP_LIMITER && env.AI_GLOBAL_LIMITER), automatic_routing_enabled: false,
         image: { format: 'JPEG/PNG', suggested_width: 384, suggested_height: 384, minimum_side: 280, maximum_side: 1568,
@@ -134,18 +136,21 @@ export function createDeployedHandler(items, ask) {
       }
       const response = await core(normalized.request, env, normalized.body);
       const data = await response.json();
-      const item = data.source_items?.[0] || data.observed?.kind?.choice?.replaceAll('_', ' ') || 'Unidentified item';
+      const withheld = ['no_item', 'material_only'].includes(data.status) || data.identity_uncertain === true;
+      const item = withheld ? (data.status === 'no_item' ? 'No waste item detected' :
+        data.status === 'material_only' && data.selected_material ? `Looks like ${data.selected_material}` : 'Item not confirmed') :
+        data.selected_item || data.source_items?.[0] || data.observed?.kind?.choice?.replaceAll('_', ' ') || 'Unidentified item';
       // The existing Pi UI consumes results[0].item/category/instruction. Keep the
       // modern envelope intact and adapt only this legacy route, never errors.
       const compatibility = {};
       if (legacyPredict && response.ok && !data.error) {
-        const review = data.status === 'manual_review' || data.status === 'needs_clarification' ||
-          data.identity_uncertain || data.policy_conditions_pending || !data.category;
-        const instructions = data.rule_evaluation?.length
+        const review = withheld || data.status === 'manual_review' || data.status === 'needs_clarification' ||
+          data.policy_conditions_pending || !data.category;
+        const instructions = withheld ? [] : data.rule_evaluation?.length
           ? data.rule_evaluation.map(rule => `[${rule.state}] ${rule.text}`)
           : data.instructions || [];
         compatibility.results = [{
-          item: `${data.identity_uncertain ? 'Tentative match: ' : ''}${data.selected_item || item}`,
+          item,
           // Both Pi UI versions recognize this non-bin alert. This is a legacy
           // display sentinel, NOT the catalog policy; top-level category stays intact.
           category: review ? 'Not accepted' : data.category,

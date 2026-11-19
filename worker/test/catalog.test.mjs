@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { identifyCatalog } from '../src/catalog-decision.mjs';
-import { QUESTIONS, baselineQuestions } from '../src/questions.mjs';
+import { QUESTIONS, SUBJECT_QUESTIONS, baselineQuestions } from '../src/questions.mjs';
 import { ProviderError } from '../src/providers.mjs';
 import { createHandler } from '../src/service.mjs';
 
@@ -19,6 +19,7 @@ function answer(question, selected, p = 0.98) {
 }
 function candidateAnswers(questions, preferNone = false) {
   return Object.fromEntries(Object.entries(questions).map(([id, question]) => {
+    if (id === 'subject' || id === 'material') return [id, answer(question, id === 'subject' ? 'single_item' : 'unknown')];
     const chosen = Object.keys(question.criteria).find(key => key !== 'none');
     if (!preferNone) return [id, answer(question, chosen)];
     // Even when local none wins, retain the best actual item as a finalist; do
@@ -27,7 +28,7 @@ function candidateAnswers(questions, preferNone = false) {
   }));
 }
 function finalAnswers(questions, match, p = 0.98) {
-  const choices = { kind: 'unknown', hazard: 'unknown', condition: 'unknown', plastic_color: 'unknown',
+  const choices = { subject: 'single_item', material: 'unknown', kind: 'unknown', hazard: 'unknown', condition: 'unknown', plastic_color: 'unknown',
     compostable_mark: 'unknown', paper_finish: 'unknown', paper_soiling: 'unknown' };
   return Object.fromEntries(Object.entries(questions).map(([id, question]) => [
     id, answer(question, id === 'match' ? match : choices[id] ?? 'check', id === 'match' ? p : 0.98),
@@ -49,14 +50,14 @@ test('exact mode makes exactly two calls with one shared deadline, schema and im
     calls.push(options);
     assert.equal(options.provider, 'jev'); assert.equal(options.image, image); assert.strictEqual(options.env, env);
     if (calls.length === 1) {
-      assert.deepEqual(options.questions, chunkSchema); assert.equal(options.timeoutMs, 500);
+      assert.deepEqual(options.questions, { ...SUBJECT_QUESTIONS, ...chunkSchema }); assert.equal(options.timeoutMs, 500);
       clock += 125;
       return { answers: candidateAnswers(options.questions), usage: { input_tokens: 100, output_tokens: 20 } };
     }
     assert.equal(calls.length, 2); assert.equal(options.timeoutMs, 375);
-    assert.deepEqual(Object.keys(options.questions).slice(0, 8), ['match', ...Object.keys(QUESTIONS)]);
+    assert.deepEqual(Object.keys(options.questions).slice(0, 1 + Object.keys(QUESTIONS).length), ['match', ...Object.keys(QUESTIONS)]);
     assert.ok(Object.keys(options.questions).length <= 64);
-    for (const [id, question] of Object.entries(options.questions).slice(8)) {
+    for (const [id, question] of Object.entries(options.questions).slice(1 + Object.keys(QUESTIONS).length)) {
       assert.match(id, /^rule_/);
       assert.deepEqual(Object.keys(question.criteria), ['applies', 'does_not_apply', 'check', 'reference']);
     }
@@ -64,7 +65,7 @@ test('exact mode makes exactly two calls with one shared deadline, schema and im
     return { answers: finalAnswers(options.questions, finalistKeys.at(-1)), usage: { input_tokens: 50, output_tokens: 10 } };
   } });
   assert.equal(calls.length, 2); assert.equal(result.model_calls, 2);
-  assert.equal(result.question_count, Object.keys(chunkSchema).length + Object.keys(calls[1].questions).length);
+  assert.equal(result.question_count, Object.keys(SUBJECT_QUESTIONS).length + Object.keys(chunkSchema).length + Object.keys(calls[1].questions).length);
   assert.deepEqual(result.usage, { input_tokens: 150, output_tokens: 30 });
   assert.equal(result.status, 'catalog_match'); assertNoRouting(result);
   const selected = items[Number(finalistKeys.at(-1).slice(5))];
@@ -109,13 +110,14 @@ function assertSelectedRow(result, key, probability) {
 }
 
 for (const probability of [0.79, 0.3, 0.12]) {
-  test(`second-stage top item at ${probability} retains its actual row without a minimum probability gate`, async () => {
+  test(`second-stage top item at ${probability} abstains without attaching a candidate policy`, async () => {
     let calls = 0;
     const result = await identifyCatalog({ ...base, ask: async options => ++calls === 1
       ? { answers: candidateAnswers(options.questions) }
       : { answers: finalAnswers(options.questions, finalistKeys[0], probability) } });
     assert.equal(calls, 2);
-    assertSelectedRow(result, finalistKeys[0], probability);
+    assert.equal(result.status, 'manual_review'); assert.equal(result.selected_item, null);
+    assert.deepEqual(result.instructions, []); assert.deepEqual(result.source_items, []); assertNoRouting(result);
     assert.equal(result.observed.match.choice, finalistKeys[0]);
     assert.equal(result.observed.match.p, probability);
   });
@@ -125,7 +127,7 @@ for (const [label, none, best, runner] of [
   ['none winner', 0.7, 0.2, 0.1],
   ['small winning margin', 0.35, 0.36, 0.29],
 ]) {
-  test(`second-stage ${label} displays highest non-none candidate with original probability`, async () => {
+  test(`second-stage ${label} abstains and retains only diagnostic scores`, async () => {
     let calls = 0;
     const selectedKey = finalistKeys.at(-1);
     const runnerKey = finalistKeys[0];
@@ -138,7 +140,8 @@ for (const [label, none, best, runner] of [
       return { answers: raw };
     } });
     assert.equal(calls, 2);
-    assertSelectedRow(result, selectedKey, best);
+    assert.equal(result.status, 'manual_review'); assert.equal(result.selected_item, null);
+    assert.deepEqual(result.instructions, []); assert.deepEqual(result.source_items, []); assert.equal(result.match_probability, best); assertNoRouting(result);
     assert.equal(result.none_probability, none);
     assert.equal(result.observed.match.choice, none > best ? 'none' : selectedKey);
     assert.equal(result.observed.match.p, Math.max(none, best));

@@ -28,7 +28,7 @@ test('exact null-category sentinel does not hide identity or policy; checks stay
     const h = harness(); h.ctx.data = exact;
     await h.run('displayResult(data, null, 350)');
     assert.equal(h.ctx.itemName.textContent, 'beverage can');
-    assert.equal(h.ctx.whyText.textContent, 'Match score: 99%');
+    assert.equal(h.ctx.whyText.textContent, 'Model match score: 99%');
     assert.equal(h.ctx.binNameLarge.textContent, 'Blue Bin');
     assert.equal(h.ctx.actionText.textContent, 'PREDICTED POLICY BIN');
     assert.equal(h.nodes['result-checks'].textContent, '');
@@ -36,13 +36,13 @@ test('exact null-category sentinel does not hide identity or policy; checks stay
     assert.match(h.nodes['api-summary'].textContent, /Observed condition: unknown/);
     assert.deepEqual(JSON.parse(h.nodes['api-response'].textContent), exact);
 });
-test('tentative identity remains tentative while relevant source instructions remain visible', async () => {
-    const h = harness(); h.ctx.data = { ...exact, identity_uncertain: true, rule_evaluation: ['applies', 'check', 'does_not_apply', 'reference'].map(state => ({ state, text: state })) };
+test('a rejected identity from an older Worker cannot display candidate bin guidance', async () => {
+    const h = harness(); h.ctx.data = { ...exact, identity_uncertain: true };
     await h.run('displayResult(data, null, 1)');
-    assert.equal(h.ctx.itemName.textContent, 'beverage can');
-    assert.equal(h.ctx.whyText.textContent, 'Match score: 99%');
-    assert.match(h.nodes['result-checks'].textContent, /verify the item/);
-    assert.equal(h.nodes['instruction-list'].children.length, 3);
+    assert.equal(h.ctx.itemName.textContent, 'Item not confirmed');
+    assert.equal(h.ctx.binNameLarge.textContent, '');
+    assert.match(h.nodes['result-checks'].textContent, /try again/);
+    assert.equal(h.nodes['instruction-list'].children.length, 1);
 });
 test('legacy responses retain item/instructions; unknown categories never imply litter', async () => {
     for (const category of ['Not accepted', 'nonsense', undefined]) {
@@ -92,11 +92,11 @@ test('match scores handle legacy responses and missing or invalid values without
     for (const [value, expected] of [[.784, '78.4%'], [0, '0%'], [1, '100%'], [null, 'not returned'], [-1, 'not returned'], [99, 'not returned'], ['0.9', 'not returned']]) {
         const h = harness(); h.ctx.data = { selected_item: 'test item', match_probability: value };
         await h.run('displayResult(data, null, 1)');
-        assert.equal(h.ctx.whyText.textContent, `Match score: ${expected}`);
+        assert.equal(h.ctx.whyText.textContent, expected === 'not returned' ? '' : `Model match score: ${expected}`);
     }
     const h = harness(); h.ctx.data = { results: [{ item: 'legacy can', category: 'Blue Bin', confidence: .87 }] };
     await h.run('displayResult(data, null, 1)');
-    assert.equal(h.ctx.whyText.textContent, 'Match score: 87%');
+    assert.equal(h.ctx.whyText.textContent, 'Model match score: 87%');
 });
 test('API details have no handler that disables the return timer', () => {
     const h = harness();
