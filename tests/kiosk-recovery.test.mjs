@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 const html = readFileSync(new URL('../frontend/static/index.html', import.meta.url), 'utf8');
-const info = readFileSync(new URL('../frontend/static/result-info.js', import.meta.url), 'utf8');
+const info = readFileSync(new URL('../frontend/static/i18n.js', import.meta.url), 'utf8') + readFileSync(new URL('../frontend/static/result-info.js', import.meta.url), 'utf8');
 const response = JSON.parse(readFileSync(new URL('../worker/deployment/2026-11-07-exact-upload/live-response.json', import.meta.url)));
 const section = (start, end) => html.slice(html.indexOf(start), html.indexOf(end, html.indexOf(start)));
 const source = info + section('        const arm =', '        const cameraFallback =')

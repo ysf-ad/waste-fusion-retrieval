@@ -1,5 +1,7 @@
 /* Web-only controls. The kiosk still owns the page layout and result renderer. */
 window.BennyWeb = (() => {
+    // Remembered in English so the FR/EN button can re-render it later.
+    const say = (el, text) => window.BennyI18n ? window.BennyI18n.setText(el, text) : (el.textContent = text);
     const samples = {
         can: {
             result:{status:'catalog_match',selected_item:'Aluminum can',policy_category:'Blue Bin',source_category:'Blue Bin',match_probability:.96,instructions:['Empty the can before recycling.'],automatic_routing_enabled:false}},
@@ -53,8 +55,8 @@ window.BennyWeb = (() => {
             if (!live || busy) return;
             demoMode = !demoMode;
             simulate.setAttribute('aria-pressed', String(demoMode));
-            simulate.textContent = demoMode ? 'Use live examples' : 'Show simulated examples';
-            exampleStatus.textContent = demoMode ? 'Simulated mode. No example photo will be sent.' : '';
+            say(simulate, demoMode ? 'Use live examples' : 'Show simulated examples');
+            say(exampleStatus, demoMode ? 'Simulated mode. No example photo will be sent.' : '');
         });
         const buttons = [...section.querySelectorAll('[data-example]')];
         document.getElementById('web-live').hidden = !live;
@@ -93,15 +95,15 @@ window.BennyWeb = (() => {
             busy = true;
             cameraControl?.close();
             update();
-            message.textContent = 'Checking exact-mode availability…';
+            say(message, 'Checking exact-mode availability…');
             try {
                 const health = await fetch('/api/health', {cache:'no-store', signal:AbortSignal.timeout(4500)});
                 if (!health.ok) throw new Error('Live API unavailable. No photo was sent.');
                 const api = await health.json();
                 if (api.ready !== true || !api.modes?.includes('exact') || api.rate_limit_enforced !== true || api.kiosk_open_set !== true) throw new Error('The matching live kiosk API is not ready or rate-limited. No photo was sent.');
-                message.textContent = '';
+                say(message, '');
                 await action();
-            } catch (error) { message.textContent = error instanceof Error ? error.message : 'Live test unavailable.'; }
+            } catch (error) { say(message, error instanceof Error ? error.message : 'Live test unavailable.'); }
             finally { busy = false; update(); }
         }
         for (const button of buttons) {
@@ -141,14 +143,14 @@ window.BennyWeb = (() => {
             event.preventDefault();
             const blob = item.getAsFile();
             if (!blob || !['image/png', 'image/jpeg'].includes(blob.type)) {
-                status.textContent = 'Paste a PNG or JPEG image.';
+                say(status, 'Paste a PNG or JPEG image.');
                 return;
             }
             cameraControl.close();
             file.value = camera.value = '';
             captured = new File([blob], blob.name || `pasted-image.${blob.type === 'image/png' ? 'png' : 'jpg'}`, {type: blob.type});
             refreshPhoto();
-            status.textContent = 'Pasted image ready. Press Analyze photo to check it.';
+            say(status, 'Pasted image ready. Press Analyze photo to check it.');
             submit.focus?.();
         });
         submit.addEventListener('click', async () => {

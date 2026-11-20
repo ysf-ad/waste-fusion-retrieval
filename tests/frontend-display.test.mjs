@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 
 // Exercise the actual page renderer plus its current predictionInfo adapter.
 const html = readFileSync(new URL('../frontend/static/index.html', import.meta.url), 'utf8');
-const info = readFileSync(new URL('../frontend/static/result-info.js', import.meta.url), 'utf8');
+const info = readFileSync(new URL('../frontend/static/i18n.js', import.meta.url), 'utf8') + readFileSync(new URL('../frontend/static/result-info.js', import.meta.url), 'utf8');
 function section(start, end) {
   const from = html.indexOf(start), to = html.indexOf(end, from);
   assert.ok(from >= 0 && to > from, `shipped function boundaries: ${start}`);

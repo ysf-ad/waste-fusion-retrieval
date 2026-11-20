@@ -7,6 +7,8 @@ window.BennyCamera = (() => {
         const cancel = byId('web-camera-close'), status = byId('web-camera-status');
         const fallback = byId('web-native-camera');
         let stream = null, generation = 0, encoding = false;
+        const say = (text, vars) => window.BennyI18n ? window.BennyI18n.setText(status, text, vars) : (status.textContent = vars ? text.replace('{message}', vars.message) : text);
+        const T = text => window.BennyI18n ? window.BennyI18n.t(text) : text;
         const stop = media => { for (const track of media?.getTracks() || []) track.stop(); };
         const frameReady = () => Boolean(stream && video.videoWidth && video.videoHeight && video.readyState >= 2);
         const refresh = () => { snap.disabled = encoding || !frameReady(); };
@@ -21,7 +23,7 @@ window.BennyCamera = (() => {
         }
         function unavailable(message) {
             close();
-            status.textContent = `${message} Choose a photo instead, or use your device camera if offered.`;
+            say('{message} Choose a photo instead, or use your device camera if offered.', { message: T(message) });
             if (fallback) fallback.hidden = false;
         }
         function explanation(error) {
@@ -38,7 +40,7 @@ window.BennyCamera = (() => {
             }
             const token = ++generation;
             panel.hidden = false;
-            status.textContent = 'Waiting for camera permission…';
+            say('Waiting for camera permission…');
             try {
                 const camera = await navigator.mediaDevices.getUserMedia({ audio:false,
                     video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}} });
@@ -47,14 +49,14 @@ window.BennyCamera = (() => {
                 video.srcObject = camera;
                 await video.play();
                 if (token !== generation) return;
-                status.textContent = 'Frame the item, then capture the photo.';
+                say('Frame the item, then capture the photo.');
                 refresh();
             } catch (error) {
                 if (token === generation) unavailable(explanation(error));
             }
         });
         for (const event of ['loadeddata', 'playing', 'resize']) video.addEventListener(event, refresh);
-        cancel.addEventListener('click', () => { close(); status.textContent = ''; });
+        cancel.addEventListener('click', () => { close(); say(''); });
         window.addEventListener('pagehide', close);
         snap.addEventListener('click', async () => {
             if (!enabled() || snap.disabled || !frameReady()) return;
@@ -74,7 +76,7 @@ window.BennyCamera = (() => {
                 const photo = new File([blob], 'camera-photo.jpg', {type:'image/jpeg'});
                 close();
                 onPhoto(photo);
-                status.textContent = 'Photo captured. Check the preview before analyzing.';
+                say('Photo captured. Check the preview before analyzing.');
             } catch {
                 if (token === generation) unavailable('Could not capture a photo.');
             }

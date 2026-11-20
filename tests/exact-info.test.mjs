@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 const html = readFileSync(new URL('../frontend/static/index.html', import.meta.url), 'utf8');
-const info = readFileSync(new URL('../frontend/static/result-info.js', import.meta.url), 'utf8');
+const info = readFileSync(new URL('../frontend/static/i18n.js', import.meta.url), 'utf8') + readFileSync(new URL('../frontend/static/result-info.js', import.meta.url), 'utf8');
 const themes = html.slice(html.indexOf('        const arm ='), html.indexOf('        const cameraFallback ='));
 const display = html.slice(html.indexOf('        async function displayResult('), html.indexOf('        async function savePhotoWithResults('));
 function harness() {

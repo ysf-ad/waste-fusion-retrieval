@@ -27,7 +27,7 @@
             <button id="language-btn" class="header-btn language-btn">FR</button>
 
             <div class="contrast-button-group">
-                <button id="contrast-btn" class="header-btn contrast-btn">High Contrast</button>
+                <button id="contrast-btn" class="header-btn contrast-btn" data-i18n>High Contrast</button>
                 <span class="toggle-indicator"></span>
             </div>
 
@@ -52,7 +52,7 @@
                 <p class="fallback-hint" data-i18n="cameraHttpsHint">Camera requires HTTPS. Use file upload instead.</p>
             </div>
         </div>
-        <p class="confidence-disclaimer">Model confidence is not calibrated certainty.</p>
+        <p class="confidence-disclaimer" data-i18n>Model confidence is not calibrated certainty.</p>
     </div>
 
     <!-- Scanning Page -->
@@ -69,8 +69,8 @@
             <div class="spinner"></div>
         </div>
         <div class="bottom-bar">
-            <span>How Long It Took Benny To Process Your Query: <span id="scan-time">0.0s</span></span>
-            <p class="confidence-disclaimer">Model confidence is not calibrated certainty.</p>
+            <span><span data-i18n>How Long It Took Benny To Process Your Query:</span> <span id="scan-time">0.0s</span></span>
+            <p class="confidence-disclaimer" data-i18n>Model confidence is not calibrated certainty.</p>
         </div>
     </div>
 
@@ -106,16 +106,16 @@
                 <ul id="instruction-list"></ul>
             </section>
             <details id="api-details" class="api-details">
-                <summary>Full response</summary>
+                <summary data-i18n>Full response</summary>
                 <p id="api-summary"></p>
                 <pre id="api-response"></pre>
             </details>
         </div>
 
         <div class="bottom-bar">
-            <span>How Long It Took Benny To Process Your Query: <span id="inference-time">-</span></span>
+            <span><span data-i18n>How Long It Took Benny To Process Your Query:</span> <span id="inference-time">-</span></span>
             <button id="back-btn" class="back-btn" data-i18n="scanAnother">← Scan Another Item</button>
-            <p class="confidence-disclaimer">Model confidence is not calibrated certainty.</p>
+            <p class="confidence-disclaimer" data-i18n>Model confidence is not calibrated certainty.</p>
         </div>
 
         <div id="error-container" class="error-message" style="display: none;"></div>
@@ -158,6 +158,7 @@
         </div>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="result-info.js"></script>
     <script src="camera-orientation.js"></script>
     <script>
@@ -225,7 +226,7 @@
             window.CameraOrientation?.applyImage(preview, { source: photoSource, view: 'captured' });
             preview.hidden = false;
             const label = document.getElementById('image-preview-label');
-            label.textContent = `Submitted photo · ${blob.size.toLocaleString('en-US')} bytes`;
+            label.textContent = BennyI18n.t('Submitted photo · {size} bytes', { size: blob.size.toLocaleString(BennyI18n.lang() === 'fr' ? 'fr-CA' : 'en-US') });
             label.hidden = false;
         }
         function clearImagePreview() {
@@ -610,17 +611,18 @@
             // Source text and diagnostics remain verbatim; no translation API rewrites them.
             resultPage.className = `page result-page ${themeDetails.theme} layout-info`;
             applyLayout('layout-bin');
-            itemName.textContent = info.item;
+            const T = BennyI18n.t;
+            itemName.textContent = T(info.item);
             const scoreText = formatModelConfidence(info.matchScore);
             whyText.textContent = scoreText;
-            actionText.textContent = info.withheld ? (info.status === 'no_item' ? 'NO WASTE ITEM' : 'NO BIN RECOMMENDATION') : 'PREDICTED POLICY BIN';
-            binNameLarge.textContent = info.withheld ? '' : info.bin || 'NOT CONFIRMED';
-            document.getElementById('prediction-note').textContent = info.bin
+            actionText.textContent = T(info.withheld ? (info.status === 'no_item' ? 'NO WASTE ITEM' : 'NO BIN RECOMMENDATION') : 'PREDICTED POLICY BIN');
+            binNameLarge.textContent = info.withheld ? '' : T(info.bin || 'NOT CONFIRMED');
+            document.getElementById('prediction-note').textContent = T(info.bin
                 ? 'Predicted policy bin — not an automatic sorting confirmation. Follow all source conditions.'
-                : 'No bin recommendation was made.';
+                : 'No bin recommendation was made.');
             largeIconContainer.innerHTML = themeDetails.icon;
             document.getElementById('result-checks').textContent = info.checks.join('\n');
-            document.getElementById('instructions-title').textContent = info.withheld ? 'What to do next' : `Source instructions — ${info.sourceBin}`;
+            document.getElementById('instructions-title').textContent = info.withheld ? T('What to do next') : T('Source instructions — {bin}', { bin: T(info.sourceBin) });
             const list = document.getElementById('instruction-list');
             list.replaceChildren();
             // Multiple instructions may apply together; do not turn this into a single winner.
@@ -635,7 +637,7 @@
             }
             if (!visibleRules.length) {
                 const row = document.createElement('li');
-                row.textContent = info.withheld ? info.reason : info.rules.length ? 'No instruction is confirmed to apply. Review the API details before disposal.' : 'No source instructions returned by the API.';
+                row.textContent = info.withheld ? T(info.reason) : T(info.rules.length ? 'No instruction is confirmed to apply. Review the API details before disposal.' : 'No source instructions returned by the API.');
                 list.appendChild(row);
             }
             document.getElementById('api-details').open = false;
@@ -661,19 +663,20 @@
             if (autoReturnTimer) clearTimeout(autoReturnTimer);
             autoReturnTimer = null;
             resultPage.className = 'page result-page theme-red layout-info';
-            itemName.textContent = 'Unable to identify item';
-            whyText.textContent = 'No usable prediction was returned. Try another photo; do not guess a bin.';
-            actionText.textContent = 'TRY AGAIN';
-            binNameLarge.textContent = 'NOT CONFIRMED';
-            document.getElementById('prediction-note').textContent = 'No bin recommendation was made.';
+            const T = BennyI18n.t;
+            itemName.textContent = T('Unable to identify item');
+            whyText.textContent = T('No usable prediction was returned. Try another photo; do not guess a bin.');
+            actionText.textContent = T('TRY AGAIN');
+            binNameLarge.textContent = T('NOT CONFIRMED');
+            document.getElementById('prediction-note').textContent = T('No bin recommendation was made.');
             largeIconContainer.innerHTML = SVGS.exclamation;
             document.getElementById('result-checks').textContent = '';
             document.getElementById('instruction-list').replaceChildren();
-            document.getElementById('instructions-title').textContent = 'No source instructions';
+            document.getElementById('instructions-title').textContent = T('No source instructions');
             document.getElementById('api-details').open = false;
             document.getElementById('api-summary').textContent = message;
             document.getElementById('api-response').textContent = '';
-            errorContainer.textContent = 'Error: ' + message;
+            errorContainer.textContent = T('Error: {message}', { message: T(message) });
             errorContainer.style.display = 'block';
             showPage(resultPage);
             countdownOverlay.style.display = 'none';
@@ -743,41 +746,15 @@
             if (stream) stream.getTracks().forEach(track => track.stop());
         });
 
-        // Dictionary and Language Control
-        const translations = {
-            en: {
-                takePhoto: 'Take Photo', uploadPhoto: 'Upload Photo', howToUse: 'How to Use', closePhoto: 'Close photo ×',
-                instruction1: '1. Position item in camera view', instruction2: '2. Wait for automatic capture', instruction3: '3. View classification results',
-                cameraNotAvailable: 'Camera not available', cameraHttpsHint: 'Camera requires HTTPS. Use file upload instead.',
-                analyzing: 'Analyzing your item...', scanAnother: '← Scan Another Item',
-                'unknown item': 'Unknown Item', 'unknown': 'Unknown', 'please dispose of this item properly.': 'Please dispose of this item properly.'
-            },
-            fr: {
-                takePhoto: 'Prendre une photo', uploadPhoto: 'Téléverser une photo', howToUse: 'Mode d\'emploi', closePhoto: 'Fermer la photo ×',
-                instruction1: '1. Positionner l\'objet dans le champ de la caméra', instruction2: '2. Attendre la capture automatique', instruction3: '3. Afficher les résultats de la classification',
-                cameraNotAvailable: 'Caméra non disponible', cameraHttpsHint: 'La caméra nécessite HTTPS. Utilisez le téléchargement de fichier à la place.',
-                analyzing: 'Analyse de votre objet...', scanAnother: '← Analyser un autre objet',
-                'unknown item': 'Objet Inconnu', 'unknown': 'Inconnu', 'please dispose of this item properly.': 'Veuillez éliminer cet objet correctement.'
-            }
-        };
-
+        // Language control: one shared dictionary in i18n.js (kiosk and web).
         function setLanguage(lang) {
-            localStorage.setItem('language', lang);
-            document.documentElement.lang = lang;
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang] && translations[lang][key]) {
-                    el.textContent = translations[lang][key];
-                }
-            });
-            document.getElementById('language-btn').textContent = lang === 'en' ? 'FR' : 'EN';
+            BennyI18n.setLanguage(lang);
+            document.getElementById('language-btn').textContent = BennyI18n.lang() === 'en' ? 'FR' : 'EN';
         }
-
         document.getElementById('language-btn').addEventListener('click', () => {
-            const currentLang = localStorage.getItem('language') || 'en';
-            setLanguage(currentLang === 'en' ? 'fr' : 'en');
+            setLanguage(BennyI18n.lang() === 'en' ? 'fr' : 'en');
         });
-        setLanguage(localStorage.getItem('language') || 'en');
+        setLanguage(BennyI18n.lang());
 
         function toggleHighContrast() {
             const isActive = document.body.classList.toggle('high-contrast');

@@ -14,7 +14,7 @@ function https(value) {
 }
 export async function buildBennyWeb() {
     const load = name => readFile(new URL(name, source), 'utf8');
-    const [html, css, info, orientation, web, camera] = await Promise.all(['index.html','styles.css','result-info.js','camera-orientation.js','benny-web.js','benny-camera.js'].map(load));
+    const [html, css, info, orientation, web, camera, i18n] = await Promise.all(['index.html','styles.css','result-info.js','camera-orientation.js','benny-web.js','benny-camera.js','i18n.js'].map(load));
     const credits = JSON.parse(await readFile(new URL('credits.json', media), 'utf8'));
     const photos = Object.fromEntries(await Promise.all(sampleIds.map(async id => {
         const jpg = await readFile(new URL(`${id}.jpg`, media));
@@ -64,6 +64,16 @@ export async function buildBennyWeb() {
         #web-camera-panel button { margin:.15rem .15rem .15rem 0; }
         #web-camera-status:empty { display:none; }
         #web-selected-photo { display:block; width:min(100%,340px); max-height:220px; object-fit:contain; background:#142337; border-radius:10px; margin:.6rem 0; }
+        /* High contrast: black surfaces, yellow text and borders, like the kiosk. */
+        body.high-contrast #web-demo, body.high-contrast #web-live, body.high-contrast .web-picker,
+        body.high-contrast .web-example-grid button, body.high-contrast .web-mode-button,
+        body.high-contrast #web-credits, body.high-contrast .web-example-grid img { background:#000; color:#ff0; border-color:#ff0; }
+        body.high-contrast #web-demo :is(p, h2, h3, span, label, summary, li, a), body.high-contrast .web-kicker { color:#ff0; }
+        body.high-contrast #web-demo a { text-decoration:underline; }
+        body.high-contrast .web-example-grid button:is(:hover, :focus-visible), body.high-contrast .web-mode-button:is(:hover, :focus-visible) { background:#222; outline:3px solid #ff0; outline-offset:2px; }
+        body.high-contrast #web-demo .header-btn { background:#ff0; color:#000; }
+        body.high-contrast #web-demo .header-btn:disabled { background:#555; color:#000; opacity:1; }
+        body.high-contrast #web-demo input[type=file] { color:#ff0; }
         #web-example-status:empty,#web-status:empty { display:none; }
         @media (max-width: 460px) { .web-photo-controls { grid-template-columns:minmax(0,1fr); gap:0; } #web-submit { width:100%; min-height:44px; } }
         #web-submit:disabled { opacity:.5; }
@@ -89,44 +99,45 @@ export async function buildBennyWeb() {
     replace('<label><input type="checkbox" id="debug-long" /> Long text</label>', '<input type="hidden" id="debug-long" />');
     replace('        <div class="camera-container" id="camera-wrapper">', `        <section id="web-demo" hidden>
             <div class="web-inner">
-                <p class="web-kicker">Benny · Web demo</p>
-                <h2>What are you sorting?</h2>
+                <p class="web-kicker" data-i18n>Benny · Web demo</p>
+                <h2 data-i18n>What are you sorting?</h2>
                 <section id="web-live" aria-label="Analyze your own photo">
-                    <p class="web-lead">Take a photo, choose one, or paste an image (Ctrl+V) to check it against the Waste Wizard catalog.</p>
+                    <p class="web-lead" data-i18n>Take a photo, choose one, or paste an image (Ctrl+V) to check it against the Waste Wizard catalog.</p>
                     <div class="web-photo-controls">
-                        <label class="web-picker">Choose a photo<input id="web-file" type="file" accept="image/jpeg,image/png" /></label>
-                        <div class="web-picker"><button class="header-btn" id="web-camera-open" type="button">Take Photo</button></div>
+                        <label class="web-picker"><span data-i18n>Choose a photo</span><input id="web-file" type="file" accept="image/jpeg,image/png" /></label>
+                        <div class="web-picker"><button class="header-btn" id="web-camera-open" type="button" data-i18n>Take Photo</button></div>
                     </div>
                     <div id="web-camera-panel" hidden>
                         <video id="web-camera-video" autoplay muted playsinline aria-label="Camera preview"></video>
-                        <button class="header-btn" id="web-camera-snap" type="button" disabled>Capture photo</button>
-                        <button class="header-btn" id="web-camera-close" type="button">Close camera</button>
+                        <button class="header-btn" id="web-camera-snap" type="button" disabled data-i18n>Capture photo</button>
+                        <button class="header-btn" id="web-camera-close" type="button" data-i18n>Close camera</button>
                     </div>
                     <p id="web-camera-status" role="status" aria-live="polite"></p>
-                    <label id="web-native-camera" class="web-picker" hidden>Try device camera<input id="web-camera-file" type="file" accept="image/jpeg,image/png" capture="environment" /></label>
+                    <label id="web-native-camera" class="web-picker" hidden><span data-i18n>Try device camera</span><input id="web-camera-file" type="file" accept="image/jpeg,image/png" capture="environment" /></label>
                     <img id="web-selected-photo" alt="Selected photo, not yet sent" hidden />
-                    <button class="header-btn" id="web-submit" type="button" disabled>Analyze photo</button>
-                    <p class="web-kind-note">JPEG or PNG up to 10 MB. Analyze sends a prepared copy to the model provider. Use a photo you have permission to share.</p>
+                    <button class="header-btn" id="web-submit" type="button" disabled data-i18n>Analyze photo</button>
+                    <p class="web-kind-note" data-i18n>JPEG or PNG up to 10 MB. Analyze sends a prepared copy to the model provider. Use a photo you have permission to share.</p>
                     <p id="web-status" role="status" aria-live="polite"></p>
                 </section>
-                <h3 class="web-example-heading">Or try an example</h3>
-                <p id="web-example-mode" class="web-kind-note">Click a photo to analyze it live. <button type="button" class="web-mode-button" id="web-simulate" aria-pressed="false">Show simulated examples</button></p>
-                <p id="web-offline-note" class="web-lead" hidden>Offline preview. Sample results are simulated. No image is uploaded.</p>
+                <h3 class="web-example-heading" data-i18n>Or try an example</h3>
+                <p id="web-example-mode" class="web-kind-note"><span data-i18n>Click a photo to analyze it live.</span> <button type="button" class="web-mode-button" id="web-simulate" aria-pressed="false" data-i18n>Show simulated examples</button></p>
+                <p id="web-offline-note" class="web-lead" hidden data-i18n>Offline preview. Sample results are simulated. No image is uploaded.</p>
                 <p id="web-example-status" role="status" aria-live="polite"></p>
                 <div class="web-example-grid">
-                    <button type="button" data-example="can"><img alt="" />Drink can</button>
-                    <button type="button" data-example="hand"><img alt="" />Bare hand</button>
-                    <button type="button" data-example="wood"><img alt="" />Wood fragment</button>
+                    <button type="button" data-example="can"><img alt="" /><span data-i18n>Drink can</span></button>
+                    <button type="button" data-example="hand"><img alt="" /><span data-i18n>Bare hand</span></button>
+                    <button type="button" data-example="wood"><img alt="" /><span data-i18n>Wood fragment</span></button>
                 </div>
                 <details id="web-credits">
-                    <summary>Sample photo credits</summary>
+                    <summary data-i18n>Sample photo credits</summary>
                     <ul>${creditList}</ul>
                 </details>
 
             </div>
         </section>
         <div class="camera-container" id="camera-wrapper">`);
-    replace('<span>How Long It Took Benny To Process Your Query: <span id="inference-time">-</span></span>', '<span><span id="web-output-kind">Sample result · no live inference</span><span id="web-live-timing" hidden> · <span id="inference-time">-</span></span></span>');
+    replace('<span><span data-i18n>How Long It Took Benny To Process Your Query:</span> <span id="inference-time">-</span></span>', '<span><span id="web-output-kind" data-i18n>Sample result · no live inference</span><span id="web-live-timing" hidden> · <span id="inference-time">-</span></span></span>');
+    replace('<script src="i18n.js"></script>', inline(i18n));
     replace('<script src="result-info.js"></script>', inline(info));
     replace('<script src="camera-orientation.js"></script>', `${inline(orientation)}\n${inline(`window.BennySamplePhotos = Object.freeze(${JSON.stringify(photos)}); window.BennyExampleCacheVersion = ${JSON.stringify(cacheTag)};`)}\n${inline(camera)}\n${inline(web)}`);
     replace('        startCamera();', `        window.CameraOrientation.configure({orientation:{screen_rotation:0,live_rotation:0}},document);
@@ -135,8 +146,8 @@ export async function buildBennyWeb() {
                 const sample = window.BennyWeb.chooseSample(id);
                 uploadMode = true;
                 setScanImage(sample.blob);
-                document.getElementById('image-preview-label').textContent = 'Sample photo';
-                document.getElementById('web-output-kind').textContent = cached ? 'Cached live result · no new request' : 'Sample result · no live inference';
+                BennyI18n.setText(document.getElementById('image-preview-label'), 'Sample photo');
+                BennyI18n.setText(document.getElementById('web-output-kind'), cached ? 'Cached live result · no new request' : 'Sample result · no live inference');
                 document.getElementById('web-live-timing').hidden = true;
                 if (cached) {
                     const scan = beginScan();
@@ -156,8 +167,8 @@ export async function buildBennyWeb() {
                 const scan = beginScan();
                 uploadMode = true;
                 setScanImage(original);
-                document.getElementById('image-preview-label').textContent = 'Original photo preview';
-                document.getElementById('web-output-kind').textContent = 'Live exact-mode result';
+                BennyI18n.setText(document.getElementById('image-preview-label'), 'Original photo preview');
+                BennyI18n.setText(document.getElementById('web-output-kind'), 'Live exact-mode result');
                 document.getElementById('web-live-timing').hidden = false;
                 inferenceTimeDisplay.textContent = '-';
                 showPage(loadingPage);

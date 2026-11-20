@@ -15,6 +15,7 @@ function harness() {
     URL: { createObjectURL(blob) { blobs.push(blob); return `blob:preview-${blobs.length}`; }, revokeObjectURL(url) { revoked.push(url); } } };
   context.window = context;
   vm.createContext(context);
+  vm.runInContext(readFileSync(new URL('../frontend/static/i18n.js', import.meta.url), 'utf8'), context);
   vm.runInContext(readFileSync(new URL('../frontend/static/camera-orientation.js', import.meta.url), 'utf8'), context);
   context.CameraOrientation.configure({ orientation: { captured_rotation: 180, captured_mirror: true } });
   const start = html.indexOf('        function setScanImage('), end = html.indexOf('        function startScanTimer(', start);

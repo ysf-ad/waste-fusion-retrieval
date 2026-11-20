@@ -1,6 +1,9 @@
 /* Exact API information, independent of the legacy Not accepted display sentinel. */
 (function (root) {
     const text = value => typeof value === 'string' ? value : '';
+    // Interface wording only; catalog item names and instructions are not translated.
+    const T = (s, v) => root.BennyI18n ? root.BennyI18n.t(s, v)
+        : (v ? s.replace(/\{(\w+)\}/g, (all, key) => key in v ? String(v[key]) : all) : s);
     function knownBin(value) {
         const category = text(value).trim();
         return /^(blue bin(?: \(recycling\))?|green bin(?: \(organics\))?|garbage(?: bin)?|recycling|metal|compost|organic|hhw|household hazardous waste|electronic waste)$/i.test(category) ? category : '';
@@ -23,7 +26,7 @@
                 : match?.choice === 'none' ? match.p
                 : Number.isFinite(data.match_probability) ? data.match_probability
                 : ['unknown','multiple_items'].includes(subject?.choice) ? subject.p : null;
-            return { item, bin: '', sourceBin: '', rules: [], checks: [message], tentative: false, withheld: true,
+            return { item, bin: '', sourceBin: '', rules: [], checks: [T(message)], tentative: false, withheld: true,
                 matchScore: Number.isFinite(p) && p >= 0 && p <= 1 ? p : null, reason: message, status: data.status,
                 condition: text(data.observed?.condition?.choice) || 'Not returned', legacyCategory: 'Not used',
                 score: Number.isFinite(data.match_probability) ? String(data.match_probability) : 'Not returned' };
@@ -47,15 +50,15 @@
             const others = (Array.isArray(data.alternatives) ? data.alternatives : [])
                 .filter(alt => text(alt?.item) && Number.isFinite(alt.probability) && alt.probability >= 0.01 && alt.probability <= 1)
                 .slice(0, 3).map(alt => `${alt.item} ${Math.round(alt.probability * 100)}%`);
-            if (others.length) checks.push(`Other possibilities: ${others.join(' · ')}`);
+            if (others.length) checks.push(T('Other possibilities: {list}', { list: others.join(' · ') }));
         }
-        if (data.special_handling) checks.push('Special handling required; follow the source instructions.');
+        if (data.special_handling) checks.push(T('Special handling required; follow the source instructions.'));
         if (Array.isArray(data.clarification)) for (const value of data.clarification) {
             const question = typeof value === 'string' ? value : text(value?.question) || text(value?.id);
             if (question) checks.push(question);
         }
-        if (['manual_review', 'needs_clarification'].includes(data.status)) checks.push('API requests manual review.');
-        if (!bin) checks.push('No predicted policy bin was returned. Review the instructions; do not guess a bin.');
+        if (['manual_review', 'needs_clarification'].includes(data.status)) checks.push(T('API requests manual review.'));
+        if (!bin) checks.push(T('No predicted policy bin was returned. Review the instructions; do not guess a bin.'));
         const scoreValue = data.match_probability ?? legacy.confidence;
         const matchScore = Number.isFinite(scoreValue) && scoreValue >= 0 && scoreValue <= 1 ? scoreValue : null;
         return { item, bin, sourceBin, rules, checks, tentative: Boolean(data.identity_uncertain || data.tentative_match === true), matchScore,
@@ -65,10 +68,10 @@
             score: Number.isFinite(data.match_probability) ? String(data.match_probability) : 'Not returned' };
     }
     function formatModelConfidence(score) {
-        if (!Number.isFinite(score) || score < 0 || score > 1) return 'Model confidence: unavailable';
-        if (score === 1) return 'Model confidence: 100%';
+        if (!Number.isFinite(score) || score < 0 || score > 1) return T('Model confidence: {value}', { value: T('unavailable') });
+        if (score === 1) return T('Model confidence: {value}', { value: '100%' });
         const percent = Number((score * 100).toFixed(1));
-        return `Model confidence: ${percent === 100 ? '>99.9%' : `${percent}%`}`;
+        return T('Model confidence: {value}', { value: percent === 100 ? '>99.9%' : `${percent}%` });
     }
     root.predictionInfo = predictionInfo;
     root.formatModelConfidence = formatModelConfidence;
