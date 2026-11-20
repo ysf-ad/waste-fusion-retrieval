@@ -612,7 +612,7 @@
             applyLayout('layout-bin');
             itemName.textContent = info.item;
             const scoreText = formatModelConfidence(info.matchScore);
-            whyText.textContent = [info.tentative ? 'Tentative match' : '', scoreText].filter(Boolean).join(' · ');
+            whyText.textContent = scoreText;
             actionText.textContent = info.withheld ? (info.status === 'no_item' ? 'NO WASTE ITEM' : 'NO BIN RECOMMENDATION') : 'PREDICTED POLICY BIN';
             binNameLarge.textContent = info.withheld ? '' : info.bin || 'NOT CONFIRMED';
             document.getElementById('prediction-note').textContent = info.bin

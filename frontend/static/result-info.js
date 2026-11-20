@@ -43,7 +43,6 @@
         }
         const checks = [];
         if (data.identity_uncertain || data.tentative_match === true) {
-            checks.push('Tentative match: below the 80% confidence threshold. Check the item before using this bin.');
             // Contenders help the person correct a close call; names and scores only, no bins.
             const others = (Array.isArray(data.alternatives) ? data.alternatives : [])
                 .filter(alt => text(alt?.item) && Number.isFinite(alt.probability) && alt.probability >= 0.01 && alt.probability <= 1)

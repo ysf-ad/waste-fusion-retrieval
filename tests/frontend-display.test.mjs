@@ -92,14 +92,14 @@ for (const [status, extra, title, guidance, score] of [
   assert.match(h.get('instruction-list').children[0].textContent, guidance);
   assert.equal(h.ctx.whyText.textContent, `Model confidence: ${score}`);
 });
-test('tentative match keeps item, bin and confidence with a visible warning', async () => {
+test('tentative match keeps item, bin and confidence without a warning label', async () => {
   const h = harness(); h.ctx.data = { status: 'catalog_match', selected_item: 'banana', tentative_match: true, match_probability: .62,
     policy_category: 'Green Bin', source_category: 'Green Bin', instructions: ['Place in the Green Bin.'] };
   await h.run('displayResult(data, null, 1)');
   assert.equal(h.ctx.itemName.textContent, 'banana');
   assert.equal(h.ctx.binNameLarge.textContent, 'Green Bin');
-  assert.equal(h.ctx.whyText.textContent, 'Tentative match · Model confidence: 62%');
-  assert.match(h.get('result-checks').textContent, /below the 80% confidence threshold/);
+  assert.equal(h.ctx.whyText.textContent, 'Model confidence: 62%');
+  assert.doesNotMatch(h.get('result-checks').textContent, /tentative|threshold/i);
 });
 test('tentative match lists up to three contenders by name and score, without bins', async () => {
   const h = harness(); h.ctx.data = { status: 'catalog_match', selected_item: 'plastic clamshell', tentative_match: true, match_probability: .18,
