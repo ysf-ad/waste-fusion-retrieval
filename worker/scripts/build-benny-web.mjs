@@ -55,8 +55,11 @@ export async function buildBennyWeb() {
         #web-live label { display:block; margin:.6rem 0; }
         .web-photo-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem; }
         .web-picker { font-weight:600; border:1px solid #aec6e5; border-radius:10px; padding:.6rem; min-width:0; }
-        .web-picker input { display:block; width:100%; margin-top:.4rem; font:inherit; font-size:.8rem; }
-        .web-picker input::file-selector-button { min-height:32px; cursor:pointer; }
+        /* The whole picker is the button; the browser's own file control (always in the
+           browser's language) is kept for keyboard/screen readers but not shown. */
+        .web-picker:has(input[type=file]) { position:relative; display:flex; align-items:center; justify-content:center; cursor:pointer; min-height:44px; }
+        .web-picker:has(input[type=file]):focus-within { outline:3px solid var(--ink); outline-offset:2px; }
+        .web-picker input[type=file] { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
         .web-example-heading { margin-top:1.2rem; }
         .web-mode-button { margin:.3rem .2rem; min-height:36px; padding:.25rem .55rem; border:1px solid #7b97b9; border-radius:8px; background:#fff; color:#15375f; cursor:pointer; }
         #web-camera-panel { margin:.6rem 0; }
@@ -72,7 +75,7 @@ export async function buildBennyWeb() {
         body.high-contrast #web-demo a { text-decoration:underline; }
         body.high-contrast .web-example-grid button:is(:hover, :focus-visible), body.high-contrast .web-mode-button:is(:hover, :focus-visible) { background:#222; outline:3px solid #ff0; outline-offset:2px; }
         body.high-contrast #web-demo .header-btn { background:#ff0; color:#000; }
-        body.high-contrast #web-demo .header-btn:disabled { background:#555; color:#000; opacity:1; }
+        body.high-contrast #web-demo .header-btn:disabled { background:#000; color:#ff0; border:2px dashed #ff0; opacity:1; }
         body.high-contrast #web-demo input[type=file] { color:#ff0; }
         #web-example-status:empty,#web-status:empty { display:none; }
         @media (max-width: 460px) { .web-photo-controls { grid-template-columns:minmax(0,1fr); gap:0; } #web-submit { width:100%; min-height:44px; } }
