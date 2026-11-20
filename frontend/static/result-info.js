@@ -48,9 +48,6 @@
                 .filter(alt => text(alt?.item) && Number.isFinite(alt.probability) && alt.probability >= 0.01 && alt.probability <= 1)
                 .slice(0, 3).map(alt => `${alt.item} ${Math.round(alt.probability * 100)}%`);
             if (others.length) checks.push(`Other possibilities: ${others.join(' · ')}`);
-            if (Number.isFinite(data.match_probability) && data.match_probability < 0.3) {
-                checks.push('Low confidence: this may be a guess. Retake with the item filling the frame, well lit and not covered by your hand.');
-            }
         }
         if (data.special_handling) checks.push('Special handling required; follow the source instructions.');
         if (Array.isArray(data.clarification)) for (const value of data.clarification) {

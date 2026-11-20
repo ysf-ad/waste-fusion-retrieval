@@ -109,7 +109,7 @@ test('tentative match lists up to three contenders by name and score, without bi
   const checks = h.get('result-checks').textContent;
   assert.match(checks, /Other possibilities: plastic food tubs 17% · takeout container 12% · cups 10%/);
   assert.doesNotMatch(checks, /glass jar|Garbage|Green Bin/);
-  assert.match(checks, /Low confidence: this may be a guess\. Retake/);
+  assert.doesNotMatch(checks, /low confidence|tentative|retake/i);
   assert.equal(h.ctx.binNameLarge.textContent, 'Blue Bin');
 });
 test('a tentative match at 30% or above has no retake hint', async () => {
