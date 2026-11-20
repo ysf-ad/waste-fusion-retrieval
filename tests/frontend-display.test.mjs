@@ -101,6 +101,28 @@ test('tentative match keeps item, bin and confidence with a visible warning', as
   assert.equal(h.ctx.whyText.textContent, 'Tentative match · Model confidence: 62%');
   assert.match(h.get('result-checks').textContent, /below the 80% confidence threshold/);
 });
+test('tentative match lists up to three contenders by name and score, without bins', async () => {
+  const h = harness(); h.ctx.data = { status: 'catalog_match', selected_item: 'plastic clamshell', tentative_match: true, match_probability: .18,
+    policy_category: 'Blue Bin', source_category: 'Blue Bin', instructions: ['Empty first.'],
+    alternatives: [{ item: 'plastic food tubs', probability: .17 }, { item: 'takeout container', probability: .12 }, { item: 'glass jar', probability: .004 }, { item: 'cups', probability: .1 }] };
+  await h.run('displayResult(data, null, 1)');
+  const checks = h.get('result-checks').textContent;
+  assert.match(checks, /Other possibilities: plastic food tubs 17% · takeout container 12% · cups 10%/);
+  assert.doesNotMatch(checks, /glass jar|Garbage|Green Bin/);
+  assert.match(checks, /Low confidence: this may be a guess\. Retake/);
+  assert.equal(h.ctx.binNameLarge.textContent, 'Blue Bin');
+});
+test('a tentative match at 30% or above has no retake hint', async () => {
+  const h = harness(); h.ctx.data = { status: 'catalog_match', selected_item: 'fruit peels', tentative_match: true, match_probability: .73, policy_category: 'Green Bin', instructions: ['Green Bin.'] };
+  await h.run('displayResult(data, null, 1)');
+  assert.doesNotMatch(h.get('result-checks').textContent, /Low confidence/);
+});
+test('a confident match does not list contenders', async () => {
+  const h = harness(); h.ctx.data = { status: 'catalog_match', selected_item: 'water bottle', match_probability: .93, policy_category: 'Blue Bin',
+    instructions: ['Empty first.'], alternatives: [{ item: 'metal bottle', probability: .03 }] };
+  await h.run('displayResult(data, null, 1)');
+  assert.doesNotMatch(h.get('result-checks').textContent, /Other possibilities/);
+});
 test('malformed prediction envelopes are rejected before display', async () => {
   const h = harness();
   for (const data of [null, {}, [], { results: [] }, { error: 'failure', results: [{ item: 'stale' }] }, { results: [{ category: 'Blue Bin' }] }]) {

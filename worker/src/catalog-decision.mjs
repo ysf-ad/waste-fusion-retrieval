@@ -32,8 +32,8 @@ export async function identifyCatalog({ image, items, ask, env, provider, timeou
   if (!finalists.length) return abstain(preliminary, 'No Waste Wizard item is available. Review manually; no bin is confirmed.', metadata());
   const remaining = timeoutMs - (performance.now() - started);
   if (remaining < 100) throw new ProviderError('decision_timeout', 'Catalog candidate stage used the decision budget. Sort manually.', 504);
-  const schema = { match: choice('Which ONE exact catalog name best describes photo? Choose none if every finalist is a poor match or the image is unclear. Do not choose an item merely because it has similar material.', {
-    none: 'None fits sufficiently, or uncertain', ...Object.fromEntries(finalists.map(({ key, row }) => [key, row.item])),
+  const schema = { match: choice('Which ONE catalog name best describes the object shown? Several finalists may be similar; pick the closest. Choose none only when no finalist plausibly describes the object. Do not choose an item merely because it has similar material.', {
+    none: 'No finalist plausibly describes the object', ...Object.fromEntries(finalists.map(({ key, row }) => [key, row.item])),
   }), ...QUESTIONS };
   for (const finalist of finalists) for (const [id, question] of Object.entries(ruleQuestions(finalist.row, `rule_${finalist.key}`))) {
     if (Object.keys(schema).length < 64) schema[id] = question;
@@ -47,18 +47,22 @@ export async function identifyCatalog({ image, items, ask, env, provider, timeou
   const [selectedKey, probability] = ranked[0] || [];
   const matched = finalists.find(item => item.key === selectedKey)?.row;
   const identity = { ...meta, match_probability: probability ?? null, none_probability: second.answers.match.probabilities.none };
-  // A named winner (it beat "none") is shown with its bin. Below the confidence
-  // gate it is labeled tentative rather than hidden; only "none" withholds a bin.
+  const none = second.answers.match.probabilities.none;
+  // "None" withholds a bin only with majority support. When similar finalists
+  // split the vote, "none" can win a plurality while most probability says the
+  // object is in the catalog; then the top candidate is shown as tentative.
   if (validated.match.choice === 'none' || !matched) {
     // A confident second look at a bare hand/empty scene explains the miss.
     const subject = subjectDecision(validated, identity);
     if (subject) return subject;
-    return abstain(validated, 'No sufficiently supported Waste Wizard item is identified. Scan again or review manually; no bin is confirmed.', identity);
+    if (!matched || !(none < 0.5)) {
+      return abstain(validated, 'No sufficiently supported Waste Wizard item is identified. Scan again or review manually; no bin is confirmed.', identity);
+    }
   }
   const base = { ...identity, status: 'manual_review', category: null, source_items: [], instructions: [], clarification: [],
     automatic_routing_enabled: false, calibration: 'Conservative model-score gates, not calibrated correctness guarantees.',
     policy_version: POLICY_VERSION, policy_scope: 'Bundled Toronto Waste Wizard snapshot; follow all item-specific conditions.', observed: validated,
-    selected_item: matched.item, identity_uncertain: false, tentative_match: !passes(validated.match, GATES.kind),
+    selected_item: matched.item, identity_uncertain: false, tentative_match: validated.match.choice === 'none' || !passes(validated.match, GATES.kind),
     alternatives: ranked.slice(1, 4).map(([key, probability]) => ({ item: finalists.find(item => item.key === key)?.row.item, probability })),
     special_handling: ['HHW', 'Electronic Waste'].includes(matched.category) || validated.hazard.choice === 'evident' };
   return { ...attachPolicy(base, matched, validated, second.answers, `rule_${selectedKey}`), status: 'catalog_match',
