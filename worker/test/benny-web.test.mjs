@@ -71,7 +71,9 @@ function harness({ protocol = 'file:', health = { ready: true, modes: ['exact'],
         const image = new Element(); button.querySelector = () => image; return button;
     });
     get('web-demo').querySelectorAll = () => buttons;
+    const documentHandlers = new Map();
     const document = { getElementById: get, documentElement: get('html-root'), body: new Element('body'),
+        addEventListener(name, fn) { documentHandlers.set(name, [...(documentHandlers.get(name) || []), fn]); },
         querySelector: () => get('native-help'), querySelectorAll: () => [],
         createElement: tag => {
             const element = new Element();
@@ -87,7 +89,7 @@ function harness({ protocol = 'file:', health = { ready: true, modes: ['exact'],
     get('canvas-display').toDataURL = () => 'data:image/jpeg;base64,AA==';
     const stored = new Map();
     const context = vm.createContext({ document, location: { protocol }, console,
-        Blob, FormData, AbortController, AbortSignal, atob,
+        Blob, File, FormData, AbortController, AbortSignal, atob,
         FileReader: class { readAsDataURL() { this.onload({ target: { result: 'data:image/jpeg;base64,AA==' } }); } },
         Image: class { constructor() { this.width = dimensions[0]; this.height = dimensions[1]; } set src(value) { this._src = value; this.onload(); } },
         URL: { createObjectURL(blob) { const url = `blob:fixture-${++serial}`; blobs.set(url, blob); return url; }, revokeObjectURL(url) { blobs.delete(url); } },
@@ -133,8 +135,15 @@ function harness({ protocol = 'file:', health = { ready: true, modes: ['exact'],
         await get(inputId).fire('change');
         return original;
     }
+    async function paste(type = 'image/png', withFile = true) {
+        let prevented = false;
+        const blob = new Blob(['pasted-bytes'], { type });
+        const event = { preventDefault() { prevented = true; }, clipboardData: { items: withFile ? [{ kind: 'file', type, getAsFile: () => blob }] : [{ kind: 'string', type: 'text/plain' }] } };
+        for (const fn of documentHandlers.get('paste') || []) await fn(event);
+        return { prevented, blob };
+    }
     async function simulate() { if (get('web-simulate').getAttribute('aria-pressed') !== 'true') await get('web-simulate').click(); }
-    return { context, get, choose, choosePending, flushReplay, selectPhoto, simulate, requests, bitmaps, canvases, blobs, timers, storage,
+    return { context, get, choose, choosePending, flushReplay, selectPhoto, simulate, paste, requests, bitmaps, canvases, blobs, timers, storage,
         cameraCalls: () => cameraCalls, eventSources: () => eventSources };
 }
 
@@ -505,3 +514,30 @@ for (const [label, options] of [['unsupported MIME', { mime: 'image/gif' }], ['d
             for (const { bitmap } of h.bitmaps) assert.equal(bitmap.closed, true);
     });
 }
+
+test('pasting an image selects it for preview only; Analyze still sends it', async () => {
+    const h = harness({ protocol: 'https:' });
+    h.get('camera-page').classList.add('active');
+    const before = h.requests.length;
+    const { prevented } = await h.paste('image/png');
+    assert.equal(prevented, true);
+    assert.equal(h.get('web-selected-photo').hidden, false);
+    assert.equal(h.get('web-submit').disabled, false);
+    assert.match(h.get('web-status').textContent, /Pasted image ready/);
+    assert.equal(h.requests.length, before, 'paste alone sends nothing');
+    await h.get('web-submit').click();
+    for (let i = 0; i < 60; i++) await Promise.resolve();
+    assert.ok(h.requests.some(r => r.url === '/predict'), 'Analyze sends the pasted image');
+});
+test('paste ignores text, rejects unsupported image types, and is inert offline', async () => {
+    const h = harness({ protocol: 'https:' });
+    h.get('camera-page').classList.add('active');
+    assert.equal((await h.paste('text/plain', false)).prevented, false);
+    assert.equal(h.get('web-submit').disabled, true);
+    await h.paste('image/gif');
+    assert.match(h.get('web-status').textContent, /PNG or JPEG/);
+    assert.equal(h.get('web-submit').disabled, true);
+    const offline = harness({ protocol: 'file:' });
+    offline.get('camera-page').classList.add('active');
+    assert.equal((await offline.paste('image/png')).prevented, false);
+});

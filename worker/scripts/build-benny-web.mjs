@@ -92,7 +92,7 @@ export async function buildBennyWeb() {
                 <p class="web-kicker">Benny · Web demo</p>
                 <h2>What are you sorting?</h2>
                 <section id="web-live" aria-label="Analyze your own photo">
-                    <p class="web-lead">Take a photo or choose one to check it against the Waste Wizard catalog.</p>
+                    <p class="web-lead">Take a photo, choose one, or paste an image (Ctrl+V) to check it against the Waste Wizard catalog.</p>
                     <div class="web-photo-controls">
                         <label class="web-picker">Choose a photo<input id="web-file" type="file" accept="image/jpeg,image/png" /></label>
                         <div class="web-picker"><button class="header-btn" id="web-camera-open" type="button">Take Photo</button></div>

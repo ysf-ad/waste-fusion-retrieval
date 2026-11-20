@@ -132,6 +132,25 @@ window.BennyWeb = (() => {
         }});
         file.addEventListener('change', () => { cameraControl.close(); camera.value = ''; captured = null; refreshPhoto(); });
         camera.addEventListener('change', () => { cameraControl.close(); file.value = ''; captured = null; refreshPhoto(); });
+        // Ctrl+V / Cmd+V an image anywhere on the start page selects it like a chosen photo.
+        // It is only previewed; Analyze photo still sends it.
+        document.addEventListener('paste', event => {
+            if (busy || !document.getElementById('camera-page')?.classList.contains('active')) return;
+            const item = [...(event.clipboardData?.items || [])].find(entry => entry.kind === 'file' && entry.type.startsWith('image/'));
+            if (!item) return;
+            event.preventDefault();
+            const blob = item.getAsFile();
+            if (!blob || !['image/png', 'image/jpeg'].includes(blob.type)) {
+                status.textContent = 'Paste a PNG or JPEG image.';
+                return;
+            }
+            cameraControl.close();
+            file.value = camera.value = '';
+            captured = new File([blob], blob.name || `pasted-image.${blob.type === 'image/png' ? 'png' : 'jpg'}`, {type: blob.type});
+            refreshPhoto();
+            status.textContent = 'Pasted image ready. Press Analyze photo to check it.';
+            submit.focus?.();
+        });
         submit.addEventListener('click', async () => {
             if (submit.disabled) return;
             const selected = selectedPhoto();
