@@ -32,8 +32,8 @@ export async function identifyCatalog({ image, items, ask, env, provider, timeou
   if (!finalists.length) return abstain(preliminary, 'No Waste Wizard item is available. Review manually; no bin is confirmed.', metadata());
   const remaining = timeoutMs - (performance.now() - started);
   if (remaining < 100) throw new ProviderError('decision_timeout', 'Catalog candidate stage used the decision budget. Sort manually.', 504);
-  const schema = { match: choice('Which ONE catalog name best describes the object shown? Several finalists may be similar; pick the closest. Choose none only when no finalist plausibly describes the object. Do not choose an item merely because it has similar material.', {
-    none: 'No finalist plausibly describes the object', ...Object.fromEntries(finalists.map(({ key, row }) => [key, row.item])),
+  const schema = { match: choice('Which ONE catalog name best describes the object shown? Always pick the most likely finalist, even from a partial, blurry or obstructed view, if anything in the photo (shape, material, packaging, context) points toward it. Several finalists may be similar; pick the closest. Choose none only when there is no direction, hint or reasonable possibility at all: no object is visible, or the object is clearly unrelated to every finalist.', {
+    none: 'No reasonable possibility: no object, or clearly unrelated to every finalist', ...Object.fromEntries(finalists.map(({ key, row }) => [key, row.item])),
   }), ...QUESTIONS };
   for (const finalist of finalists) for (const [id, question] of Object.entries(ruleQuestions(finalist.row, `rule_${finalist.key}`))) {
     if (Object.keys(schema).length < 64) schema[id] = question;
@@ -48,14 +48,15 @@ export async function identifyCatalog({ image, items, ask, env, provider, timeou
   const matched = finalists.find(item => item.key === selectedKey)?.row;
   const identity = { ...meta, match_probability: probability ?? null, none_probability: second.answers.match.probabilities.none };
   const none = second.answers.match.probabilities.none;
-  // "None" withholds a bin only with majority support. When similar finalists
-  // split the vote, "none" can win a plurality while most probability says the
-  // object is in the catalog; then the top candidate is shown as tentative.
+  // "None" withholds a bin only with clear majority support (>= 60%). When
+  // similar finalists split the vote, "none" can win a plurality while most
+  // probability says the object is in the catalog; something tentative is then
+  // more useful than nothing, so the top candidate is shown as tentative.
   if (validated.match.choice === 'none' || !matched) {
     // A confident second look at a bare hand/empty scene explains the miss.
     const subject = subjectDecision(validated, identity);
     if (subject) return subject;
-    if (!matched || !(none < 0.5)) {
+    if (!matched || !(none < 0.6)) {
       return abstain(validated, 'No sufficiently supported Waste Wizard item is identified. Scan again or review manually; no bin is confirmed.', identity);
     }
   }

@@ -124,7 +124,7 @@ for (const probability of [0.79, 0.3, 0.12]) {
   });
 }
 
-for (const [label, none, expectTentative] of [['split vote, none 19% plurality', 0.19, true], ['none majority 55%', 0.55, false]]) {
+for (const [label, none, expectTentative] of [['split vote, none 19% plurality', 0.19, true], ['none 55% short of a clear majority', 0.55, true], ['none clear majority 60%', 0.6, false]]) {
   test(`second-stage ${label}: ${expectTentative ? 'top candidate shown as tentative' : 'no bin'}`, async () => {
     let calls = 0;
     const selectedKey = finalistKeys[0];
@@ -132,7 +132,7 @@ for (const [label, none, expectTentative] of [['split vote, none 19% plurality',
       if (++calls === 1) return { answers: candidateAnswers(options.questions) };
       const raw = finalAnswers(options.questions, 'none');
       const keys = Object.keys(options.questions.match.criteria).filter(key => key !== 'none');
-      const best = expectTentative ? 0.18 : 0.2;
+      const best = none >= 0.5 ? 0.2 : 0.18;
       const rest = (1 - none - best) / (keys.length - 1);
       assert.ok(rest < best && rest < none, 'fixture keeps none as the single winner');
       raw.match.probabilities = Object.fromEntries([['none', none], ...keys.map(key => [key, key === selectedKey ? best : rest])]);
@@ -143,7 +143,7 @@ for (const [label, none, expectTentative] of [['split vote, none 19% plurality',
     assert.equal(result.none_probability, none);
     if (expectTentative) {
       assert.equal(result.status, 'catalog_match'); assert.equal(result.tentative_match, true);
-      assert.ok(result.selected_item); assert.equal(result.match_probability, 0.18);
+      assert.ok(result.selected_item); assert.equal(result.match_probability, none >= 0.5 ? 0.2 : 0.18);
       assert.ok(result.alternatives.length > 0);
     } else {
       assert.equal(result.status, 'manual_review'); assert.equal(result.selected_item, null); assert.deepEqual(result.source_items, []);
