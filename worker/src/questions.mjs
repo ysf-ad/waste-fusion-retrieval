@@ -2,14 +2,14 @@
 export const choice = (instructions, criteria) => ({ type: 'choice', instructions, criteria });
 // These open-set heads are production-only; benchmark schemas remain closed set.
 export const SUBJECT_QUESTIONS = {
-  subject: choice('Is there one separately identifiable inanimate item or piece of waste to assess? A person or hand may hold an item; assess that item, not the person. Choose human_only only when a person/body part is the subject and no separate item can be identified. Competing items or an unclear view require abstention.', {
-    single_item: 'One separately identifiable item, including an item held by a person',
-    human_only: 'Person or body part only, with no separately identifiable item',
-    no_item: 'No identifiable item: empty scene or background only',
-    multiple_items: 'Multiple competing items, no single assessment target',
-    unknown: 'Cannot establish a separate single item from the view',
+  subject: choice('What is presented to the camera for sorting? If any separate object is visible, it is the subject, even when a hand holds it, covers part of it, or fills most of the frame. Choose human_only only when nothing but skin, a body part or worn clothing is visible.', {
+    single_item: 'One object is visible, held in a hand or not',
+    human_only: 'Only a hand, person or body part is visible, holding or touching nothing',
+    no_item: 'Empty scene or background only',
+    multiple_items: 'Several separate objects with no single main one',
+    unknown: 'Too dark, blurry or obstructed to tell',
   }),
-  material: choice('What material is visually supported for the separate target item? Use visible construction rather than brand, package contents or an imagined item identity. Choose mixed for inseparable mixed materials and unknown when material is not established. Human bodies are not waste material. Material is supporting evidence for a visually supported Waste Wizard item, not a substitute identity and never a reason to override none.', {
+  material: choice('Main visible material of the object (ignore the hand holding it). Labels, caps and lids do not make an item mixed. This is a hint only, never a substitute for the catalog item.', {
     unknown: 'Material cannot be reliably established', paper: 'Paper', cardboard: 'Cardboard or paperboard',
     plastic: 'Plastic', metal: 'Metal', glass: 'Glass', wood: 'Wood', textile: 'Textile or fabric',
     organic: 'Food or plant material', ceramic: 'Ceramic or porcelain', foam: 'Foamed plastic',

@@ -110,14 +110,15 @@ function assertSelectedRow(result, key, probability) {
 }
 
 for (const probability of [0.79, 0.3, 0.12]) {
-  test(`second-stage top item at ${probability} abstains without attaching a candidate policy`, async () => {
+  test(`second-stage named winner at ${probability} is shown as a tentative match with its policy`, async () => {
     let calls = 0;
     const result = await identifyCatalog({ ...base, ask: async options => ++calls === 1
       ? { answers: candidateAnswers(options.questions) }
       : { answers: finalAnswers(options.questions, finalistKeys[0], probability) } });
     assert.equal(calls, 2);
-    assert.equal(result.status, 'manual_review'); assert.equal(result.selected_item, null);
-    assert.deepEqual(result.instructions, []); assert.deepEqual(result.source_items, []); assertNoRouting(result);
+    assert.equal(result.status, 'catalog_match'); assert.ok(result.selected_item);
+    assert.equal(result.tentative_match, true); assert.equal(result.identity_uncertain, false);
+    assert.ok(result.source_items.length); assert.equal(result.automatic_routing_enabled, false);
     assert.equal(result.observed.match.choice, finalistKeys[0]);
     assert.equal(result.observed.match.p, probability);
   });
@@ -125,7 +126,6 @@ for (const probability of [0.79, 0.3, 0.12]) {
 
 for (const [label, none, best, runner] of [
   ['none winner', 0.7, 0.2, 0.1],
-  ['small winning margin', 0.35, 0.36, 0.29],
 ]) {
   test(`second-stage ${label} abstains and retains only diagnostic scores`, async () => {
     let calls = 0;

@@ -77,13 +77,13 @@ export function abstain(answers, reason, metadata = {}) {
     special_handling: answers.hazard?.choice === 'evident', observed: answers };
 }
 
+// The subject head only vetoes when it is confident nothing sortable is shown
+// (a bare hand/body or an empty scene). Everything else goes to item matching.
 export function subjectDecision(answers, metadata = {}) {
   const subject = answers.subject;
-  if (passes(subject, GATES.subject) && subject.choice === 'single_item') return null;
-  const confident = passes(subject, GATES.subject);
-  const noItem = confident && ['human_only', 'no_item'].includes(subject?.choice);
-  return { ...abstain(answers, noItem ? 'No separate item is identifiable. No disposal decision was made.' : 'A single separate item is not established. Scan one item clearly or request manual review.', metadata),
-    status: noItem ? 'no_item' : 'manual_review', no_item_reason: confident ? subject.choice : 'uncertain_subject' };
+  if (!passes(subject, GATES.subject) || !['human_only', 'no_item'].includes(subject.choice)) return null;
+  return { ...abstain(answers, 'No separate item is identifiable. No disposal decision was made.', metadata),
+    status: 'no_item', no_item_reason: subject.choice };
 }
 
 const KIND_MATERIALS = {
@@ -93,17 +93,16 @@ const KIND_MATERIALS = {
   food_scraps: ['organic'], textile: ['textile'], ceramic: ['ceramic'],
 };
 export function conflictingMaterial(answers) {
-  if (answers.material?.choice === 'mixed') return true;
   const expected = KIND_MATERIALS[answers.kind?.choice];
   return Boolean(expected && passes(answers.kind, GATES.kind) && passes(answers.material, GATES.material) &&
-    answers.material.choice !== 'unknown' && !expected.includes(answers.material.choice));
+    !['unknown', 'mixed'].includes(answers.material.choice) && !expected.includes(answers.material.choice));
 }
 
 export function resolvePolicy(raw, items) {
   const answers=validateAnswers(raw);
   const subject = subjectDecision(answers);
   if (subject) return subject;
-  if (conflictingMaterial(answers)) return abstain(answers, 'Material and item evidence conflict or indicate mixed materials. No disposal policy is confirmed.', {});
+  if (conflictingMaterial(answers)) return abstain(answers, 'Material and item evidence conflict. No disposal policy is confirmed.', {});
   if (!RULES[answers.kind.choice] || !passes(answers.kind, GATES.kind)) return abstain(answers, 'No sufficiently supported Waste Wizard item is identified. Scan again or review manually; no bin is confirmed.');
   const ranked=Object.entries(raw.kind.probabilities).filter(([kind])=>RULES[kind]).sort((a,b)=>b[1]-a[1]);
   const [kind,probability]=ranked[0];

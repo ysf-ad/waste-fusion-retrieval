@@ -79,10 +79,10 @@ test('exact policy bin stays visible with unresolved checks and source instructi
   assert.match(h.get('api-summary').textContent, /fixture-build/);
   assert.deepEqual(JSON.parse(h.get('api-response').textContent), h.ctx.data);
 });
-for (const [status, extra, title, guidance] of [
-  ['no_item', { no_item_reason: 'human_only' }, 'No waste item detected', /People and body parts/],
-  ['material_only', { selected_material: 'wood', material_probability: .91 }, 'Item not confirmed', /try again/],
-  ['catalog_match', { selected_item: 'Cigarette', identity_uncertain: true, match_probability: .21 }, 'Item not confirmed', /try again/],
+for (const [status, extra, title, guidance, score] of [
+  ['no_item', { no_item_reason: 'human_only' }, 'No waste item detected', /People and body parts/, 'unavailable'],
+  ['material_only', { selected_material: 'wood', material_probability: .91 }, 'Item not confirmed', /try again/, 'unavailable'],
+  ['catalog_match', { selected_item: 'Cigarette', identity_uncertain: true, match_probability: .21 }, 'Item not confirmed', /try again/, '21%'],
 ]) test(`renderer withholds stale bin and rules for ${status}`, async () => {
   const h = harness(); h.ctx.data = { status, ...extra, policy_category: 'Garbage',
     results: [{ item: 'Cigarette', category: 'Garbage', instruction: 'Throw in garbage' }] };
@@ -90,7 +90,16 @@ for (const [status, extra, title, guidance] of [
   assert.equal(h.ctx.itemName.textContent, title);
   assert.equal(h.ctx.binNameLarge.textContent, '');
   assert.match(h.get('instruction-list').children[0].textContent, guidance);
-  assert.equal(h.ctx.whyText.textContent, 'Model confidence: unavailable');
+  assert.equal(h.ctx.whyText.textContent, `Model confidence: ${score}`);
+});
+test('tentative match keeps item, bin and confidence with a visible warning', async () => {
+  const h = harness(); h.ctx.data = { status: 'catalog_match', selected_item: 'banana', tentative_match: true, match_probability: .62,
+    policy_category: 'Green Bin', source_category: 'Green Bin', instructions: ['Place in the Green Bin.'] };
+  await h.run('displayResult(data, null, 1)');
+  assert.equal(h.ctx.itemName.textContent, 'banana');
+  assert.equal(h.ctx.binNameLarge.textContent, 'Green Bin');
+  assert.equal(h.ctx.whyText.textContent, 'Tentative match · Model confidence: 62%');
+  assert.match(h.get('result-checks').textContent, /below the 80% confidence threshold/);
 });
 test('malformed prediction envelopes are rejected before display', async () => {
   const h = harness();

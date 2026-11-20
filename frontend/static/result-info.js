@@ -17,8 +17,12 @@
             const message = human ? 'People and body parts do not go in any bin.' : 'Place one waste item in view and try again.';
             const subject = data.observed?.subject;
             const match = data.observed?.match;
+            // Show the score behind the outcome: the no-item vote, the "none fits"
+            // vote, or the best candidate's score that fell below the threshold.
             const p = data.status === 'no_item' ? (data.no_item_reason && subject?.choice === data.no_item_reason ? subject.p : null)
-                : match?.choice === 'none' ? match.p : ['unknown','multiple_items'].includes(subject?.choice) ? subject.p : null;
+                : match?.choice === 'none' ? match.p
+                : Number.isFinite(data.match_probability) ? data.match_probability
+                : ['unknown','multiple_items'].includes(subject?.choice) ? subject.p : null;
             return { item, bin: '', sourceBin: '', rules: [], checks: [message], tentative: false, withheld: true,
                 matchScore: Number.isFinite(p) && p >= 0 && p <= 1 ? p : null, reason: message, status: data.status,
                 condition: text(data.observed?.condition?.choice) || 'Not returned', legacyCategory: 'Not used',
@@ -38,7 +42,7 @@
             if (instruction) rules.push({ text: instruction, state: 'reference' });
         }
         const checks = [];
-        if (data.identity_uncertain) checks.push('Identity is tentative; verify the item.');
+        if (data.identity_uncertain || data.tentative_match === true) checks.push('Tentative match: below the 80% confidence threshold. Check the item before using this bin.');
         if (data.special_handling) checks.push('Special handling required; follow the source instructions.');
         if (Array.isArray(data.clarification)) for (const value of data.clarification) {
             const question = typeof value === 'string' ? value : text(value?.question) || text(value?.id);
@@ -48,7 +52,7 @@
         if (!bin) checks.push('No predicted policy bin was returned. Review the instructions; do not guess a bin.');
         const scoreValue = data.match_probability ?? legacy.confidence;
         const matchScore = Number.isFinite(scoreValue) && scoreValue >= 0 && scoreValue <= 1 ? scoreValue : null;
-        return { item, bin, sourceBin, rules, checks, tentative: Boolean(data.identity_uncertain), matchScore,
+        return { item, bin, sourceBin, rules, checks, tentative: Boolean(data.identity_uncertain || data.tentative_match === true), matchScore,
             reason: text(data.reason), status: text(data.status) || 'Legacy response',
             condition: text(data.observed?.condition?.choice) || 'Not returned',
             legacyCategory: text(legacy.category) || 'Not returned',

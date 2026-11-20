@@ -70,7 +70,10 @@ export async function buildBennyWeb() {
         #web-output-kind { font-weight:700; }
         .web-kind-note { font-size:.8rem; opacity:.85; }
         @media (max-width: 700px) {
-          .result-page.active, .scan-page.active { grid-template-columns:minmax(0,1fr); grid-template-rows:auto auto auto; height:100dvh; overflow:auto; font-size:14px; }
+          .result-page.active, .scan-page.active { grid-template-columns:minmax(0,1fr); grid-template-rows:repeat(3,max-content); align-content:start; height:100dvh; overflow-y:auto; font-size:14px; }
+          /* Panels grow with their content on phones; never clip the item name or confidence. */
+          .result-page.active > .panel, .scan-page.active > .panel { min-height:max-content; overflow:visible; }
+          .result-page .info-wrapper { flex:none; overflow:visible; }
           .layout-info .image-wrapper { max-height:180px; }
           .layout-info .info-title,.layout-info .bin-text { font-size:2em; }
           .layout-info .right-panel { min-height:230px; }

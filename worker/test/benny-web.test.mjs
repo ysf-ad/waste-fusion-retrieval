@@ -340,11 +340,11 @@ for (const [label, prediction, score] of [
     ['none match', {status:'manual_review',selected_item:null,observed:{match:{choice:'none',p:.89}},match_probability:.99}, '89%'],
     ['unknown subject', {status:'manual_review',selected_item:null,observed:{subject:{choice:'unknown',p:.84}}}, '84%'],
     ['competing subjects', {status:'manual_review',selected_item:null,observed:{subject:{choice:'multiple_items',p:.85}}}, '85%'],
-    ['unrelated named score', {status:'manual_review',selected_item:null,observed:{match:{choice:'item_0',p:.99}},match_probability:.99}, 'unavailable'],
+    ['below-threshold named score', {status:'manual_review',selected_item:null,observed:{match:{choice:'item_0',p:.99}},match_probability:.99}, '99%'],
     ['old material response', {status:'material_only',selected_material:'wood',material_probability:.99,selected_item:null}, 'unavailable'],
-    ['tentative candidate', {status:'catalog_match',selected_item:'Tentative can',identity_uncertain:true,match_probability:.99,policy_category:'Blue Bin'}, 'unavailable'],
+    ['tentative candidate', {status:'catalog_match',selected_item:'Tentative can',identity_uncertain:true,match_probability:.99,policy_category:'Blue Bin'}, '99%'],
     ['out-of-range subject', {status:'no_item',no_item_reason:'human_only',observed:{subject:{choice:'human_only',p:1.1}}}, 'unavailable'],
-]) test(`live ${label} confidence uses only relevant evidence and never guesses a bin`, async () => {
+]) test(`live ${label} confidence shows the relevant score and never guesses a bin`, async () => {
     const h = harness({ protocol: 'https:', prediction });
     await h.choose('wood');
     assert.equal(h.get('why-text').textContent, `Model confidence: ${score}`);

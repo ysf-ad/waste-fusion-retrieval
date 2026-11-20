@@ -207,6 +207,7 @@
         function showPage(page) {
             [cameraPage, loadingPage, resultPage].forEach(p => p.classList.remove('active'));
             page.classList.add('active');
+            page.scrollTop = 0; // Always open at the top so the item name is in view.
             if (page !== loadingPage) stopScanTimer();
         }
 
